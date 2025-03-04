@@ -11,28 +11,37 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.grey[100],
       body: Column(
         children: [
           // Encabezado con logo y botones
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-            color: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 5,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Logo
                 Image.asset(
-                  'assets/logo.png', // Asegúrate de tener este archivo en assets
-                  height: 90,
+                  'assets/logo.png',
+                  height: 120,
                 ),
                 Row(
                   children: [
-                    IconButton(
+                    IconButton(iconSize: 48,
                       icon: const Icon(Icons.notifications, color: Colors.black),
                       onPressed: () {},
                     ),
-                    IconButton(
+                    IconButton(iconSize: 48,
                       icon: const Icon(Icons.person, color: Colors.black),
                       onPressed: () {},
                     ),
@@ -42,45 +51,57 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
 
-          // Título "INICIO"
+          // Título "Inicio"
           const Text(
             "INICIO",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 40,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 3,
+              fontFamily: 'PermanentMarker',
+            ),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
 
           // Botones de navegación
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: GridView.count(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              crossAxisCount: 2,
+              crossAxisSpacing: 15,
+              mainAxisSpacing: 15,
               children: [
-                _buildMenuButton(Icons.people, "EMPLEADOS"),
-                _buildMenuButton(Icons.inventory, "INVENTARIO"),
-                _buildMenuButton(Icons.restaurant_menu, "CARTA"),
-                _buildMenuButton(Icons.dashboard, "DASHBOARD"),
-                _buildMenuButton(Icons.attach_money, "VENTAS"),
-                _buildMenuButton(Icons.local_shipping, "PROVEEDORES"),
+                _buildMenuButton(Icons.restaurant_menu, "Carta"),
+                _buildMenuButton(Icons.inventory, "Inventario"),
+                _buildMenuButton(Icons.attach_money, "Ventas"),
+                _buildMenuButton(Icons.dashboard, "Dashboard"),
+                _buildMenuButton(Icons.people, "Empleados"),
+                _buildMenuButton(Icons.local_shipping, "Proveedores"),
               ],
             ),
           ),
 
           // Botón inferior "Planes"
-          Container(
-            padding: const EdgeInsets.all(10),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 15),
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
               onPressed: () {},
-              icon: const Icon(Icons.card_membership),
-              label: const Text("Planes"),
+              icon: const Icon(Icons.card_membership, size: 30),
+              label: const Text(
+                "Planes",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'TitanOne'),
+              ),
             ),
           ),
         ],
@@ -89,23 +110,28 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildMenuButton(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.deepPurple[700],
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.deepPurple,
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Colors.deepPurple, width: 2),
+        ),
+        elevation: 5,
+      ),
+      onPressed: () {},
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 60, color: Colors.deepPurple),
+          const SizedBox(height: 10),
+          Text(
+            text,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'TitanOne'),
           ),
-        ),
-        onPressed: () {},
-        icon: Icon(icon, size: 30),
-        label: Text(
-          text,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+        ],
       ),
     );
   }
