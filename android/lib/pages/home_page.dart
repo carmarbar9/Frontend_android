@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'inventory_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -37,11 +38,13 @@ class _HomePageState extends State<HomePage> {
                 ),
                 Row(
                   children: [
-                    IconButton(iconSize: 48,
-                      icon: const Icon(Icons.notifications, color: Colors.black),
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
                       onPressed: () {},
                     ),
-                    IconButton(iconSize: 48,
+                    IconButton(
+                      iconSize: 48,
                       icon: const Icon(Icons.person, color: Colors.black),
                       onPressed: () {},
                     ),
@@ -66,7 +69,7 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(height: 20),
 
-          // Botones de navegación
+          // Botones de navegación con animación
           Expanded(
             child: GridView.count(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -74,12 +77,12 @@ class _HomePageState extends State<HomePage> {
               crossAxisSpacing: 15,
               mainAxisSpacing: 15,
               children: [
-                _buildMenuButton(Icons.restaurant_menu, "Carta"),
-                _buildMenuButton(Icons.inventory, "Inventario"),
-                _buildMenuButton(Icons.attach_money, "Ventas"),
-                _buildMenuButton(Icons.dashboard, "Dashboard"),
-                _buildMenuButton(Icons.people, "Empleados"),
-                _buildMenuButton(Icons.local_shipping, "Proveedores"),
+                _buildAnimatedMenuButton(Icons.restaurant_menu, "Carta"),
+                _buildAnimatedMenuButton(Icons.inventory, "Inventario"),
+                _buildAnimatedMenuButton(Icons.attach_money, "Ventas"),
+                _buildAnimatedMenuButton(Icons.dashboard, "Dashboard"),
+                _buildAnimatedMenuButton(Icons.people, "Empleados"),
+                _buildAnimatedMenuButton(Icons.local_shipping, "Proveedores"),
               ],
             ),
           ),
@@ -89,7 +92,7 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.symmetric(vertical: 15),
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
+                backgroundColor: const Color.fromARGB(255, 129, 43, 43),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                 shape: RoundedRectangleBorder(
@@ -109,30 +112,50 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildMenuButton(IconData icon, String text) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.deepPurple,
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Colors.deepPurple, width: 2),
-        ),
-        elevation: 5,
-      ),
-      onPressed: () {},
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 60, color: Colors.deepPurple),
-          const SizedBox(height: 10),
-          Text(
-            text,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'TitanOne'),
+  Widget _buildAnimatedMenuButton(IconData icon, String text) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 200),
+      tween: Tween<double>(begin: 1.0, end: 1.0),
+      builder: (context, scale, child) {
+        return MouseRegion(
+          onEnter: (_) => setState(() => scale = 1.1),
+          onExit: (_) => setState(() => scale = 1.0),
+          child: Transform.scale(
+            scale: scale,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color.fromARGB(255, 129, 43, 43),
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: const BorderSide(color: Color.fromARGB(255, 129, 43, 43), width: 2),
+                ),
+                elevation: 5,
+              ),
+              onPressed: () {
+                if (text == "Inventario") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const InventoryPage()),
+                  );
+                }
+              }, 
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 60, color: const Color.fromARGB(255, 129, 43, 43)),
+                  const SizedBox(height: 10),
+                  Text(
+                    text,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'TitanOne'),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
