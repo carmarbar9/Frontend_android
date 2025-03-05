@@ -90,9 +90,9 @@ class _InventoryPageState extends State<InventoryPage> {
     return Center(
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 20),
-        padding: const EdgeInsets.all(15),
-        height: 250,
-        width: 200,
+        padding: const EdgeInsets.all(20),
+        height: 400,
+        width: 320,
         decoration: BoxDecoration(
           color: const Color.fromARGB(255, 129, 43, 43),
           borderRadius: BorderRadius.circular(20),
@@ -106,25 +106,30 @@ class _InventoryPageState extends State<InventoryPage> {
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
               category['icon'],
-              size: 80,
+              size: 120,
               color: Colors.white,
             ),
+            const SizedBox(height: 8),
             Text(
               category['name'],
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 24,
+                fontSize: 32,
                 fontWeight: FontWeight.bold,
               ),
             ),
+            const SizedBox(height: 8),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+              textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -135,7 +140,7 @@ class _InventoryPageState extends State<InventoryPage> {
                   ),
                 );
               },
-              icon: const Icon(Icons.visibility),
+              icon: const Icon(Icons.visibility, size: 30),
               label: const Text("Ver"),
             ),
           ],
