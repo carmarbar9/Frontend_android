@@ -1,4 +1,5 @@
 import 'package:android/pages/categoryItems_page.dart';
+import 'package:android/pages/notifications_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -48,7 +49,12 @@ class _InventoryPageState extends State<InventoryPage> {
           IconButton(
             iconSize: 48,
             icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationsPage()),
+              );
+            },
           ),
           // Icono de perfil en la izquierda
           IconButton(
@@ -67,8 +73,10 @@ class _InventoryPageState extends State<InventoryPage> {
               'Inventario',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 32,
+                fontSize: 40,
                 color: Colors.black,
+                letterSpacing: 3,
+                fontFamily: 'PermanentMarker',
               ),
             ),
           ),

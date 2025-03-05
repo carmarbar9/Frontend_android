@@ -1,3 +1,4 @@
+import 'package:android/pages/notifications_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 
@@ -33,7 +34,12 @@ class EmployeesPage extends StatelessWidget {
           IconButton(
             iconSize: 48,
             icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationsPage()),
+              );
+            },
           ),
           // Icono de perfil en la izquierda
           IconButton(

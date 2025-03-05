@@ -1,4 +1,5 @@
 import 'package:android/pages/itemsDetails_page.dart';
+import 'package:android/pages/notifications_page.dart';
 import 'package:flutter/material.dart';
 
 class CategoryItemsPage extends StatefulWidget {
@@ -73,7 +74,12 @@ class _CategoryItemsPageState extends State<CategoryItemsPage>
           IconButton(
             iconSize: 48,
             icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationsPage()),
+              );
+            },
           ),
           // Icono de perfil en la izquierda
           IconButton(

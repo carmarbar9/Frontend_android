@@ -1,4 +1,5 @@
 import 'package:android/pages/employee_page.dart';
+import 'package:android/pages/notifications_page.dart';
 import 'package:flutter/material.dart';
 import 'inventory_page.dart';
 
@@ -42,8 +43,15 @@ class _HomePageState extends State<HomePage> {
                     IconButton(
                       iconSize: 48,
                       icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
-                      onPressed: () {},
-                    ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationsPage(),
+                          ),
+                        );
+                      },
+          ),
                     IconButton(
                       iconSize: 48,
                       icon: const Icon(Icons.person, color: Colors.black),
