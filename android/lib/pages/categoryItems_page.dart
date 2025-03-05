@@ -1,3 +1,4 @@
+import 'package:android/pages/itemsDetails_page.dart';
 import 'package:flutter/material.dart';
 
 class CategoryItemsPage extends StatefulWidget {
@@ -21,7 +22,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage>
     'Carnes': ['Pollo', 'Ternera', 'Cerdo', 'Cordero', 'Jamón'],
     'Pescados': ['Atún', 'Salmón', 'Merluza', 'Bacalao', 'Sardina'],
     'Especias': ['Pimienta', 'Sal', 'Orégano', 'Curry', 'Pimentón'],
-    'Bebidas': ['Agua', 'Refresco', 'Zumo', 'Cerveza', 'Vino'],
+    'Bebidas': ['Agua', 'Coca-Cola', 'Zumo de Piña', 'Cerveza', 'Vino'],
     'Frutas': ['Manzana', 'Plátano', 'Naranja', 'Pera', 'Melón'],
     'Lácteos': ['Leche', 'Queso', 'Yogur', 'Mantequilla', 'Nata'],
     'Otros': ['Aceite', 'Vinagre', 'Harina', 'Azúcar', 'Café'],
@@ -108,6 +109,19 @@ class _CategoryItemsPageState extends State<CategoryItemsPage>
                                 ),
                               ),
                             ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => ItemDetailsPage(
+                                        itemName: items[index],
+                                        category: widget.categoryName,
+                                      ),
+                                ),
+                              );
+                            },
+
                           ),
                         ),
                       );
