@@ -28,26 +28,66 @@ class _InventoryPageState extends State<InventoryPage> {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: const Text(
-          'Inventario',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+        backgroundColor: Colors.grey[200],
+        elevation: 0,  // Remover la sombra del AppBar
+        leading: IconButton(
+          icon: Container(
+            height: 120,  // Aumentamos el tamaño del logo
+            width: 120,  // Mantener el logo en proporción cuadrada
+            child: Image.asset(
+              'assets/logo.png', // Utilizamos la imagen del logo como ícono
+              fit: BoxFit.contain,  // Asegura que el logo se mantenga dentro de los límites
+            ),
+          ),
+          onPressed: () {
+            Navigator.pop(context); // Navegar atrás cuando se toca el logo
+          },
         ),
-        centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 129, 43, 43),
+        actions: [
+          // Icono de notificaciones en la izquierda
+          IconButton(
+            iconSize: 48,
+            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
+            onPressed: () {},
+          ),
+          // Icono de perfil en la izquierda
+          IconButton(
+            iconSize: 48,
+            icon: const Icon(Icons.person, color: Colors.black),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: Column(
         children: [
+          // Título "Inventario" sobre la barra de búsqueda
           Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Buscar',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Text(
+              'Inventario',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 32,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          // Barra de búsqueda con tamaño más pequeño y borde gris
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+            child: Container(
+              width: double.infinity, // Se ajusta al ancho disponible
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Buscar',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: const Color.fromARGB(255, 150, 149, 149), // Color gris claro
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide(color: const Color.fromARGB(255, 71, 71, 71)!), // Borde gris oscuro
+                  ),
                 ),
-                filled: true,
-                fillColor: Colors.white,
               ),
             ),
           ),
@@ -63,12 +103,12 @@ class _InventoryPageState extends State<InventoryPage> {
               },
             ),
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 129, 43, 43),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
@@ -81,6 +121,51 @@ class _InventoryPageState extends State<InventoryPage> {
             ),
           ),
           const SizedBox(height: 20),
+          // Botones de "Pérdidas" y "Riesgos"
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red, // Color para "Pérdidas"
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  onPressed: () {
+                    // Acción para "Pérdidas"
+                  },
+                  icon: const Icon(Icons.warning, size: 30),
+                  label: const Text(
+                    "Pérdidas",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange, // Color para "Riesgos"
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  onPressed: () {
+                    // Acción para "Riesgos"
+                  },
+                  icon: const Icon(Icons.error, size: 30),
+                  label: const Text(
+                    "Riesgos",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -125,18 +210,17 @@ class _InventoryPageState extends State<InventoryPage> {
             const SizedBox(height: 8),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-              textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder:
-                        (context) =>
-                            CategoryItemsPage(categoryName: category['name']),
+                    builder: (context) =>
+                        CategoryItemsPage(categoryName: category['name']),
                   ),
                 );
               },
@@ -149,14 +233,3 @@ class _InventoryPageState extends State<InventoryPage> {
     );
   }
 }
-
-// En el futuro, aquí puedes reemplazar la lista 'categories' con datos desde el backend.
-// Ejemplo:
-// void fetchCategories() async {
-//   final response = await http.get(Uri.parse('https://api.example.com/categories'));
-//   if (response.statusCode == 200) {
-//     setState(() {
-//       categories = jsonDecode(response.body);
-//     });
-//   }
-// }

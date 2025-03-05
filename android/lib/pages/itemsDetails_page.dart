@@ -46,9 +46,35 @@ class ItemDetailsPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(itemName.toUpperCase()),
-        centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 129, 43, 43),
+        backgroundColor: Colors.grey[200],
+        elevation: 0,  // Remover la sombra del AppBar
+        leading: IconButton(
+          icon: Container(
+            height: 120,  // Aumentamos el tamaño del logo
+            width: 120,  // Mantener el logo en proporción cuadrada
+            child: Image.asset(
+              'assets/logo.png', // Utilizamos la imagen del logo como ícono
+              fit: BoxFit.contain,  // Asegura que el logo se mantenga dentro de los límites
+            ),
+          ),
+          onPressed: () {
+            Navigator.pop(context); // Navegar atrás cuando se toca el logo
+          },
+        ),
+        actions: [
+          // Icono de notificaciones en la izquierda
+          IconButton(
+            iconSize: 48,
+            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
+            onPressed: () {},
+          ),
+          // Icono de perfil en la izquierda
+          IconButton(
+            iconSize: 48,
+            icon: const Icon(Icons.person, color: Colors.black),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: Center(
         child: Padding(

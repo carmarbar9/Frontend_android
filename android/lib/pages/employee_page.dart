@@ -17,12 +17,31 @@ class EmployeesPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: const Text(
-          'Empleados',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+        backgroundColor: Colors.grey[200],
+        elevation: 0,  // Remover la sombra del AppBar
+        leading: IconButton(
+          icon: Image.asset(
+            'assets/logo.png', // Utilizamos la imagen del logo como ícono
+            height: 180, // Aumentamos el tamaño del logo
+          ),
+          onPressed: () {
+            Navigator.pop(context); // Navegar atrás cuando se toca el logo
+          },
         ),
-        centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 129, 43, 43),
+        actions: [
+          // Icono de notificaciones en la izquierda
+          IconButton(
+            iconSize: 48,
+            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
+            onPressed: () {},
+          ),
+          // Icono de perfil en la izquierda
+          IconButton(
+            iconSize: 48,
+            icon: const Icon(Icons.person, color: Colors.black),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: Column(
         children: [
