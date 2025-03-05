@@ -1,3 +1,4 @@
+import 'package:android/pages/categoryItems_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -124,7 +125,16 @@ class _InventoryPageState extends State<InventoryPage> {
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
               ),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) =>
+                            CategoryItemsPage(categoryName: category['name']),
+                  ),
+                );
+              },
               icon: const Icon(Icons.visibility),
               label: const Text("Ver"),
             ),
