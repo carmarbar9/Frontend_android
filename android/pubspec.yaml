@@ -64,6 +64,12 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/logo.png
+    - assets/employee1.png
+    - assets/employee2.png
+    - assets/employee3.png
+    - assets/employee4.png
+    - assets/employee5.png
+
   
   fonts:
     - family: PermanentMarker

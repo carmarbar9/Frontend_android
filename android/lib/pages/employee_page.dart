@@ -8,8 +8,8 @@ class EmployeesPage extends StatelessWidget {
   final List<Map<String, dynamic>> employees = [
     {'name': 'María Ruiz', 'phone': '680 56 54 67', 'position': 'Encargada', 'image': 'assets/employee1.png'},
     {'name': 'Juan Pérez', 'phone': '685 12 34 56', 'position': 'Camarero', 'image': 'assets/employee2.png'},
-    {'name': 'Ana Gómez', 'phone': '680 78 90 12', 'position': 'Cocinera', 'image': 'assets/employee3.png'},
-    {'name': 'Carlos Rodríguez', 'phone': '650 34 56 78', 'position': 'Repartidor', 'image': 'assets/employee4.png'},
+    {'name': 'Ana Gómez', 'phone': '680 78 90 12', 'position': 'Cocinera', 'image': 'assets/employee4.png'},
+    {'name': 'Carlos Rodríguez', 'phone': '650 34 56 78', 'position': 'Repartidor', 'image': 'assets/employee3.png'},
     {'name': 'Laura Martínez', 'phone': '640 12 34 56', 'position': 'Asistente de cocina', 'image': 'assets/employee5.png'},
   ];
 
