@@ -1,7 +1,10 @@
-import 'package:android/pages/employee_page.dart';
-import 'package:android/pages/notifications_page.dart';
+import 'package:android/pages/empleados/employee_page.dart';
+import 'package:android/pages/notificaciones/notifications_page.dart';
+import 'package:android/pages/proveedores/providers_page.dart';
 import 'package:flutter/material.dart';
-import 'inventory_page.dart';
+import 'inventario/inventory_page.dart';
+import 'package:android/pages/planes/plans_page.dart';
+import 'package:android/pages/ventas/sales_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -108,7 +111,12 @@ class _HomePageState extends State<HomePage> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PlansPage()),
+                );
+              },
               icon: const Icon(Icons.card_membership, size: 30),
               label: const Text(
                 "Planes",
@@ -153,6 +161,18 @@ class _HomePageState extends State<HomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => EmployeesPage()),
+                  );
+                }
+                if (text == "Ventas") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SalesPage()),
+                  );
+                }
+                if (text == "Proveedores") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProvidersPage()),
                   );
                 }
               }, 

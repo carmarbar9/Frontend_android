@@ -140,21 +140,22 @@ class NotificationsPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white, 
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                if (title != 'VENTAS') // Condición para ocultar el botón en notificaciones de ventas
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white, 
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                     ),
+                    onPressed: () {
+                      // Acción para añadir al carrito u otra funcionalidad
+                    },
+                    label: const Text("Añadir AL"),
+                    icon: const Icon(Icons.add_shopping_cart, size: 40), // Icono a la derecha
                   ),
-                  onPressed: () {
-                    // Acción para añadir al carrito u otra funcionalidad
-                  },
-                  label: const Text("Añadir AL"),
-                  icon: const Icon(Icons.add_shopping_cart, size: 40), // Icono a la derecha
-                ),
               ],
             ),
           ),

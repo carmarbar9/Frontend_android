@@ -1,5 +1,5 @@
-import 'package:android/pages/categoryItems_page.dart';
-import 'package:android/pages/notifications_page.dart';
+import 'package:android/pages/inventario/categoryItems_page.dart';
+import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

@@ -1,5 +1,5 @@
-import 'package:android/pages/itemsDetails_page.dart';
-import 'package:android/pages/notifications_page.dart';
+import 'package:android/pages/inventario/itemsDetails_page.dart';
+import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:flutter/material.dart';
 
 class CategoryItemsPage extends StatefulWidget {

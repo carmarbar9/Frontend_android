@@ -1,4 +1,4 @@
-import 'package:android/pages/notifications_page.dart';
+import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 
