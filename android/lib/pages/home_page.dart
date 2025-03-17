@@ -5,6 +5,11 @@ import 'package:flutter/material.dart';
 import 'inventario/inventory_page.dart';
 import 'package:android/pages/planes/plans_page.dart';
 import 'package:android/pages/ventas/sales_page.dart';
+import 'package:android/pages/dashboard/dashboard_page.dart';
+import 'package:android/pages/user/user_profile.dart';
+import 'package:android/pages/carta/carta_page.dart';
+
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -58,7 +63,12 @@ class _HomePageState extends State<HomePage> {
                     IconButton(
                       iconSize: 48,
                       icon: const Icon(Icons.person, color: Colors.black),
-                      onPressed: () {},
+                      onPressed: () {
+                          Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const UserProfilePage()),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -169,6 +179,20 @@ class _HomePageState extends State<HomePage> {
                     MaterialPageRoute(builder: (context) => SalesPage()),
                   );
                 }
+                if (text == "Carta") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CartaPage()),
+                  );
+                }
+
+                if (text == "Dashboard") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const DashboardPage()),
+                  );
+                }
+
                 if (text == "Proveedores") {
                   Navigator.push(
                     context,
