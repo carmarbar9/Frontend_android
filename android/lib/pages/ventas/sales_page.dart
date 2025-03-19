@@ -5,49 +5,8 @@ import 'package:android/pages/ventas/salesDetails_page.dart';
 class SalesPage extends StatelessWidget {
   const SalesPage({super.key});
 
-  // Lista de ventas de ejemplo, cada venta es un Map con sus datos.
-  final List<Map<String, dynamic>> sales = const [
-    {
-      "table": "MESA 1",
-      "price": "50,75€",
-      "date": "10/03/2025",
-      "waiter": "María Ruiz",
-      "isPaid": true,
-      "products": [
-        {"name": "Coca-Cola", "quantity": "2u"},
-        {"name": "Cerveza", "quantity": "1u"},
-      ],
-    },
-    {
-      "table": "MESA 2",
-      "price": "78,40€",
-      "date": "10/03/2025",
-      "waiter": "Carlos López",
-      "isPaid": true,
-      "products": [
-        {"name": "Cerveza", "quantity": "2u"},
-        {"name": "Ensalada", "quantity": "1u"},
-      ],
-    },
-    {
-      "table": "MESA 3",
-      "price": "100,25€",
-      "date": "09/03/2025",
-      "waiter": "Ana Martínez",
-      "isPaid": false,
-      "products": [
-        {"name": "Presa Ibérica", "quantity": "1u"},
-        {"name": "Solomillo de Cerdo", "quantity": "1u"},
-      ],
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
-    // Separamos las ventas según su estado
-    final paidSales = sales.where((sale) => sale["isPaid"] == true).toList();
-    final pendingSales = sales.where((sale) => sale["isPaid"] == false).toList();
-
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
@@ -66,13 +25,11 @@ class SalesPage extends StatelessWidget {
         actions: [
           IconButton(
             iconSize: 32,
-            icon: const Icon(Icons.notifications,
-                color: Color.fromARGB(255, 10, 10, 10)),
+            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => const NotificationsPage()),
+                MaterialPageRoute(builder: (context) => const NotificationsPage()),
               );
             },
           ),
@@ -102,8 +59,7 @@ class SalesPage extends StatelessWidget {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -118,8 +74,7 @@ class SalesPage extends StatelessWidget {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -137,8 +92,7 @@ class SalesPage extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 30, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -154,41 +108,9 @@ class SalesPage extends StatelessWidget {
             Expanded(
               child: ListView(
                 children: [
-                  // Sección de ventas pagadas
-                  const Text(
-                    "Pagadas",
-                    style: TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 10),
-                  ...paidSales.map((sale) => _buildSaleCard(
-                        context,
-                        sale["table"],
-                        sale["price"],
-                        sale["date"],
-                        sale["isPaid"],
-                        sale["waiter"],
-                        sale["products"],
-                      )),
-                  const SizedBox(height: 20),
-                  // Sección de ventas pendientes
-                  const Text(
-                    "Pendientes de pago",
-                    style: TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 10),
-                  ...pendingSales.map((sale) => _buildSaleCard(
-                        context,
-                        sale["table"],
-                        sale["price"],
-                        sale["date"],
-                        sale["isPaid"],
-                        sale["waiter"],
-                        sale["products"],
-                      )),
+                  _buildSaleCard(context, "MESA 1", "50,75€", "10/03/2025"),
+                  _buildSaleCard(context, "MESA 2", "78,40€", "10/03/2025"),
+                  _buildSaleCard(context, "MESA 3", "100,25€", "09/03/2025"),
                 ],
               ),
             ),
@@ -198,8 +120,7 @@ class SalesPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSaleCard(BuildContext context, String table, String price,
-      String date, bool isPaid, String waiter, List<Map<String, String>> products) {
+  Widget _buildSaleCard(BuildContext context, String table, String price, String date) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -208,10 +129,14 @@ class SalesPage extends StatelessWidget {
             builder: (context) => SaleDetailPage(
               table: table,
               date: date,
-              waiter: waiter,
+              waiter: "María Ruiz", // Ejemplo de datos
               total: price,
-              isPaid: isPaid,
-              products: products,
+              products: [
+                {"name": "Coca-Cola", "quantity": "2u"},
+                {"name": "Cerveza", "quantity": "1u"},
+                {"name": "Presa Ibérica", "quantity": "1u"},
+                {"name": "Solomillo de Cerdo", "quantity": "1u"},
+              ],
             ),
           ),
         );
@@ -220,9 +145,7 @@ class SalesPage extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 10),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isPaid
-              ? const Color.fromARGB(255, 46, 204, 113) // Verde para pagadas
-              : const Color.fromARGB(255, 241, 196, 15), // Amarillo para pendientes
+          color: const Color.fromARGB(255, 151, 48, 66),
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
@@ -255,15 +178,6 @@ class SalesPage extends StatelessWidget {
               date,
               style: const TextStyle(
                 fontSize: 16,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              isPaid ? "Pagada" : "Pendiente",
-              style: const TextStyle(
-                fontSize: 16,
-                fontStyle: FontStyle.italic,
                 color: Colors.white,
               ),
             ),
