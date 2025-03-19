@@ -6,6 +6,7 @@ class SaleDetailPage extends StatelessWidget {
   final String date;
   final String waiter;
   final String total;
+  final bool isPaid;
   final List<Map<String, String>> products;
 
   const SaleDetailPage({
@@ -14,6 +15,7 @@ class SaleDetailPage extends StatelessWidget {
     required this.date,
     required this.waiter,
     required this.total,
+    required this.isPaid,
     required this.products,
   });
 
@@ -37,11 +39,13 @@ class SaleDetailPage extends StatelessWidget {
         actions: [
           IconButton(
             iconSize: 32,
-            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
+            icon: const Icon(Icons.notifications,
+                color: Color.fromARGB(255, 10, 10, 10)),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                MaterialPageRoute(
+                    builder: (context) => const NotificationsPage()),
               );
             },
           ),
@@ -99,6 +103,14 @@ class SaleDetailPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
+                  Text(
+                    isPaid ? "Estado: Pagada" : "Estado: Pendiente",
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   const Text(
                     "Productos:",
                     style: TextStyle(
@@ -110,7 +122,8 @@ class SaleDetailPage extends StatelessWidget {
                   ...products.map(
                     (product) => Text(
                       "${product['name']} - ${product['quantity']}",
-                      style: const TextStyle(fontSize: 16, color: Colors.white),
+                      style:
+                          const TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -121,7 +134,8 @@ class SaleDetailPage extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -134,7 +148,8 @@ class SaleDetailPage extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey,
                           foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -153,7 +168,8 @@ class SaleDetailPage extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.grey,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 30, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -163,7 +179,8 @@ class SaleDetailPage extends StatelessWidget {
               },
               child: const Text(
                 "Volver",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ],
