@@ -37,7 +37,7 @@ class SaleDetailPage extends StatelessWidget {
         actions: [
           IconButton(
             iconSize: 32,
-            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
+            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
             onPressed: () {
               Navigator.push(
                 context,
@@ -60,7 +60,7 @@ class SaleDetailPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 129, 43, 43),
+                color: const Color.fromARGB(255, 151, 48, 66),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: const [
                   BoxShadow(

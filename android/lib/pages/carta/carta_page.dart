@@ -117,7 +117,7 @@ class CartaPage extends StatelessWidget {
         height: 85,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color.fromARGB(255, 129, 43, 43),
+            backgroundColor: const Color.fromARGB(255, 151, 48, 66),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
             shape: RoundedRectangleBorder(

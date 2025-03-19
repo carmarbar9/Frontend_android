@@ -33,7 +33,7 @@ class EmployeesPage extends StatelessWidget {
           // Icono de notificaciones en la izquierda
           IconButton(
             iconSize: 48,
-            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
+            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
             onPressed: () {
               Navigator.push(
                 context,
@@ -80,7 +80,7 @@ class EmployeesPage extends StatelessWidget {
           const SizedBox(height: 15),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 129, 43, 43),
+              backgroundColor: const Color.fromARGB(255, 151, 48, 66),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               shape: RoundedRectangleBorder(
@@ -108,7 +108,7 @@ class EmployeesPage extends StatelessWidget {
         height: 400,
         width: 320,
         decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 129, 43, 43),
+          color: const Color.fromARGB(255, 151, 48, 66),
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(

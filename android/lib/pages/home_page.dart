@@ -50,7 +50,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     IconButton(
                       iconSize: 48,
-                      icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
+                      icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -114,7 +114,7 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.symmetric(vertical: 15),
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 129, 43, 43),
+                backgroundColor: const Color.fromARGB(255, 151, 48, 66),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                 shape: RoundedRectangleBorder(
@@ -152,7 +152,7 @@ class _HomePageState extends State<HomePage> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: const Color.fromARGB(255, 129, 43, 43),
+                foregroundColor: const Color.fromARGB(255, 151, 48, 66),
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -203,7 +203,7 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, size: 60, color: const Color.fromARGB(255, 129, 43, 43)),
+                  Icon(icon, size: 60, color: const Color.fromARGB(255, 151, 48, 66)),
                   const SizedBox(height: 10),
                   Text(
                     text,
