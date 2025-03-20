@@ -114,7 +114,7 @@ class _InventoryPageState extends State<InventoryPage> {
           const SizedBox(height: 20),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 151, 48, 66),
+              backgroundColor: const Color.fromARGB(255, 167, 45, 77),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
               shape: RoundedRectangleBorder(
@@ -187,7 +187,7 @@ class _InventoryPageState extends State<InventoryPage> {
         height: 400,
         width: 320,
         decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 151, 48, 66),
+          color: const Color.fromARGB(255, 167, 45, 77),
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(

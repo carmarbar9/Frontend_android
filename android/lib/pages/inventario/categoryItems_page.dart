@@ -117,7 +117,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage>
                         padding: const EdgeInsets.symmetric(vertical: 5.0),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: const Color.fromARGB(255, 151, 48, 66),
+                            color: const Color.fromARGB(255, 167, 45, 77),
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: const [
                               BoxShadow(

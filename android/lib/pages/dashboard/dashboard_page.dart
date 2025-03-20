@@ -37,7 +37,7 @@ class DashboardPage extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.redAccent, size: 36),
+            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 167, 45, 77), size: 36),
             onPressed: () {
               Navigator.push(
                 context,

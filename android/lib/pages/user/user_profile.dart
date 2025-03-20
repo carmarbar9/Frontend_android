@@ -50,7 +50,7 @@ class UserProfilePage extends StatelessWidget {
           width: 450,
           padding: const EdgeInsets.all(35),
           decoration: BoxDecoration(
-            color: const Color.fromARGB(255, 151, 48, 66),
+            color: const Color.fromARGB(255, 167, 45, 77),
             borderRadius: BorderRadius.circular(30),
             boxShadow: const [
               BoxShadow(

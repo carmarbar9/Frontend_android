@@ -87,7 +87,7 @@ class NotificationsPage extends StatelessWidget {
     IconData icon = _getNotificationIcon(title);
 
     return Card(
-      color: const Color.fromARGB(255, 151, 48, 66),
+      color: const Color.fromARGB(255, 167, 45, 77),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
       ),

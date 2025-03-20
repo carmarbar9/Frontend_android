@@ -127,7 +127,7 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.symmetric(vertical: 15),
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 151, 48, 66),
+                backgroundColor: const Color.fromARGB(255, 167, 45, 77),
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
@@ -169,12 +169,12 @@ class _HomePageState extends State<HomePage> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: const Color.fromARGB(255, 151, 48, 66),
+                foregroundColor: const Color.fromARGB(255, 167, 45, 77),
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                   side: const BorderSide(
-                      color: Color.fromARGB(255, 129, 43, 43), width: 2),
+                      color: Color.fromARGB(255, 167, 45, 77), width: 2),
                 ),
                 elevation: 5,
               ),
@@ -220,7 +220,7 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, size: 60, color: const Color.fromARGB(255, 151, 48, 66)),
+                  Icon(icon, size: 60, color: const Color.fromARGB(255, 167, 45, 77)),
                   const SizedBox(height: 10),
                   Text(
                     text,

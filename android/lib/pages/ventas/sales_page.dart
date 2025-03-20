@@ -223,7 +223,7 @@ Widget _buildSaleCard(BuildContext context, String table, String price,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isPaid
-            ? const Color.fromARGB(255, 151, 48, 66)
+            ? const Color.fromARGB(255, 167, 45, 77)
             : const Color.fromARGB(255, 146, 82, 93),
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [

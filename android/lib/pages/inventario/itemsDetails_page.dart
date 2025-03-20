@@ -93,7 +93,7 @@ class ItemDetailsPage extends StatelessWidget {
                 width: double.infinity,
                 constraints: const BoxConstraints(minHeight: 400),
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 151, 48, 66),
+                  color: const Color.fromARGB(255, 167, 45, 77),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: const [
                     BoxShadow(
