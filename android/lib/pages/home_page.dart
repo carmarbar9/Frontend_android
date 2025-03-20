@@ -1,6 +1,7 @@
 import 'package:android/pages/empleados/employee_page.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/pages/proveedores/providers_page.dart';
+import 'package:android/pages/login_page.dart'; // Importa la pantalla de login
 import 'package:flutter/material.dart';
 import 'inventario/inventory_page.dart';
 import 'package:android/pages/planes/plans_page.dart';
@@ -8,8 +9,6 @@ import 'package:android/pages/ventas/sales_page.dart';
 import 'package:android/pages/dashboard/dashboard_page.dart';
 import 'package:android/pages/user/user_profile.dart';
 import 'package:android/pages/carta/carta_page.dart';
-
-
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -50,7 +49,8 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     IconButton(
                       iconSize: 48,
-                      icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
+                      icon: const Icon(Icons.notifications,
+                          color: Color.fromARGB(255, 176, 20, 20)),
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -59,14 +59,28 @@ class _HomePageState extends State<HomePage> {
                           ),
                         );
                       },
-          ),
+                    ),
                     IconButton(
                       iconSize: 48,
                       icon: const Icon(Icons.person, color: Colors.black),
                       onPressed: () {
-                          Navigator.push(
+                        Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const UserProfilePage()),
+                          MaterialPageRoute(
+                              builder: (context) => const UserProfilePage()),
+                        );
+                      },
+                    ),
+                    // Botón para cerrar sesión
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(Icons.logout, color: Colors.black),
+                      onPressed: () {
+                        // Al cerrar sesión se reemplaza la ruta actual por la pantalla de login
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LoginPage()),
                         );
                       },
                     ),
@@ -116,7 +130,8 @@ class _HomePageState extends State<HomePage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 129, 43, 43),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -130,7 +145,10 @@ class _HomePageState extends State<HomePage> {
               icon: const Icon(Icons.card_membership, size: 30),
               label: const Text(
                 "Planes",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'TitanOne'),
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'TitanOne'),
               ),
             ),
           ),
@@ -156,7 +174,8 @@ class _HomePageState extends State<HomePage> {
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
-                  side: const BorderSide(color: Color.fromARGB(255, 129, 43, 43), width: 2),
+                  side: const BorderSide(
+                      color: Color.fromARGB(255, 129, 43, 43), width: 2),
                 ),
                 elevation: 5,
               ),
@@ -164,7 +183,8 @@ class _HomePageState extends State<HomePage> {
                 if (text == "Inventario") {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const InventoryPage()),
+                    MaterialPageRoute(
+                        builder: (context) => const InventoryPage()),
                   );
                 }
                 if (text == "Empleados") {
@@ -185,29 +205,31 @@ class _HomePageState extends State<HomePage> {
                     MaterialPageRoute(builder: (context) => const CartaPage()),
                   );
                 }
-
                 if (text == "Dashboard") {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const DashboardPage()),
                   );
                 }
-
                 if (text == "Proveedores") {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => ProvidersPage()),
                   );
                 }
-              }, 
+              },
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, size: 60, color: const Color.fromARGB(255, 129, 43, 43)),
+                  Icon(icon,
+                      size: 60, color: const Color.fromARGB(255, 129, 43, 43)),
                   const SizedBox(height: 10),
                   Text(
                     text,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'TitanOne'),
+                    style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'TitanOne'),
                   ),
                 ],
               ),

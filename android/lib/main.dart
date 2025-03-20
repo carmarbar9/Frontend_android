@@ -1,4 +1,4 @@
-import 'package:android/pages/home_page.dart';
+import 'package:android/pages/login_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'GastroStock',
       theme: ThemeData(primarySwatch: Colors.deepPurple),
-      home: const HomePage()
+      home: const LoginPage(),
     );
   }
 }
