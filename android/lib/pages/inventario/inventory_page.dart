@@ -48,7 +48,7 @@ class _InventoryPageState extends State<InventoryPage> {
           // Icono de notificaciones en la izquierda
           IconButton(
             iconSize: 48,
-            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 176, 20, 20)),
+            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
             onPressed: () {
               Navigator.push(
                 context,
@@ -114,7 +114,7 @@ class _InventoryPageState extends State<InventoryPage> {
           const SizedBox(height: 20),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 129, 43, 43),
+              backgroundColor: const Color.fromARGB(255, 151, 48, 66),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
               shape: RoundedRectangleBorder(
@@ -187,7 +187,7 @@ class _InventoryPageState extends State<InventoryPage> {
         height: 400,
         width: 320,
         decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 129, 43, 43),
+          color: const Color.fromARGB(255, 151, 48, 66),
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
