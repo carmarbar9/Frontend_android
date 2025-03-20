@@ -220,12 +220,7 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-<<<<<<< HEAD
-                  Icon(icon,
-                      size: 60, color: const Color.fromARGB(255, 129, 43, 43)),
-=======
                   Icon(icon, size: 60, color: const Color.fromARGB(255, 151, 48, 66)),
->>>>>>> ecb39868c03d8e9bd63e1ca048f25e0921e5a560
                   const SizedBox(height: 10),
                   Text(
                     text,
