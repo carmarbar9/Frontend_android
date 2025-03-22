@@ -1,17 +1,27 @@
-import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
+import 'package:android/pages/notificaciones/notifications_page.dart';
+import 'package:android/models/empleados.dart';
+import 'package:android/services/service_empleados.dart';
+import 'package:android/pages/empleados/employee_detail_page.dart';
+import 'package:android/pages/empleados/add_employee_page.dart'; // Asegúrate de que la ruta es correcta
 
-class EmployeesPage extends StatelessWidget {
-  EmployeesPage({super.key});
+class EmployeesPage extends StatefulWidget {
+  const EmployeesPage({Key? key}) : super(key: key);
 
-  final List<Map<String, dynamic>> employees = [
-    {'name': 'María Ruiz', 'phone': '680 56 54 67', 'position': 'Encargada', 'image': 'assets/employee1.png'},
-    {'name': 'Juan Pérez', 'phone': '685 12 34 56', 'position': 'Camarero', 'image': 'assets/employee2.png'},
-    {'name': 'Ana Gómez', 'phone': '680 78 90 12', 'position': 'Cocinera', 'image': 'assets/employee4.png'},
-    {'name': 'Carlos Rodríguez', 'phone': '650 34 56 78', 'position': 'Repartidor', 'image': 'assets/employee3.png'},
-    {'name': 'Laura Martínez', 'phone': '640 12 34 56', 'position': 'Asistente de cocina', 'image': 'assets/employee5.png'},
-  ];
+  @override
+  _EmployeesPageState createState() => _EmployeesPageState();
+}
+
+class _EmployeesPageState extends State<EmployeesPage> {
+  late Future<List<Empleado>> _empleadosFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Se llama al servicio para obtener todos los empleados
+    _empleadosFuture = EmpleadoService.getAllEmpleados();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,18 +29,16 @@ class EmployeesPage extends StatelessWidget {
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
         backgroundColor: Colors.grey[200],
-        elevation: 0,  // Remover la sombra del AppBar
+        elevation: 0, // Sin sombra en el AppBar
         leading: IconButton(
           icon: Image.asset(
-            'assets/logo.png', // Utilizamos la imagen del logo como ícono
-            height: 180, // Aumentamos el tamaño del logo
+            'assets/logo.png', // Imagen del logo
+            height: 180,
           ),
-          onPressed: () {
-            Navigator.pop(context); // Navegar atrás cuando se toca el logo
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          // Icono de notificaciones en la izquierda
+          // Botón de notificaciones
           IconButton(
             iconSize: 48,
             icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
@@ -41,7 +49,7 @@ class EmployeesPage extends StatelessWidget {
               );
             },
           ),
-          // Icono de perfil en la izquierda
+          // Botón de perfil
           IconButton(
             iconSize: 48,
             icon: const Icon(Icons.person, color: Colors.black),
@@ -49,58 +57,82 @@ class EmployeesPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Buscar',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+      body: FutureBuilder<List<Empleado>>(
+        future: _empleadosFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          final empleados = snapshot.data!;
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Buscar',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
                 ),
-                filled: true,
-                fillColor: Colors.white,
               ),
-            ),
-          ),
-          Expanded(
-            child: CardSwiper(
-              cardsCount: employees.length,
-              onSwipe: (previousIndex, currentIndex, direction) {
-                debugPrint("Swiped from index: \$previousIndex to \$currentIndex");
-                return true;
-              },
-              cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
-                return _buildEmployeeCard(employees[index]);
-              },
-            ),
-          ),
-          const SizedBox(height: 15),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 167, 45, 77),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+              Expanded(
+                child: CardSwiper(
+                  cardsCount: empleados.length,
+                  onSwipe: (previousIndex, currentIndex, direction) {
+                    debugPrint("Swiped from index: $previousIndex to $currentIndex");
+                    return true;
+                  },
+                  cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
+                    return _buildEmployeeCard(empleados[index]);
+                  },
+                ),
               ),
-            ),
-            onPressed: () {},
-            icon: const Icon(Icons.add, size: 30),
-            label: const Text(
-              "Añadir",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 20),
-        ],
+              const SizedBox(height: 15),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 167, 45, 77),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                onPressed: () async {
+                  // Navega a la página de añadir empleado
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddEmployeePage()),
+                  );
+                  // Si se creó un empleado, refresca la lista
+                  if (result != null) {
+                    setState(() {
+                      _empleadosFuture = EmpleadoService.getAllEmpleados();
+                    });
+                  }
+                },
+                icon: const Icon(Icons.add, size: 30),
+                label: const Text(
+                  "Añadir",
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildEmployeeCard(Map<String, dynamic> employee) {
+  Widget _buildEmployeeCard(Empleado employee) {
     return Center(
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 20),
@@ -121,25 +153,33 @@ class EmployeesPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            CircleAvatar(
+            // Imagen del empleado (usa imagen por defecto o la propiedad si está disponible en el JSON)
+            const CircleAvatar(
               radius: 60,
-              backgroundImage: AssetImage(employee['image']),
+              backgroundImage: AssetImage('assets/employee1.png'),
             ),
+            // Nombre completo (firstName y lastName)
             Text(
-              employee['name'],
+              '${employee.firstName ?? "Nombre"} ${employee.lastName ?? "Apellido"}',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.center,
             ),
+            // Autoridad del empleado
+          
+            // Descripción del empleado
             Text(
-              employee['position'],
+              employee.descripcion ?? '',
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 30,
+                fontSize: 24,
               ),
+              textAlign: TextAlign.center,
             ),
+            // Botón para ver detalles
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
@@ -148,7 +188,15 @@ class EmployeesPage extends StatelessWidget {
                 textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               onPressed: () {
-                // Acción de ver detalles del empleado
+                // Navega a la página de detalle pasando el id del empleado
+                if (employee.id != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EmployeeDetailPage(employeeId: employee.id!),
+                    ),
+                  );
+                }
               },
               icon: const Icon(Icons.visibility, size: 30),
               label: const Text("Ver"),
@@ -159,4 +207,4 @@ class EmployeesPage extends StatelessWidget {
     );
   }
 }
-
+ 
