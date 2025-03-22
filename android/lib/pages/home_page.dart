@@ -23,115 +23,90 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      body: Stack(
-  children: [
-    // Imagen de fondo
-    Positioned.fill(
-      child: Image.asset(
-        'assets/fondo.png',
-        fit: BoxFit.cover,
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 5,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Image.asset('assets/logo.png', height: 62),
+                Row(
+                  children: [
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(Icons.notifications, color: Colors.black),
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsPage()));
+                      },
+                    ),
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(Icons.person, color: Colors.black),
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const UserProfilePage()));
+                      },
+                    ),
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(Icons.logout, color: Colors.black),
+                      onPressed: () {
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          const Text(
+            "INICIO",
+            style: TextStyle(
+              fontSize: 40,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 3,
+              fontFamily: 'PermanentMarker',
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          Expanded(
+            child: GridView.count(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              crossAxisCount: 2,
+              crossAxisSpacing: 15,
+              mainAxisSpacing: 15,
+              children: [
+                _build3DButton(Icons.restaurant_menu, "Carta", CartaPage()),
+                _build3DButton(Icons.inventory, "Inventario", InventoryPage()),
+                _build3DButton(Icons.attach_money, "Ventas", SalesPage()),
+                _build3DButton(Icons.dashboard, "Dashboard", DashboardPage()),
+                _build3DButton(Icons.people, "Empleados", EmployeesPage()),
+                _build3DButton(Icons.local_shipping, "Proveedores", ProvidersPage()),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            child: _build3DPlansButton(),
+          ),
+        ],
       ),
-    ),
-
-    // Filtro opcional (blur sutil para suavizar)
-    Positioned.fill(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-        child: Container(
-          color: Colors.white.withOpacity(0.1),
-        ),
-      ),
-    ),
-
-    // Contenido principal
-    Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.85),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 5,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Image.asset('assets/logo.png', height: 62),
-              Row(
-                children: [
-                  IconButton(
-                    iconSize: 48,
-                    icon: const Icon(Icons.notifications, color: Colors.black),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsPage()));
-                    },
-                  ),
-                  IconButton(
-                    iconSize: 48,
-                    icon: const Icon(Icons.person, color: Colors.black),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const UserProfilePage()));
-                    },
-                  ),
-                  IconButton(
-                    iconSize: 48,
-                    icon: const Icon(Icons.logout, color: Colors.black),
-                    onPressed: () {
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
-        const Text(
-          "INICIO",
-          style: TextStyle(
-            fontSize: 40,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 3,
-            fontFamily: 'PermanentMarker',
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
-        Expanded(
-          child: GridView.count(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            crossAxisCount: 2,
-            crossAxisSpacing: 15,
-            mainAxisSpacing: 15,
-            children: [
-              _build3DButton(Icons.restaurant_menu, "Carta", CartaPage()),
-              _build3DButton(Icons.inventory, "Inventario", InventoryPage()),
-              _build3DButton(Icons.attach_money, "Ventas", SalesPage()),
-              _build3DButton(Icons.dashboard, "Dashboard", DashboardPage()),
-              _build3DButton(Icons.people, "Empleados", EmployeesPage()),
-              _build3DButton(Icons.local_shipping, "Proveedores", ProvidersPage()),
-            ],
-          ),
-        ),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          child: _build3DPlansButton(),
-        ),
-      ],
-    ),
-  ],
-),
-
-
     );
   }
 
