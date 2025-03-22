@@ -39,6 +39,8 @@ flutter:
     - assets/icons/pescados.png
     - assets/icons/bebidas.png
     - assets/icons/postres.png
+    - assets/fondo.png
+
 
   fonts:
     - family: PermanentMarker
@@ -50,3 +52,6 @@ flutter:
     - family: TitanOne
       fonts:
         - asset: assets/fonts/TitanOne-Regular.ttf
+    - family: Boldonse
+      fonts:
+        - asset: assets/fonts/Boldonse-Regular.ttf
