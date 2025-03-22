@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/models/proveedor.dart';
-import 'package:android/services/api_service.dart';
+import 'package:android/services/service_proveedores.dart';
 import 'package:android/pages/proveedores/provider_form_page.dart';
 
 class ProvidersPage extends StatefulWidget {

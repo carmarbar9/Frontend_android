@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:android/models/proveedor.dart';
-import 'package:android/services/api_service.dart';
+import 'package:android/services/service_proveedores.dart';
 
 class ProviderFormPage extends StatefulWidget {
   final Proveedor? proveedor; // Si es nulo, es modo "añadir". Si no, modo "editar".
