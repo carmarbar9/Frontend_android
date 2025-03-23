@@ -14,7 +14,7 @@ class InventoryPage extends StatefulWidget {
 
 class _InventoryPageState extends State<InventoryPage> {
   final List<Map<String, dynamic>> categories = [
-    {'name': 'Verduras', 'icon': FontAwesomeIcons.carrot},
+    {'name': 'COMIDA', 'icon': FontAwesomeIcons.carrot},
     {'name': 'Carnes', 'icon': LineIcons.drumstickWithBiteTakenOut},
     {'name': 'Pescados', 'icon': LineIcons.fish},
     {'name': 'Especias', 'icon': FontAwesomeIcons.mortarPestle},
@@ -30,22 +30,21 @@ class _InventoryPageState extends State<InventoryPage> {
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
         backgroundColor: Colors.grey[200],
-        elevation: 0,  // Remover la sombra del AppBar
+        elevation: 0, // Remover la sombra del AppBar
         leading: IconButton(
           icon: Container(
-            height: 120,  // Aumentamos el tamaño del logo
-            width: 120,  // Mantener el logo en proporción cuadrada
+            height: 120,
+            width: 120,
             child: Image.asset(
-              'assets/logo.png', // Utilizamos la imagen del logo como ícono
-              fit: BoxFit.contain,  // Asegura que el logo se mantenga dentro de los límites
+              'assets/logo.png',
+              fit: BoxFit.contain,
             ),
           ),
           onPressed: () {
-            Navigator.pop(context); // Navegar atrás cuando se toca el logo
+            Navigator.pop(context);
           },
         ),
         actions: [
-          // Icono de notificaciones en la izquierda
           IconButton(
             iconSize: 48,
             icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
@@ -56,7 +55,6 @@ class _InventoryPageState extends State<InventoryPage> {
               );
             },
           ),
-          // Icono de perfil en la izquierda
           IconButton(
             iconSize: 48,
             icon: const Icon(Icons.person, color: Colors.black),
@@ -80,20 +78,20 @@ class _InventoryPageState extends State<InventoryPage> {
               ),
             ),
           ),
-          // Barra de búsqueda con tamaño más pequeño y borde gris
+          // Barra de búsqueda con estilo personalizado
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
             child: Container(
-              width: double.infinity, // Se ajusta al ancho disponible
+              width: double.infinity,
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Buscar',
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
-                  fillColor: const Color.fromARGB(255, 150, 149, 149), // Color gris claro
+                  fillColor: const Color.fromARGB(255, 150, 149, 149),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide(color: const Color.fromARGB(255, 71, 71, 71)!), // Borde gris oscuro
+                    borderSide: BorderSide(color: const Color.fromARGB(255, 71, 71, 71)!),
                   ),
                 ),
               ),
@@ -121,7 +119,9 @@ class _InventoryPageState extends State<InventoryPage> {
                 borderRadius: BorderRadius.circular(30),
               ),
             ),
-            onPressed: () {},
+            onPressed: () {
+              // Acción para agregar una nueva categoría o producto
+            },
             icon: const Icon(Icons.add, size: 30),
             label: const Text(
               "Añadir",
@@ -137,7 +137,7 @@ class _InventoryPageState extends State<InventoryPage> {
               children: [
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red, // Color para "Pérdidas"
+                    backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     shape: RoundedRectangleBorder(
@@ -155,7 +155,7 @@ class _InventoryPageState extends State<InventoryPage> {
                 ),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange, // Color para "Riesgos"
+                    backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     shape: RoundedRectangleBorder(
@@ -224,6 +224,7 @@ class _InventoryPageState extends State<InventoryPage> {
                 textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               onPressed: () {
+                // Navegar a la página de items filtrados por la categoría seleccionada
                 Navigator.push(
                   context,
                   MaterialPageRoute(
