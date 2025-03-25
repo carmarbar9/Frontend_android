@@ -4,6 +4,7 @@ import 'package:android/pages/empleados/employee_page.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/pages/proveedores/providers_page.dart';
 import 'package:android/pages/login_page.dart';
+import 'package:android/models/session_manager.dart';
 import 'package:android/pages/inventario/inventory_page.dart';
 import 'package:android/pages/planes/plans_page.dart';
 import 'package:android/pages/ventas/sales_page.dart';
@@ -92,7 +93,7 @@ class _HomePageState extends State<HomePage> {
               mainAxisSpacing: 15,
               children: [
                 _build3DButton(Icons.restaurant_menu, "Carta", CartaPage()),
-                _build3DButton(Icons.inventory, "Inventario", InventoryPage()),
+                _build3DButton(Icons.inventory,"Inventario",InventoryPage(negocioId: SessionManager.negocioId),),
                 _build3DButton(Icons.attach_money, "Ventas", SalesPage()),
                 _build3DButton(Icons.dashboard, "Dashboard", DashboardPage()),
                 _build3DButton(Icons.people, "Empleados", EmployeesPage()),

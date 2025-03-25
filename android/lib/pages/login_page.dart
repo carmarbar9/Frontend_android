@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:android/pages/home_page.dart';
 import 'package:android/pages/home_page_empleado.dart';
 import 'package:android/services/service_login.dart';
+import 'package:android/models/session_manager.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -25,14 +26,19 @@ class _LoginPageState extends State<LoginPage> {
 
       try {
         // Intentamos realizar el login (aunque el resultado no se utiliza)
-        await ApiService.login(_username, _password);
+        // Aquí, tras el login, supongamos que obtienes el negocioId del backend.
+        // Por ejemplo:
+        final negocioIdObtenido = await ApiService.login(_username, _password);
+        // Si ApiService.login devuelve el id del negocio, lo asignamos a SessionManager.
+        // En este ejemplo, si no lo devuelve, lo asignamos de forma manual.
+        SessionManager.negocioId = negocioIdObtenido ?? '1';
       } catch (error) {
-        // Puedes mostrar el error en un SnackBar, pero igualmente navegarás a HomePage.
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $error')),
         );
       } finally {
         setState(() => _isLoading = false);
+        // Navegamos a HomePage (que luego usará SessionManager.negocioId para pasar a InventoryPage)
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
@@ -41,12 +47,12 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Navega a la pantalla de registro (puedes completarlo)
+  // Navega a la pantalla de registro
   void _navigateToRegister() {
     // Lógica para registro
   }
   
-  // Navega a la pantalla de recuperación de contraseña (puedes completarlo)
+  // Navega a la pantalla de recuperación de contraseña
   void _navigateToForgotPassword() {
     // Lógica para recuperación de contraseña
   }
@@ -251,111 +257,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Pantalla básica de registro
-class RegisterPage extends StatelessWidget {
-  const RegisterPage({Key? key}) : super(key: key);
-  
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Registro")),
-      body: const Center(
-        child: Text("Pantalla de registro"),
-      ),
-    );
-  }
-}
-
-// Pantalla para recuperar la contraseña
-class ForgotPasswordPage extends StatefulWidget {
-  const ForgotPasswordPage({Key? key}) : super(key: key);
-
-  @override
-  _ForgotPasswordPageState createState() => _ForgotPasswordPageState();
-}
-
-class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
-  final _formKey = GlobalKey<FormState>();
-  String? _email;
-  bool _isLoading = false;
-
-  Future<void> _submit() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      setState(() => _isLoading = true);
-      try {
-        await Future.delayed(const Duration(seconds: 2));
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Correo de recuperación enviado")),
-        );
-        Navigator.pop(context);
-      } catch (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $error")),
-        );
-      } finally {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  InputDecoration _buildInputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: Colors.black87),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-      filled: true,
-      fillColor: Colors.white,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Recuperar Contraseña'),
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black),
-        elevation: 3,
-      ),
-      backgroundColor: const Color(0xFFF2F2F2),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                decoration: _buildInputDecoration("Correo electrónico"),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) =>
-                    value == null || value.isEmpty ? "Ingresa tu correo" : null,
-                onSaved: (value) => _email = value,
-              ),
-              const SizedBox(height: 30),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD33E66),
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      onPressed: _submit,
-                      icon: const Icon(Icons.send, size: 30),
-                      label: const Text("Enviar"),
-                    ),
-            ],
           ),
         ),
       ),

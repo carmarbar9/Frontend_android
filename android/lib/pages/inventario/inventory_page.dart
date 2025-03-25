@@ -1,28 +1,44 @@
+import 'package:android/models/categoria.dart';
 import 'package:android/pages/inventario/categoryItems_page.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
+import 'package:android/services/service_categoria.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:line_icons/line_icons.dart';
 
 class InventoryPage extends StatefulWidget {
-  const InventoryPage({super.key});
+  final String negocioId; // Id del negocio para filtrar las categorías
+
+  const InventoryPage({super.key, required this.negocioId});
 
   @override
   _InventoryPageState createState() => _InventoryPageState();
 }
 
 class _InventoryPageState extends State<InventoryPage> {
-  final List<Map<String, dynamic>> categories = [
-    {'name': 'COMIDA', 'icon': FontAwesomeIcons.carrot},
-    {'name': 'Carnes', 'icon': LineIcons.drumstickWithBiteTakenOut},
-    {'name': 'Pescados', 'icon': LineIcons.fish},
-    {'name': 'Especias', 'icon': FontAwesomeIcons.mortarPestle},
-    {'name': 'Bebidas', 'icon': LineIcons.beer},
-    {'name': 'Frutas', 'icon': LineIcons.fruitApple},
-    {'name': 'Lácteos', 'icon': LineIcons.cheese},
-    {'name': 'Otros', 'icon': LineIcons.box},
-  ];
+  late Future<List<Categoria>> _futureCategories;
+
+  // Mapa de íconos para cada categoría. Asegúrate de que las claves coincidan con los valores
+  // que devuelve el backend (por ejemplo, "COMIDA", "CARNES", etc.)
+  final Map<String, IconData> categoryIcons = {
+    'COMIDA': FontAwesomeIcons.carrot,
+    'CARNES': LineIcons.drumstickWithBiteTakenOut,
+    'PESCADOS': LineIcons.fish,
+    'ESPECIAS': FontAwesomeIcons.mortarPestle,
+    'BEBIDAS': LineIcons.beer,
+    'FRUTAS': LineIcons.fruitApple,
+    'LÁCTEOS': LineIcons.cheese,
+    'OTROS': LineIcons.box,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    // Consulta las categorías asociadas al negocio usando su id.
+    _futureCategories =
+        CategoryApiService.getCategoriesByNegocioId(widget.negocioId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +46,7 @@ class _InventoryPageState extends State<InventoryPage> {
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
         backgroundColor: Colors.grey[200],
-        elevation: 0, // Remover la sombra del AppBar
+        elevation: 0,
         leading: IconButton(
           icon: Container(
             height: 120,
@@ -47,11 +63,13 @@ class _InventoryPageState extends State<InventoryPage> {
         actions: [
           IconButton(
             iconSize: 48,
-            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
+            icon: const Icon(Icons.notifications,
+                color: Color.fromARGB(255, 10, 10, 10)),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                MaterialPageRoute(
+                    builder: (context) => const NotificationsPage()),
               );
             },
           ),
@@ -64,10 +82,10 @@ class _InventoryPageState extends State<InventoryPage> {
       ),
       body: Column(
         children: [
-          // Título "Inventario" sobre la barra de búsqueda
+          // Título "Inventario"
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Text(
+            child: const Text(
               'Inventario',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
@@ -78,34 +96,52 @@ class _InventoryPageState extends State<InventoryPage> {
               ),
             ),
           ),
-          // Barra de búsqueda con estilo personalizado
+          // Barra de búsqueda (puedes implementarla a futuro)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-            child: Container(
-              width: double.infinity,
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Buscar',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: const Color.fromARGB(255, 150, 149, 149),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide(color: const Color.fromARGB(255, 71, 71, 71)!),
-                  ),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Buscar',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: const Color.fromARGB(255, 150, 149, 149),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide(
+                      color: const Color.fromARGB(255, 71, 71, 71)!),
                 ),
               ),
             ),
           ),
+          // FutureBuilder para mostrar las categorías en un CardSwiper
           Expanded(
-            child: CardSwiper(
-              cardsCount: categories.length,
-              onSwipe: (previousIndex, currentIndex, direction) {
-                debugPrint("Swiped from index: \$previousIndex to \$currentIndex");
-                return true;
-              },
-              cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
-                return _buildCategoryCard(categories[index]);
+            child: FutureBuilder<List<Categoria>>(
+              future: _futureCategories,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                      child: Text('No hay categorías para este negocio'));
+                } else {
+                  final categories = snapshot.data!;
+                  return CardSwiper(
+                    cardsCount: categories.length,
+                    onSwipe: (previousIndex, currentIndex, direction) {
+                      debugPrint(
+                          "Swiped from index: $previousIndex to $currentIndex");
+                      return true;
+                    },
+                    cardBuilder:
+                        (context, index, percentThresholdX, percentThresholdY) {
+                      final categoria = categories[index];
+                      return _buildCategoryCard(categoria);
+                    },
+                  );
+                }
               },
             ),
           ),
@@ -114,7 +150,8 @@ class _InventoryPageState extends State<InventoryPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 167, 45, 77),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
@@ -131,7 +168,8 @@ class _InventoryPageState extends State<InventoryPage> {
           const SizedBox(height: 20),
           // Botones de "Pérdidas" y "Riesgos"
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -139,7 +177,8 @@ class _InventoryPageState extends State<InventoryPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -150,14 +189,16 @@ class _InventoryPageState extends State<InventoryPage> {
                   icon: const Icon(Icons.warning, size: 30),
                   label: const Text(
                     "Pérdidas",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -168,7 +209,8 @@ class _InventoryPageState extends State<InventoryPage> {
                   icon: const Icon(Icons.error, size: 30),
                   label: const Text(
                     "Riesgos",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -179,7 +221,10 @@ class _InventoryPageState extends State<InventoryPage> {
     );
   }
 
-  Widget _buildCategoryCard(Map<String, dynamic> category) {
+  Widget _buildCategoryCard(Categoria categoria) {
+    // Si el nombre en la base viene en mayúsculas, lo usamos para buscar en el mapa
+    final iconData =
+        categoryIcons[categoria.name.toUpperCase()] ?? Icons.category;
     return Center(
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 20),
@@ -202,13 +247,13 @@ class _InventoryPageState extends State<InventoryPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
-              category['icon'],
+              iconData,
               size: 120,
               color: Colors.white,
             ),
             const SizedBox(height: 8),
             Text(
-              category['name'],
+              categoria.name,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 32,
@@ -220,16 +265,18 @@ class _InventoryPageState extends State<InventoryPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 40, vertical: 15),
+                textStyle: const TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.bold),
               ),
               onPressed: () {
-                // Navegar a la página de items filtrados por la categoría seleccionada
+                // Navegar a la página de items filtrados por la categoría seleccionada.
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) =>
-                        CategoryItemsPage(categoryName: category['name']),
+                        CategoryItemsPage(categoryName: categoria.name),
                   ),
                 );
               },
