@@ -26,7 +26,7 @@ class _HomePageState extends State<HomePage> {
       body: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             decoration: const BoxDecoration(
               color: Colors.white,
               boxShadow: [
