@@ -28,7 +28,6 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // Crea el objeto Empleado usando el negocioId y userId
       Empleado newEmployee = Empleado(
         firstName: _firstName,
         lastName: _lastName,
@@ -36,7 +35,6 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
         numTelefono: _numTelefono,
         tokenEmpleado: _tokenEmpleado,
         descripcion: _descripcion,
-        // Solo se necesita el id para enviar el negocio_id
         negocio: _negocioId != null ? Negocio(id: _negocioId) : null,
       );
 
@@ -62,117 +60,106 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
     }
   }
 
-  InputDecoration _buildInputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: Colors.black87),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-      filled: true,
-      fillColor: Colors.white,
+  Widget _buildTextField({
+    required IconData icon,
+    required String label,
+    TextInputType inputType = TextInputType.text,
+    int maxLines = 1,
+    required FormFieldSetter<String> onSaved,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: TextFormField(
+        keyboardType: inputType,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, color: Color(0xFF9B1D42)),
+          labelText: label,
+          labelStyle: const TextStyle(color: Color(0xFF9B1D42), fontSize: 16),
+          filled: true,
+          fillColor: Colors.white,
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFF9B1D42)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        validator: (value) => (value == null || value.isEmpty) ? 'Campo requerido' : null,
+        onSaved: onSaved,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Añadir Empleado'),
         backgroundColor: Colors.white,
+        elevation: 5,
         iconTheme: const IconThemeData(color: Colors.black),
-        elevation: 3,
-      ),
-      backgroundColor: const Color(0xFFF2F2F2),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // Nombre
-              TextFormField(
-                decoration: _buildInputDecoration("Nombre"),
-                validator: (value) =>
-                    value == null || value.isEmpty ? "Ingresa el nombre" : null,
-                onSaved: (value) => _firstName = value,
-              ),
-              const SizedBox(height: 16),
-              // Apellido
-              TextFormField(
-                decoration: _buildInputDecoration("Apellido"),
-                validator: (value) =>
-                    value == null || value.isEmpty ? "Ingresa el apellido" : null,
-                onSaved: (value) => _lastName = value,
-              ),
-              const SizedBox(height: 16),
-              // Email
-              TextFormField(
-                decoration: _buildInputDecoration("Email"),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) =>
-                    value == null || value.isEmpty ? "Ingresa el email" : null,
-                onSaved: (value) => _email = value,
-              ),
-              const SizedBox(height: 16),
-              // Teléfono
-              TextFormField(
-                decoration: _buildInputDecoration("Teléfono"),
-                keyboardType: TextInputType.phone,
-                validator: (value) =>
-                    value == null || value.isEmpty ? "Ingresa el teléfono" : null,
-                onSaved: (value) => _numTelefono = value,
-              ),
-              const SizedBox(height: 16),
-              // Token Empleado
-              TextFormField(
-                decoration: _buildInputDecoration("Token Empleado"),
-                validator: (value) => value == null || value.isEmpty
-                    ? "Ingresa el token del empleado"
-                    : null,
-                onSaved: (value) => _tokenEmpleado = value,
-              ),
-              const SizedBox(height: 16),
-              // Descripción
-              TextFormField(
-                decoration: _buildInputDecoration("Descripción"),
-                maxLines: 3,
-                onSaved: (value) => _descripcion = value,
-              ),
-              const SizedBox(height: 16),
-              // User ID
-              TextFormField(
-                decoration: _buildInputDecoration("User ID"),
-                keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value == null || value.isEmpty ? "Ingresa el User ID" : null,
-                onSaved: (value) => _userId = int.tryParse(value!),
-              ),
-              const SizedBox(height: 16),
-              // Negocio ID
-              TextFormField(
-                decoration: _buildInputDecoration("Negocio ID"),
-                keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value == null || value.isEmpty ? "Ingresa el Negocio ID" : null,
-                onSaved: (value) => _negocioId = int.tryParse(value!),
-              ),
-              const SizedBox(height: 30),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD33E66),
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      onPressed: _submit,
-                      icon: const Icon(Icons.save, size: 30),
-                      label: const Text("Guardar"),
-                    ),
-            ],
+        title: const Text(
+          'EMPLEADOS',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2,
+            fontFamily: 'PermanentMarker',
+            color: Colors.black,
           ),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const Icon(Icons.people, size: 80, color: Color(0xFF9B1D42)),
+            const SizedBox(height: 20),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _buildTextField(icon: Icons.person, label: "Nombre", onSaved: (val) => _firstName = val),
+                  _buildTextField(icon: Icons.person_outline, label: "Apellido", onSaved: (val) => _lastName = val),
+                  _buildTextField(icon: Icons.email, label: "Email", inputType: TextInputType.emailAddress, onSaved: (val) => _email = val),
+                  _buildTextField(icon: Icons.phone, label: "Teléfono", inputType: TextInputType.phone, onSaved: (val) => _numTelefono = val),
+                  _buildTextField(icon: Icons.vpn_key, label: "Token Empleado", onSaved: (val) => _tokenEmpleado = val),
+                  _buildTextField(icon: Icons.description, label: "Descripción", maxLines: 3, onSaved: (val) => _descripcion = val),
+                  _buildTextField(icon: Icons.person_pin, label: "User ID", inputType: TextInputType.number, onSaved: (val) => _userId = int.tryParse(val!)),
+                  _buildTextField(icon: Icons.business, label: "Negocio ID", inputType: TextInputType.number, onSaved: (val) => _negocioId = int.tryParse(val!)),
+                  const SizedBox(height: 30),
+                  _isLoading
+                      ? const CircularProgressIndicator()
+                      : SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF9B1D42),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            onPressed: _submit,
+                            child: const Text(
+                              "Añadir Empleado",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'TitanOne',
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

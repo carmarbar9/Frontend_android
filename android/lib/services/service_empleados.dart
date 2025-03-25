@@ -84,6 +84,53 @@ class EmpleadoService {
     }
   }
 
+    static Future<Empleado?> getEmpleadoByEmail(String email) async {
+    final url = Uri.parse('$_baseUrl/email/$email');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final decodedBody = utf8.decode(response.bodyBytes);
+      return Empleado.fromJson(jsonDecode(decodedBody));
+    } else {
+      return null;
+    }
+  }
+
+  static Future<Empleado?> getEmpleadoByTelefono(String telefono) async {
+    final url = Uri.parse('$_baseUrl/telefono/$telefono');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final decodedBody = utf8.decode(response.bodyBytes);
+      return Empleado.fromJson(jsonDecode(decodedBody));
+    } else {
+      return null;
+    }
+  }
+
+  static Future<List<Empleado>> getEmpleadosByNombre(String nombre) async {
+    final url = Uri.parse('$_baseUrl/nombre/$nombre');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final decodedBody = utf8.decode(response.bodyBytes);
+      final List<dynamic> jsonList = jsonDecode(decodedBody);
+      return jsonList.map((json) => Empleado.fromJson(json)).toList();
+    } else {
+      return [];
+    }
+  }
+
+  static Future<List<Empleado>> getEmpleadosByApellido(String apellido) async {
+    final url = Uri.parse('$_baseUrl/apellido/$apellido');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final decodedBody = utf8.decode(response.bodyBytes);
+      final List<dynamic> jsonList = jsonDecode(decodedBody);
+      return jsonList.map((json) => Empleado.fromJson(json)).toList();
+    } else {
+      return [];
+    }
+  }
+
+
   static Future<bool> validateToken(String token) async {
     final url = Uri.parse('$_baseUrl/validate?token=$token');
     final response = await http.get(url);

@@ -74,16 +74,6 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
                   children: [
                     IconButton(
                       iconSize: 48,
-                      icon: const Icon(Icons.notifications, color: Colors.black),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const NotificationsPage()),
-                        );
-                      },
-                    ),
-                    IconButton(
-                      iconSize: 48,
                       icon: const Icon(Icons.person, color: Colors.black),
                       onPressed: () {
                         Navigator.push(
@@ -112,7 +102,7 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
 
           // Título de la página
           const Text(
-            "TPV - Empleado",
+            "TPV",
             style: TextStyle(
               fontSize: 40,
               fontWeight: FontWeight.bold,

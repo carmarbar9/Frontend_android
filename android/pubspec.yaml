@@ -39,6 +39,7 @@ flutter:
     - assets/icons/pescados.png
     - assets/icons/bebidas.png
     - assets/icons/postres.png
+    - assets/empleado.png
 
 
   fonts:

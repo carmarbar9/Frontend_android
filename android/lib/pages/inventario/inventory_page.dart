@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:android/pages/user/user_profile.dart';
+import 'package:android/pages/login_page.dart';
+import 'package:android/pages/home_page.dart';
 
 class InventoryPage extends StatefulWidget {
-  final String negocioId; // Id del negocio para filtrar las categorías
-
+  final String negocioId;
   const InventoryPage({super.key, required this.negocioId});
 
   @override
@@ -18,8 +20,8 @@ class InventoryPage extends StatefulWidget {
 
 class _InventoryPageState extends State<InventoryPage> {
   late Future<List<Categoria>> _futureCategories;
+  final TextEditingController _searchController = TextEditingController();
 
-  // Mapa de íconos para cada categoría (ajústalo según los valores que devuelve tu backend)
   final Map<String, IconData> categoryIcons = {
     'COMIDA': FontAwesomeIcons.carrot,
     'CARNES': LineIcons.drumstickWithBiteTakenOut,
@@ -34,64 +36,77 @@ class _InventoryPageState extends State<InventoryPage> {
   @override
   void initState() {
     super.initState();
-    // Consulta las categorías asociadas al negocio usando su id.
+    _searchController.clear();
     _futureCategories = CategoryApiService.getCategoriesByNegocioId(widget.negocioId);
   }
 
-  // Función para abrir el diálogo de "Añadir categoría"
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   void _showAddCategoryDialog() {
     final TextEditingController _categoryNameController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Añadir Categoría'),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text("Nueva Categoría",
+              style: TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold)),
           content: TextField(
             controller: _categoryNameController,
-            decoration: const InputDecoration(
-              labelText: 'Nombre de la categoría',
+            decoration: InputDecoration(
+              hintText: "Nombre de la categoría",
+              enabledBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Color(0xFF9B1D42)),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancelar'),
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar", style: TextStyle(color: Color(0xFF9B1D42))),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF9B1D42),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
               onPressed: () async {
-                final String newName = _categoryNameController.text.trim().toUpperCase();
+                final newName = _categoryNameController.text.trim().toUpperCase();
                 if (newName.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('El nombre no puede estar vacío')),
                   );
                   return;
                 }
-                // Crea el Map con los datos de la nueva categoría, asignando el negocioId actual.
-                final Map<String, dynamic> newCategoryData = {
+                final newCategoryData = {
                   "name": newName,
                   "negocio": {"id": widget.negocioId},
                 };
-
                 try {
                   await CategoryApiService.createCategory(newCategoryData);
                   Navigator.pop(context);
-                  // Refresca la lista de categorías
                   setState(() {
                     _futureCategories = CategoryApiService.getCategoriesByNegocioId(widget.negocioId);
+                    _searchController.clear();
                   });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Categoría agregada exitosamente')),
-                  );
                 } catch (e) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error al agregar categoría: $e')),
+                    SnackBar(content: Text('Error al agregar: $e')),
                   );
                 }
               },
-              child: const Text('Guardar'),
+              child: const Text("Guardar", style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -102,74 +117,87 @@ class _InventoryPageState extends State<InventoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
-      appBar: AppBar(
-        backgroundColor: Colors.grey[200],
-        elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            height: 120,
-            width: 120,
-            child: Image.asset(
-              'assets/logo.png',
-              fit: BoxFit.contain,
-            ),
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        actions: [
-          IconButton(
-            iconSize: 48,
-            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NotificationsPage()),
-              );
-            },
-          ),
-          IconButton(
-            iconSize: 48,
-            icon: const Icon(Icons.person, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
-      ),
+      backgroundColor: Colors.grey[100],
       body: Column(
         children: [
-          // Título "Inventario"
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: const Text(
-              'Inventario',
+          // Encabezado con logo y botones superiores
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 3))],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const HomePage()));
+                  },
+                  child: Image.asset('assets/logo.png', height: 62),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(Icons.notifications, color: Colors.black),
+                      onPressed: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) => const NotificationsPage()));
+                      },
+                    ),
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(Icons.person, color: Colors.black),
+                      onPressed: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) => const UserProfilePage()));
+                      },
+                    ),
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(Icons.logout, color: Colors.black),
+                      onPressed: () {
+                        Navigator.pushReplacement(context,
+                            MaterialPageRoute(builder: (context) => const LoginPage()));
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const Padding(
+            padding: EdgeInsets.only(top: 20.0),
+            child: Text(
+              'INVENTARIO',
               style: TextStyle(
-                fontWeight: FontWeight.bold,
                 fontSize: 40,
-                color: Colors.black,
+                fontWeight: FontWeight.bold,
                 letterSpacing: 3,
                 fontFamily: 'PermanentMarker',
               ),
             ),
           ),
-          // Barra de búsqueda (puedes implementarla a futuro)
+
+          // Campo de búsqueda gourmet
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Buscar',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: const Color.fromARGB(255, 150, 149, 149),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide(color: const Color.fromARGB(255, 71, 71, 71)!),
-                ),
-              ),
-            ),
-          ),
-          // FutureBuilder para mostrar las categorías en un CardSwiper
+  padding: const EdgeInsets.symmetric(horizontal: 60.0),
+  child: SizedBox(
+    width: double.infinity,
+    child: _build3DActionButton(
+      icon: Icons.search,
+      label: "Buscar",
+      onPressed: _showSearchDialog,
+    ),
+  ),
+),
+
+
+          const SizedBox(height: 10),
+
+          // Contenido dinámico
           Expanded(
             child: FutureBuilder<List<Categoria>>(
               future: _futureCategories,
@@ -179,16 +207,22 @@ class _InventoryPageState extends State<InventoryPage> {
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No hay categorías para este negocio'));
+                  return const Center(
+                    child: Text(
+                      'No se encontraron categorías con ese nombre',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF9B1D42),
+                      ),
+                    ),
+                  );
                 } else {
                   final categories = snapshot.data!;
                   return CardSwiper(
                     cardsCount: categories.length,
-                    onSwipe: (previousIndex, currentIndex, direction) {
-                      debugPrint("Swiped from index: $previousIndex to $currentIndex");
-                      return true;
-                    },
-                    cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
+                    onSwipe: (prev, curr, dir) => true,
+                    cardBuilder: (context, index, _, __) {
                       final categoria = categories[index];
                       return _buildCategoryCard(categoria);
                     },
@@ -197,77 +231,73 @@ class _InventoryPageState extends State<InventoryPage> {
               },
             ),
           ),
+
           const SizedBox(height: 20),
-          // Botón "Añadir" para agregar una nueva categoría al negocio actual.
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 167, 45, 77),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 60.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: _build3DActionButton(
+                icon: Icons.add,
+                label: "Añadir categoría",
+                onPressed: _showAddCategoryDialog,
               ),
             ),
-            onPressed: _showAddCategoryDialog,
-            icon: const Icon(Icons.add, size: 30),
-            label: const Text(
-              "Añadir",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
           ),
-          const SizedBox(height: 20),
-          // Botones de "Pérdidas" y "Riesgos"
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  onPressed: () {
-                    // Acción para "Pérdidas"
-                  },
-                  icon: const Icon(Icons.warning, size: 30),
-                  label: const Text(
-                    "Pérdidas",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  onPressed: () {
-                    // Acción para "Riesgos"
-                  },
-                  icon: const Icon(Icons.error, size: 30),
-                  label: const Text(
-                    "Riesgos",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ),
+
+          const SizedBox(height: 30),
         ],
       ),
     );
   }
 
+  Widget _build3DActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 100),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(3, 3)),
+          BoxShadow(color: Colors.white, blurRadius: 4, offset: Offset(-3, -3)),
+        ],
+        gradient: const LinearGradient(
+          colors: [Colors.white, Color(0xFFF5F5F5), Color(0xFFE0E0E0)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: const Color(0xFF9B1D42),
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+            side: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+          ),
+          elevation: 0,
+        ),
+        onPressed: onPressed,
+        icon: Icon(icon, size: 30, color: const Color(0xFF9B1D42)),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'TitanOne',
+            color: Color(0xFF9B1D42),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCategoryCard(Categoria categoria) {
-    // Si el nombre en la base viene en mayúsculas, usamos toUpperCase para buscar el ícono.
     final iconData = categoryIcons[categoria.name.toUpperCase()] ?? Icons.category;
     return Center(
       child: Container(
@@ -276,7 +306,11 @@ class _InventoryPageState extends State<InventoryPage> {
         height: 400,
         width: 320,
         decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 167, 45, 77),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF9B1D42), Color(0xFFB12A50), Color(0xFFD33E66)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
@@ -287,33 +321,27 @@ class _InventoryPageState extends State<InventoryPage> {
           ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Icon(
-              iconData,
-              size: 120,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 8),
+            Icon(iconData, size: 150, color: Colors.white),
             Text(
               categoria.name,
               style: const TextStyle(
-                color: Colors.white,
-                fontSize: 32,
+                fontSize: 36,
                 fontWeight: FontWeight.bold,
+                fontFamily: 'TitanOne',
+                color: Colors.white,
               ),
             ),
-            const SizedBox(height: 8),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                backgroundColor: Colors.white,
+                foregroundColor: Color(0xFF9B1D42),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
               ),
               onPressed: () {
-                // Navegar a la página de items filtrados por la categoría seleccionada.
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -321,12 +349,68 @@ class _InventoryPageState extends State<InventoryPage> {
                   ),
                 );
               },
-              icon: const Icon(Icons.visibility, size: 30),
-              label: const Text("Ver"),
+              icon: const Icon(Icons.visibility, size: 36, color: Color(0xFF9B1D42)),
+              label: const Text("Ver", style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
       ),
     );
   }
+
+  void _showSearchDialog() async {
+  String name = '';
+
+  await showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          "Buscar Categoría",
+          style: TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
+        ),
+        content: TextField(
+          decoration: InputDecoration(
+            hintText: "Nombre exacto",
+            hintStyle: TextStyle(color: const Color(0xFF9B1D42).withOpacity(0.6)),
+            enabledBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: Color(0xFF9B1D42)),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          style: const TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
+          onChanged: (value) => name = value.trim(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar", style: TextStyle(color: Color(0xFF9B1D42))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF9B1D42),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              if (name.isNotEmpty) {
+                setState(() {
+                  _futureCategories = CategoryApiService.getCategoriesByName(name);
+                });
+              }
+            },
+            child: const Text("Buscar", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 }
