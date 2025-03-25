@@ -5,7 +5,7 @@ import 'package:android/models/producto_inventario.dart';
 
 class InventoryApiService {
   // Asegúrate de usar la IP adecuada para tu entorno
-  static const String _baseUrl = 'http://10.0.2.2:8080';
+  static const String _baseUrl = 'http://10.0.2.2:8080/api/productosInventario';
 
   /// Obtiene todos los productos de inventario
   static Future<List<ProductoInventario>> getProductosInventario() async {
@@ -52,14 +52,13 @@ class InventoryApiService {
   static Future<List<ProductoInventario>> getProductosInventarioByCategoria(String categoria) async {
     final url = Uri.parse('$_baseUrl/categoria/$categoria');
     final response = await http.get(url);
-    
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body);
       return jsonList.map((json) => ProductoInventario.fromJson(json)).toList();
     } else {
       throw Exception('Error al obtener los productos por categoría');
     }
-}
+  }
 
 
   /// Actualiza un producto de inventario

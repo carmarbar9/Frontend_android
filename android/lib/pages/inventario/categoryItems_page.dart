@@ -35,6 +35,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage>
     _controller.forward();
 
     // Consultar el backend para obtener los productos de la categoría.
+    // Se asume que widget.categoryName es, por ejemplo, "COMIDA"
     _futureProducts = InventoryApiService.getProductosInventarioByCategoria(widget.categoryName);
   }
 
@@ -89,7 +90,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage>
             padding: const EdgeInsets.all(10.0),
             child: Column(
               children: [
-                // Campo de búsqueda (puedes conectar en el futuro para filtrar resultados)
+                // Campo de búsqueda (puedes implementarlo para filtrar resultados en el futuro)
                 TextField(
                   decoration: InputDecoration(
                     hintText: 'Buscar',
@@ -146,6 +147,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage>
                                     ),
                                   ),
                                   onTap: () {
+                                    // Navegar a la página de detalles pasando el nombre del producto y la categoría.
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(

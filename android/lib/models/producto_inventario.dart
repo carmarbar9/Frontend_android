@@ -1,7 +1,9 @@
+import 'categoria.dart';
+
 class ProductoInventario {
   final int id;
   final String name;
-  final String categoria; // O bien "categoriaInventario" para coincidir
+  final Categoria categoria;
   final double precioCompra;
   final int cantidadDeseada;
   final int cantidadAviso;
@@ -16,11 +18,22 @@ class ProductoInventario {
   });
 
   factory ProductoInventario.fromJson(Map<String, dynamic> json) {
+    // Verificamos el tipo de "categoria"
+    Categoria categoria;
+    if (json['categoria'] is Map<String, dynamic>) {
+      categoria = Categoria.fromJson(json['categoria']);
+    } else {
+      // Si no es Map, asumimos que es un id (int o String)
+      categoria = Categoria(
+        id: json['categoria'].toString(),
+        name: '', // Si se conoce otro valor por defecto, se puede asignar aquí.
+      );
+    }
+
     return ProductoInventario(
       id: json['id'],
       name: json['name'],
-      // Aquí se asigna el campo correcto, por ejemplo, "categoriaInventario" si ese es el key del JSON
-      categoria: json['categoriaInventario'],
+      categoria: categoria,
       precioCompra: (json['precioCompra'] as num).toDouble(),
       cantidadDeseada: json['cantidadDeseada'],
       cantidadAviso: json['cantidadAviso'],
@@ -31,7 +44,7 @@ class ProductoInventario {
     return {
       'id': id,
       'name': name,
-      'categoriaInventario': categoria, // Usa el mismo key que en el JSON
+      'categoria': categoria.toJson(), // En update se enviará el objeto completo.
       'precioCompra': precioCompra,
       'cantidadDeseada': cantidadDeseada,
       'cantidadAviso': cantidadAviso,
