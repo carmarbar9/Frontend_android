@@ -1,33 +1,31 @@
+import 'package:android/models/producto_inventario.dart';
+import 'package:android/models/categoria.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
+import 'package:android/services/service_inventory.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:line_icons/line_icons.dart';
 
-class ItemDetailsPage extends StatelessWidget {
+class ItemDetailsPage extends StatefulWidget {
   final String itemName;
-  final String category;
+  final String category; // Este valor podría ser utilizado para iconos o navegación
 
-  ItemDetailsPage({super.key, required this.itemName, required this.category});
+  const ItemDetailsPage({super.key, required this.itemName, required this.category});
 
-  final Map<String, dynamic> mockData = {
-    'Coca-Cola': {
-      'category': 'Bebidas',
-      'quantity': 100,
-      'stockAlert': 70,
-      'expirationDates': [
-        {'batch': '1', 'units': 100, 'date': '13/09/2026'},
-      ],
-    },
-    'Leche': {
-      'category': 'Lácteos',
-      'quantity': 50,
-      'stockAlert': 20,
-      'expirationDates': [
-        {'batch': '1', 'units': 50, 'date': '10/05/2025'},
-      ],
-    },
-  };
+  @override
+  _ItemDetailsPageState createState() => _ItemDetailsPageState();
+}
 
+class _ItemDetailsPageState extends State<ItemDetailsPage> {
+  late Future<ProductoInventario?> _futureProduct;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureProduct = InventoryApiService.getProductoInventarioByName(widget.itemName);
+  }
+
+  // Mapa de íconos (puedes actualizarlo según tus necesidades)
   final Map<String, IconData> categoryIcons = {
     'Verduras': FontAwesomeIcons.carrot,
     'Carnes': LineIcons.drumstickWithBiteTakenOut,
@@ -39,31 +37,145 @@ class ItemDetailsPage extends StatelessWidget {
     'Otros': LineIcons.box,
   };
 
+  TextStyle _textStyle() {
+    return const TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+    );
+  }
+
+  // Diálogo para editar producto.
+  void _showEditDialog(ProductoInventario producto) {
+    final _nameController = TextEditingController(text: producto.name);
+    final _precioController = TextEditingController(text: producto.precioCompra.toString());
+    final _cantidadDeseadaController = TextEditingController(text: producto.cantidadDeseada.toString());
+    final _cantidadAvisoController = TextEditingController(text: producto.cantidadAviso.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Editar producto'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Nombre'),
+                ),
+                TextField(
+                  controller: _precioController,
+                  decoration: const InputDecoration(labelText: 'Precio Compra'),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                ),
+                TextField(
+                  controller: _cantidadDeseadaController,
+                  decoration: const InputDecoration(labelText: 'Cantidad Deseada'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: _cantidadAvisoController,
+                  decoration: const InputDecoration(labelText: 'Cantidad Aviso'),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Guardar'),
+              onPressed: () async {
+                // Crear un nuevo objeto actualizado, manteniendo la categoría actual.
+                final updatedProduct = ProductoInventario(
+                  id: producto.id,
+                  name: _nameController.text,
+                  categoria: producto.categoria,
+                  precioCompra: double.tryParse(_precioController.text) ?? producto.precioCompra,
+                  cantidadDeseada: int.tryParse(_cantidadDeseadaController.text) ?? producto.cantidadDeseada,
+                  cantidadAviso: int.tryParse(_cantidadAvisoController.text) ?? producto.cantidadAviso,
+                );
+                try {
+                  await InventoryApiService.updateProductoInventario(updatedProduct);
+                  Navigator.pop(context); // Cierra el diálogo
+                  setState(() {
+                    // Refresca para mostrar los datos actualizados.
+                    _futureProduct = InventoryApiService.getProductoInventarioByName(widget.itemName);
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Producto actualizado')));
+                } catch (e) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Función para eliminar el producto.
+  void _deleteProduct(ProductoInventario producto) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Eliminar producto'),
+          content: const Text('¿Estás seguro de eliminar este producto?'),
+          actions: [
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Eliminar'),
+              onPressed: () async {
+                try {
+                  await InventoryApiService.deleteProductoInventario(producto.id);
+                  Navigator.pop(context); // Cierra el diálogo
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Producto eliminado')));
+                  Navigator.pop(context); // Vuelve a la pantalla anterior
+                } catch (e) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al eliminar: $e')));
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final itemData = mockData[itemName] ?? {};
-    final expirationDates = itemData['expirationDates'] ?? [];
-    final iconData = categoryIcons[category] ?? Icons.category;
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.grey[200],
-        elevation: 0,  // Remover la sombra del AppBar
+        elevation: 0,
         leading: IconButton(
           icon: Container(
-            height: 120,  // Aumentamos el tamaño del logo
-            width: 120,  // Mantener el logo en proporción cuadrada
+            height: 120,
+            width: 120,
             child: Image.asset(
-              'assets/logo.png', // Utilizamos la imagen del logo como ícono
-              fit: BoxFit.contain,  // Asegura que el logo se mantenga dentro de los límites
+              'assets/logo.png',
+              fit: BoxFit.contain,
             ),
           ),
           onPressed: () {
-            Navigator.pop(context); // Navegar atrás cuando se toca el logo
+            Navigator.pop(context);
           },
         ),
         actions: [
-          // Icono de notificaciones en la izquierda
           IconButton(
             iconSize: 48,
             icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
@@ -74,7 +186,6 @@ class ItemDetailsPage extends StatelessWidget {
               );
             },
           ),
-          // Icono de perfil en la izquierda
           IconButton(
             iconSize: 48,
             icon: const Icon(Icons.person, color: Colors.black),
@@ -82,109 +193,110 @@ class ItemDetailsPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                width: double.infinity,
-                constraints: const BoxConstraints(minHeight: 400),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 167, 45, 77),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(iconData, size: 100, color: Colors.white),
-                    const SizedBox(height: 20),
-                    Text('Nombre: $itemName', style: _textStyle()),
-                    Text('Categoría: ${itemData['category']}', style: _textStyle()),
-                    Text('Cantidad: ${itemData['quantity']}', style: _textStyle()),
-                    Text('Alerta Stock: ${itemData['stockAlert']}', style: _textStyle()),
-                    const SizedBox(height: 20),
-                    for (var batch in expirationDates)
-                      Text('CAD ${batch['batch']}-${batch['units']}u.: ${batch['date']}', style: _textStyle()),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30, width: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () {},
-                    icon: const Icon(Icons.edit),
-                    label: const Text("Editar"),
+      body: FutureBuilder<ProductoInventario?>(
+        future: _futureProduct,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data == null) {
+            return const Center(child: Text('Producto no encontrado'));
+          } else {
+            final producto = snapshot.data!;
+            // Usa el nombre de la categoría del producto para elegir el ícono.
+            final iconData = categoryIcons[producto.categoria.name] ?? Icons.category;
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        width: double.infinity,
+                        constraints: const BoxConstraints(minHeight: 400),
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(255, 167, 45, 77),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 6,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(iconData, size: 100, color: Colors.white),
+                            const SizedBox(height: 20),
+                            Text('Nombre: ${producto.name}', style: _textStyle()),
+                            Text('Categoría: ${producto.categoria.name}', style: _textStyle()),
+                            Text('Precio Compra: ${producto.precioCompra}', style: _textStyle()),
+                            Text('Cantidad Deseada: ${producto.cantidadDeseada}', style: _textStyle()),
+                            Text('Cantidad Aviso: ${producto.cantidadAviso}', style: _textStyle()),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                              textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: () {
+                              _showEditDialog(producto);
+                            },
+                            icon: const Icon(Icons.edit),
+                            label: const Text("Editar"),
+                          ),
+                          const SizedBox(width: 10),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                              textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: () {
+                              _deleteProduct(producto);
+                            },
+                            icon: const Icon(Icons.delete),
+                            label: const Text("Eliminar"),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                          textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text("Volver"),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 30, width: 10),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () {},
-                    icon: const Icon(Icons.delete),
-                    label: const Text("Eliminar"),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                icon: const Icon(Icons.arrow_back),
-                label: const Text("Volver"),
               ),
-            ],
-          ),
-        ),
+            );
+          }
+        },
       ),
     );
   }
-
-  TextStyle _textStyle() {
-    return const TextStyle(
-      color: Colors.white,
-      fontSize: 25,
-      fontWeight: FontWeight.bold,
-    );
-  }
 }
-
-// En el futuro, aquí puedes reemplazar los datos simulados con una consulta al backend.
-// Ejemplo:
-// void fetchItemDetails(String itemName) async {
-//   final response = await http.get(Uri.parse('https://api.example.com/item?name=$itemName'));
-//   if (response.statusCode == 200) {
-//     setState(() {
-//       itemData = jsonDecode(response.body);
-//     });
-//   }
-// }
