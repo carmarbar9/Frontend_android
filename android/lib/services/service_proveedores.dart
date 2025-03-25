@@ -14,6 +14,8 @@ class ApiService {
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body);
       return jsonList.map((json) => Proveedor.fromJson(json)).toList();
+    } else if (response.statusCode == 204) {
+      return [];
     } else {
       throw Exception('Error al obtener los proveedores');
     }
@@ -37,13 +39,15 @@ class ApiService {
 
   /// Método para borrar un proveedor por id
   static Future<void> deleteProveedor(int id) async {
-    final url = Uri.parse('$_baseUrl/api/proveedores/$id');
-    final response = await http.delete(url);
+  final url = Uri.parse('$_baseUrl/api/proveedores/$id');
+  final response = await http.delete(url);
 
-    if (response.statusCode != 200) {
-      throw Exception('Error al borrar el proveedor');
-    }
+  if (response.statusCode != 200 && response.statusCode != 204) {
+    throw Exception('Error al borrar el proveedor');
   }
+}
+
+
 
   /// Método para obtener un proveedor por id
   static Future<Proveedor?> getProveedorById(int id) async {
@@ -88,6 +92,31 @@ class ApiService {
     }
   }
 
+  /// Método para buscar proveedor por nombre (usa GET /api/proveedores/nombre/{nombre})
+  static Future<List<Proveedor>> searchProveedorByName(String name) async {
+    final url = Uri.parse('$_baseUrl/api/proveedores/nombre/$name');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      return [Proveedor.fromJson(jsonDecode(response.body))];
+    } else if (response.statusCode == 404) {
+      return [];
+    } else {
+      throw Exception('Error al buscar el proveedor por nombre');
+    }
+  }
+
+  /// Método para buscar proveedor por teléfono (usa GET /api/proveedores/telefono/{telefono})
+  static Future<List<Proveedor>> searchProveedorByTelefono(String telefono) async {
+    final url = Uri.parse('$_baseUrl/api/proveedores/telefono/$telefono');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      return [Proveedor.fromJson(jsonDecode(response.body))];
+    } else if (response.statusCode == 404) {
+      return [];
+    } else {
+      throw Exception('Error al buscar el proveedor por teléfono');
+    }
+  }
 
   /// Otros métodos de ejemplo para items (se mantienen sin cambios)
   static Future<dynamic> createItem(Map<String, dynamic> item) async {

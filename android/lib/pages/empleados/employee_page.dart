@@ -4,7 +4,7 @@ import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/models/empleados.dart';
 import 'package:android/services/service_empleados.dart';
 import 'package:android/pages/empleados/employee_detail_page.dart';
-import 'package:android/pages/empleados/add_employee_page.dart'; // Asegúrate de que la ruta es correcta
+import 'package:android/pages/empleados/add_employee_page.dart';
 
 class EmployeesPage extends StatefulWidget {
   const EmployeesPage({Key? key}) : super(key: key);
@@ -19,8 +19,13 @@ class _EmployeesPageState extends State<EmployeesPage> {
   @override
   void initState() {
     super.initState();
-    // Se llama al servicio para obtener todos los empleados
-    _empleadosFuture = EmpleadoService.getAllEmpleados();
+    _refreshEmployees();
+  }
+
+  void _refreshEmployees() {
+    setState(() {
+      _empleadosFuture = EmpleadoService.getAllEmpleados();
+    });
   }
 
   @override
@@ -41,7 +46,8 @@ class _EmployeesPageState extends State<EmployeesPage> {
           // Botón de notificaciones
           IconButton(
             iconSize: 48,
-            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
+            icon: const Icon(Icons.notifications,
+                color: Color.fromARGB(255, 10, 10, 10)),
             onPressed: () {
               Navigator.push(
                 context,
@@ -66,7 +72,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
-          final empleados = snapshot.data!;
+          final empleados = snapshot.data ?? [];
           return Column(
             children: [
               Padding(
@@ -84,16 +90,26 @@ class _EmployeesPageState extends State<EmployeesPage> {
                 ),
               ),
               Expanded(
-                child: CardSwiper(
-                  cardsCount: empleados.length,
-                  onSwipe: (previousIndex, currentIndex, direction) {
-                    debugPrint("Swiped from index: $previousIndex to $currentIndex");
-                    return true;
-                  },
-                  cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
-                    return _buildEmployeeCard(empleados[index]);
-                  },
-                ),
+                child: empleados.isEmpty
+                    ? const Center(
+                        child: Text(
+                          "No hay empleados",
+                          style: TextStyle(fontSize: 20, color: Colors.black54),
+                        ),
+                      )
+                    : (empleados.length == 1
+                        ? Center(child: _buildEmployeeCard(empleados.first))
+                        : CardSwiper(
+                            cardsCount: empleados.length,
+                            onSwipe: (previousIndex, currentIndex, direction) {
+                              debugPrint(
+                                  "Swiped from index: $previousIndex to $currentIndex");
+                              return true;
+                            },
+                            cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
+                              return _buildEmployeeCard(empleados[index]);
+                            },
+                          )),
               ),
               const SizedBox(height: 15),
               ElevatedButton.icon(
@@ -113,9 +129,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
                   );
                   // Si se creó un empleado, refresca la lista
                   if (result != null) {
-                    setState(() {
-                      _empleadosFuture = EmpleadoService.getAllEmpleados();
-                    });
+                    _refreshEmployees();
                   }
                 },
                 icon: const Icon(Icons.add, size: 30),
@@ -153,7 +167,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Imagen del empleado (usa imagen por defecto o la propiedad si está disponible en el JSON)
+            // Imagen del empleado (usa imagen por defecto)
             const CircleAvatar(
               radius: 60,
               backgroundImage: AssetImage('assets/employee1.png'),
@@ -168,8 +182,6 @@ class _EmployeesPageState extends State<EmployeesPage> {
               ),
               textAlign: TextAlign.center,
             ),
-            // Autoridad del empleado
-          
             // Descripción del empleado
             Text(
               employee.descripcion ?? '',
@@ -187,15 +199,19 @@ class _EmployeesPageState extends State<EmployeesPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              onPressed: () {
-                // Navega a la página de detalle pasando el id del empleado
+              onPressed: () async {
+                // Navega a la página de detalle pasando el id del empleado y espera el resultado.
                 if (employee.id != null) {
-                  Navigator.push(
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => EmployeeDetailPage(employeeId: employee.id!),
                     ),
                   );
+                  // Si se regresa un valor (por ejemplo, true tras eliminar o actualizar), refresca la lista.
+                  if (result == true) {
+                    _refreshEmployees();
+                  }
                 }
               },
               icon: const Icon(Icons.visibility, size: 30),
@@ -207,4 +223,3 @@ class _EmployeesPageState extends State<EmployeesPage> {
     );
   }
 }
- 

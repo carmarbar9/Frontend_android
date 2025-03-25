@@ -1,4 +1,6 @@
+// empleados.dart
 import 'negocio.dart';
+import 'user.dart';
 
 class Empleado {
   int? id;
@@ -8,8 +10,8 @@ class Empleado {
   String? numTelefono;
   String? tokenEmpleado;
   String? descripcion;
-  int? userId; // Para enviar el user_id
-  Negocio? negocio; // Se enviará solo el id como negocio_id
+  User? user;
+  Negocio? negocio;
 
   Empleado({
     this.id,
@@ -19,7 +21,7 @@ class Empleado {
     this.numTelefono,
     this.tokenEmpleado,
     this.descripcion,
-    this.userId,
+    this.user,
     this.negocio,
   });
 
@@ -33,25 +35,31 @@ class Empleado {
       numTelefono: json['numTelefono'],
       tokenEmpleado: json['tokenEmpleado'],
       descripcion: json['descripcion'],
-      // Extraemos el id del usuario si está disponible
-      userId: json['user'] != null ? json['user']['id'] : null,
-      negocio: json['negocio'] != null ? Negocio.fromJson(json['negocio']) : null,
+      user: json['user'] != null ? User.fromJson(json['user']) : null,
+      // Si negocio es un entero, se crea un Negocio solo con id; de lo contrario, se crea a partir del JSON
+      negocio: json['negocio'] is int 
+          ? Negocio(id: json['negocio'])
+          : (json['negocio'] != null ? Negocio.fromJson(json['negocio']) : null),
     );
   }
 
-  // Convierte la instancia a un mapa JSON para enviarlo al backend
+  // Convierte la instancia a un mapa JSON para enviarlo al backend.
+  // Se envían todos los datos (incluyendo id, user y negocio) para cumplir con la entidad completa.
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    // No incluimos el id en la creación, ya que suele ser autogenerado
-    data['first_name'] = firstName;
-    data['last_name'] = lastName;
+    // Incluimos el id si está presente (por ejemplo, en un PUT)
+    if (id != null) data['id'] = id;
+    data['firstName'] = firstName;
+    data['lastName'] = lastName;
     data['email'] = email;
-    data['num_telefono'] = numTelefono;
-    data['token_empleado'] = tokenEmpleado;
+    data['numTelefono'] = numTelefono;
+    data['tokenEmpleado'] = tokenEmpleado;
     data['descripcion'] = descripcion;
-    data['user_id'] = userId;
+    if (user != null) {
+      data['user'] = user!.toJson();
+    }
     if (negocio != null) {
-      data['negocio_id'] = negocio!.id;
+      data['negocio'] = negocio!.toJson();
     }
     return data;
   }
