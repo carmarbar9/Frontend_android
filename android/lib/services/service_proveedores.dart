@@ -37,13 +37,13 @@ class ApiService {
 
   /// Método para borrar un proveedor por id
   static Future<void> deleteProveedor(int id) async {
-    final url = Uri.parse('$_baseUrl/api/proveedores/$id');
-    final response = await http.delete(url);
+  final url = Uri.parse('$_baseUrl/api/proveedores/$id');
+  final response = await http.delete(url);
 
-    if (response.statusCode != 200) {
-      throw Exception('Error al borrar el proveedor');
-    }
+  if (response.statusCode != 200 && response.statusCode != 204) {
+    throw Exception('Error al borrar el proveedor');
   }
+}
 
   /// Método para obtener un proveedor por id
   static Future<Proveedor?> getProveedorById(int id) async {
