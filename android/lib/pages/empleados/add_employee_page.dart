@@ -36,7 +36,6 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
         numTelefono: _numTelefono,
         tokenEmpleado: _tokenEmpleado,
         descripcion: _descripcion,
-        userId: _userId,
         // Solo se necesita el id para enviar el negocio_id
         negocio: _negocioId != null ? Negocio(id: _negocioId) : null,
       );
