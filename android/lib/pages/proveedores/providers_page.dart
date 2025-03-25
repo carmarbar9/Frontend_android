@@ -53,45 +53,46 @@ class _ProvidersPageState extends State<ProvidersPage> {
   }
 
   void _deleteProvider(Proveedor proveedor) async {
-    bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Confirmar eliminación"),
-          content: const Text("¿Estás seguro de que deseas eliminar este proveedor?"),
-          actions: [
-            TextButton(
-              child: const Text("Cancelar"),
-              onPressed: () {
-                Navigator.pop(context, false);
-              },
-            ),
-            ElevatedButton(
-              child: const Text("Eliminar"),
-              onPressed: () {
-                Navigator.pop(context, true);
-              },
-            ),
-          ],
-        );
-      },
-    );
-    if (confirm == true) {
-      try {
-        await ApiService.deleteProveedor(proveedor.id!);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Proveedor eliminado")),
-        );
-        setState(() {
-          _loadProveedores();
-        });
-      } catch (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error al eliminar proveedor: $error")),
-        );
-      }
+  bool? confirm = await showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Confirmar eliminación"),
+        content: const Text("¿Estás seguro de que deseas eliminar este proveedor?"),
+        actions: [
+          TextButton(
+            child: const Text("Cancelar"),
+            onPressed: () {
+              Navigator.pop(context, false);
+            },
+          ),
+          ElevatedButton(
+            child: const Text("Eliminar"),
+            onPressed: () {
+              Navigator.pop(context, true);
+            },
+          ),
+        ],
+      );
+    },
+  );
+
+  if (confirm == true) {
+    try {
+      await ApiService.deleteProveedor(proveedor.id!);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Proveedor eliminado")),
+      );
+      _loadProveedores(); // Recarga los datos correctamente
+      setState(() {}); // Fuerza el redibujado
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al eliminar proveedor: $error")),
+      );
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -340,16 +341,16 @@ class _ProvidersPageState extends State<ProvidersPage> {
           Text(
             proveedor.name ?? '',
             style: const TextStyle(
-              fontSize: 22,
+              fontSize: 28, // Tamaño aumentado para el nombre
               fontWeight: FontWeight.bold,
               fontFamily: 'TitanOne',
               color: Colors.white,
             ),
           ),
           const SizedBox(height: 5),
-          Text("Email: ${proveedor.email ?? ''}", style: const TextStyle(color: Colors.white)),
-          Text("Teléfono: ${proveedor.telefono ?? ''}", style: const TextStyle(color: Colors.white)),
-          Text("Dirección: ${proveedor.direccion ?? ''}", style: const TextStyle(color: Colors.white)),
+          Text("Email: ${proveedor.email ?? ''}", style: const TextStyle(color: Colors.white, fontSize: 18)),
+          Text("Teléfono: ${proveedor.telefono ?? ''}", style: const TextStyle(color: Colors.white, fontSize: 18)),
+          Text("Dirección: ${proveedor.direccion ?? ''}", style: const TextStyle(color: Colors.white, fontSize: 18)),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -373,18 +374,25 @@ class _ProvidersPageState extends State<ProvidersPage> {
   }
 
   Widget _build3DPlainButton(IconData icon, String label, VoidCallback onPressed) {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+  return ElevatedButton.icon(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.white,
+      foregroundColor: const Color(0xFF9B1D42),
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
       ),
-      onPressed: onPressed,
-      icon: Icon(icon),
-      label: Text(label),
-    );
-  }
+    ),
+    onPressed: onPressed,
+    icon: Icon(icon, color: const Color(0xFF9B1D42)),
+    label: Text(
+      label,
+      style: const TextStyle(
+        color: Color(0xFF9B1D42),
+        fontSize: 20, // Tamaño aumentado para la letra
+      ),
+    ),
+  );
+}
+
 }
