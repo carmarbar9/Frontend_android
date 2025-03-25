@@ -1,4 +1,3 @@
-// services/category_api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:android/models/categoria.dart';
@@ -14,6 +13,20 @@ class CategoryApiService {
       return jsonList.map((json) => Categoria.fromJson(json)).toList();
     } else {
       throw Exception('Error al obtener las categorías');
+    }
+  }
+
+  static Future<Categoria> createCategory(Map<String, dynamic> data) async {
+    final url = Uri.parse('$_baseUrl');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 201) {
+      return Categoria.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Error al crear la categoría');
     }
   }
 }
