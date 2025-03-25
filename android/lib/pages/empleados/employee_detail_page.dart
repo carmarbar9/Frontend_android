@@ -155,139 +155,169 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
     );
   }
 
-  Widget _buildDetailRow(String title, String? value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "$title: ",
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value ?? "N/A",
-            style: const TextStyle(
-              fontSize: 20,
-              color: Colors.white,
+  Widget _buildDetailRow(IconData icon, String title, String? value) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Icon(icon, color: Colors.white, size: 24),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+                color: Colors.white,
+              ),
             ),
-          ),
+            const SizedBox(height: 4),
+            Text(
+              value ?? "N/A",
+              style: const TextStyle(
+                fontSize: 20,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
+
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 5,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: const Text(
-          'Detalle del Empleado',
-          style: TextStyle(color: Colors.black),
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.grey[100],
+    appBar: AppBar(
+      backgroundColor: Colors.white,
+      elevation: 5,
+      iconTheme: const IconThemeData(color: Colors.black),
+      title: const Text(
+        'DETALLE',
+        style: TextStyle(
+          color: Colors.black,
+          fontFamily: 'PermanentMarker',
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 2,
         ),
       ),
-      body: FutureBuilder<Empleado?>(
-        future: _employeeFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData || snapshot.data == null) {
-            return const Center(child: Text('Empleado no encontrado'));
-          }
-          final employee = snapshot.data!;
-          return Center(
-            child: Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF9B1D42),
-                    Color(0xFFB12A50),
-                    Color(0xFFD33E66),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    offset: Offset(4, 4),
-                  ),
-                ],
-              ),
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  Center(
-                    child: Text(
-                      '${employee.firstName ?? "N/A"} ${employee.lastName ?? ""}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontFamily: 'PermanentMarker',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDetailRow("Email", employee.email),
-                  const SizedBox(height: 12),
-                  _buildDetailRow("Teléfono", employee.numTelefono),
-                  const SizedBox(height: 12),
-                  _buildDetailRow("Descripción", employee.descripcion),
-                  const SizedBox(height: 12),
-                  _buildDetailRow("Negocio", employee.negocio?.name),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white, 
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      ),
-                      onPressed: () {
-                        _showEditDialog(employee);
-                      },
-                      icon: const Icon(Icons.edit, size: 24),
-                      label: const Text("Editar"),
-                    ),
+      centerTitle: true,
+    ),
+    body: FutureBuilder<Empleado?>(
+      future: _employeeFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const Center(child: Text('Empleado no encontrado'));
+        }
 
-                   ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white, // <-- aquí
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      ),
-                      onPressed: () {
-                        _deleteEmployee(employee);
-                      },
-                      icon: const Icon(Icons.delete, size: 24),
-                      label: const Text("Eliminar"),
-                    ),
-                    ],
-                  ),
-                ],
+        final employee = snapshot.data!;
+        return Center(
+          child: Container(
+            margin: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(25),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF9B1D42), Color(0xFFB12A50), Color(0xFFD33E66)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              boxShadow: const [
+                BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(4, 4)),
+              ],
             ),
-          );
-        },
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                const CircleAvatar(
+                  radius: 140,
+                  backgroundImage: AssetImage('assets/empleado.png'),
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: Text(
+                    '${employee.firstName ?? "N/A"} ${employee.lastName ?? ""}',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'TitanOne',
+                      letterSpacing: 1,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                _buildDetailRow(Icons.email, "Email", employee.email),
+const SizedBox(height: 15),
+_buildDetailRow(Icons.phone, "Teléfono", employee.numTelefono),
+const SizedBox(height: 15),
+_buildDetailRow(Icons.description, "Descripción", employee.descripcion),
+const SizedBox(height: 15),
+_buildDetailRow(Icons.store, "Negocio", employee.negocio?.name),
+
+                const SizedBox(height: 30),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildFlatWhiteButton(
+                      icon: Icons.edit,
+                      label: "Editar",
+                      onPressed: () => _showEditDialog(employee),
+                    ),
+                    _buildFlatWhiteButton(
+                      icon: Icons.delete,
+                      label: "Eliminar",
+                      onPressed: () => _deleteEmployee(employee),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
+
+Widget _buildFlatWhiteButton({
+  required IconData icon,
+  required String label,
+  required VoidCallback onPressed,
+  Color color = const Color(0xFF9B1D42),
+}) {
+  return ElevatedButton.icon(
+    onPressed: onPressed,
+    icon: Icon(icon, color: color, size: 30),
+    label: Text(
+      label,
+      style: TextStyle(
+        color: color,
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
       ),
-    );
-  }
+    ),
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.white,
+      foregroundColor: color,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 0,
+    ),
+  );
+}
+
 }
