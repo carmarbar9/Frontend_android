@@ -84,27 +84,27 @@ class EmpleadoService {
     }
   }
 
-    static Future<Empleado?> getEmpleadoByEmail(String email) async {
-    final url = Uri.parse('$_baseUrl/email/$email');
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      final decodedBody = utf8.decode(response.bodyBytes);
-      return Empleado.fromJson(jsonDecode(decodedBody));
-    } else {
-      return null;
-    }
-  }
+  //   static Future<Empleado?> getEmpleadoByEmail(String email) async {
+  //   final url = Uri.parse('$_baseUrl/email/$email');
+  //   final response = await http.get(url);
+  //   if (response.statusCode == 200) {
+  //     final decodedBody = utf8.decode(response.bodyBytes);
+  //     return Empleado.fromJson(jsonDecode(decodedBody));
+  //   } else {
+  //     return null;
+  //   }
+  // }
 
-  static Future<Empleado?> getEmpleadoByTelefono(String telefono) async {
-    final url = Uri.parse('$_baseUrl/telefono/$telefono');
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      final decodedBody = utf8.decode(response.bodyBytes);
-      return Empleado.fromJson(jsonDecode(decodedBody));
-    } else {
-      return null;
-    }
-  }
+  // static Future<Empleado?> getEmpleadoByTelefono(String telefono) async {
+  //   final url = Uri.parse('$_baseUrl/telefono/$telefono');
+  //   final response = await http.get(url);
+  //   if (response.statusCode == 200) {
+  //     final decodedBody = utf8.decode(response.bodyBytes);
+  //     return Empleado.fromJson(jsonDecode(decodedBody));
+  //   } else {
+  //     return null;
+  //   }
+  // }
 
   static Future<List<Empleado>> getEmpleadosByNombre(String nombre) async {
     final url = Uri.parse('$_baseUrl/nombre/$nombre');

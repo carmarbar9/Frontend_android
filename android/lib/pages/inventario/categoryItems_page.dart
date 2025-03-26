@@ -21,7 +21,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  late Future<List<ProductoInventario>> _futureProducts;
+  Future<List<ProductoInventario>>? _futureProducts;
   int? _categoryId; // Aquí guardamos el ID real de la categoría
 
   // Variable para búsqueda (opcional)
@@ -336,7 +336,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage>
                 const SizedBox(height: 10),
                 Expanded(
                   child: FutureBuilder<List<ProductoInventario>>(
-                    future: _futureProducts,
+                    future: _futureProducts ?? Future.value([]),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());

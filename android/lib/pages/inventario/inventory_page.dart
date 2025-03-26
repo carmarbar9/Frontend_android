@@ -298,13 +298,15 @@ class _InventoryPageState extends State<InventoryPage> {
                 } else {
                   final categories = snapshot.data!;
                   return CardSwiper(
-                    cardsCount: categories.length,
-                    onSwipe: (prev, curr, dir) => true,
-                    cardBuilder: (context, index, _, __) {
-                      final categoria = categories[index];
-                      return _buildCategoryCard(categoria);
-                    },
-                  );
+  cardsCount: categories.length,
+  numberOfCardsDisplayed: categories.length >= 3 ? 3 : categories.length,
+  onSwipe: (prev, curr, dir) => true,
+  cardBuilder: (context, index, _, __) {
+    final categoria = categories[index];
+    return _buildCategoryCard(categoria);
+  },
+);
+
                 }
               },
             ),
