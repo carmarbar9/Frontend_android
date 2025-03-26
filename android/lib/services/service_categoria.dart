@@ -30,6 +30,16 @@ class CategoryApiService {
     }
   }
 
+  static Future<void> deleteCategory(String id) async {
+  final response = await http.delete(
+    Uri.parse('http://10.0.2.2:8080/api/categorias/$id'),
+  );
+
+  if (response.statusCode != 204) {
+    throw Exception('Error al eliminar categoría');
+  }
+  }
+
   static Future<List<Categoria>> getCategoriesByName(String name) async {
   final url = Uri.parse('$_baseUrl/nombre/$name');
   final response = await http.get(url);

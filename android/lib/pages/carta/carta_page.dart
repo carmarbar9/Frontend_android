@@ -1,42 +1,116 @@
 import 'package:flutter/material.dart';
+import 'package:android/models/categoria.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
-import 'package:android/pages/home_page.dart';
-import 'package:android/pages/user/user_profile.dart';
+import 'package:android/pages/carta/productosCategoria_page.dart';
+import 'package:android/services/service_categoria.dart';
 
-class CartaPage extends StatelessWidget {
+class CartaPage extends StatefulWidget {
   const CartaPage({super.key});
+
+  @override
+  State<CartaPage> createState() => _CartaPageState();
+}
+
+class _CartaPageState extends State<CartaPage> {
+  late Future<List<Categoria>> _categorias;
+  final String negocioId = "1";
+
+  @override
+  void initState() {
+    super.initState();
+    _categorias = CategoryApiService.getCategoriesByNegocioId(negocioId);
+  }
+
+  void _mostrarDialogoCrearCategoria() {
+    final TextEditingController _nombreController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Añadir nueva categoría"),
+          content: TextField(
+            controller: _nombreController,
+            decoration: const InputDecoration(labelText: "Nombre de la categoría"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final nombre = _nombreController.text.trim().toUpperCase();
+                if (nombre.isEmpty) return;
+
+                try {
+                  await CategoryApiService.createCategory({
+                    "name": nombre,
+                    "negocio": {"id": negocioId},
+                    "pertenece": 1 
+                  });
+
+                  Navigator.pop(context);
+                  setState(() {
+                    _categorias = CategoryApiService.getCategoriesByNegocioId(negocioId);
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Categoría creada correctamente")),
+                  );
+                } catch (e) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error al crear categoría: $e")),
+                  );
+                }
+              },
+              child: const Text("Guardar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _eliminarCategoria(Categoria categoria) async {
+    try {
+      await CategoryApiService.deleteCategory(categoria.id.toString());
+      setState(() {
+        _categorias = CategoryApiService.getCategoriesByNegocioId(negocioId);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Categoría '${categoria.name}' eliminada")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al eliminar categoría: $e")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[200],
         elevation: 0,
-        leading: GestureDetector(
-          onTap: () {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const HomePage()),
-              (route) => false,
-            );
+        leading: IconButton(
+          icon: SizedBox(
+            height: 120,
+            width: 120,
+            child: Image.asset(
+              'assets/logo.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+          onPressed: () {
+            Navigator.pop(context);
           },
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Image.asset('assets/logo.png', height: 50),
-          ),
-        ),
-        title: const Text(
-          'CARTA',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 26,
-            color: Colors.black,
-          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.redAccent, size: 32),
+            iconSize: 48,
+            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
             onPressed: () {
               Navigator.push(
                 context,
@@ -45,22 +119,28 @@ class CartaPage extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.person, color: Colors.black, size: 32),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const UserProfilePage()),
-              );
-            },
+            iconSize: 48,
+            icon: const Icon(Icons.person, color: Colors.black),
+            onPressed: () {},
           ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
           children: [
+            const Text(
+              'CARTA',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 40,
+                color: Colors.black,
+                letterSpacing: 3,
+                fontFamily: 'PermanentMarker',
+              ),
+            ),
+            const SizedBox(height: 10),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: TextField(
@@ -68,10 +148,10 @@ class CartaPage extends StatelessWidget {
                       hintText: 'Buscar',
                       prefixIcon: const Icon(Icons.search),
                       filled: true,
-                      fillColor: Colors.grey[300],
+                      fillColor: const Color.fromARGB(255, 150, 149, 149),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: const BorderSide(color: Color.fromARGB(255, 71, 71, 71)),
                       ),
                     ),
                   ),
@@ -79,63 +159,96 @@ class CartaPage extends StatelessWidget {
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: const Color.fromARGB(255, 167, 45, 77),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  onPressed: () {},
-                  icon: const Icon(Icons.add),
-                  label: const Text('Añadir'),
+                  onPressed: _mostrarDialogoCrearCategoria,
+                  icon: const Icon(Icons.add, size: 30),
+                  label: const Text(
+                    'Añadir',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: ListView(
-                children: [
-                  _buildCategoryButton('Tapas', 'assets/icons/tapas.png'),
-                  _buildCategoryButton('Ensaladas', 'assets/icons/ensaladas.png'),
-                  _buildCategoryButton('Carnes', 'assets/icons/carnes.png'),
-                  _buildCategoryButton('Pescados', 'assets/icons/pescados.png'),
-                  _buildCategoryButton('Bebidas', 'assets/icons/bebidas.png'),
-                  _buildCategoryButton('Postres', 'assets/icons/postres.png'),
-                ],
+              child: FutureBuilder<List<Categoria>>(
+                future: _categorias,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text("Error al cargar categorías: ${snapshot.error}"));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text("No hay categorías disponibles"));
+                  }
+
+                  final categorias = snapshot.data!;
+                  return ListView.builder(
+                    itemCount: categorias.length,
+                    itemBuilder: (context, index) {
+                      final cat = categorias[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: SizedBox(
+                          height: 85,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromARGB(255, 167, 45, 77),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductosPorCategoriaPage(
+                                    categoria: cat,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                               Image.asset(
+                                'assets/icons/${cat.name.toLowerCase()}.png',
+                                height: 40,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Image.asset(
+                                    'assets/logo.png', // 👈 tu icono por defecto
+                                    height: 40,
+                                  );
+                                },
+                              ),
+                                const SizedBox(width: 15),
+                                Expanded(
+                                  child: Text(
+                                    cat.name.toUpperCase(),
+                                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.white),
+                                  onPressed: () => _eliminarCategoria(cat),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryButton(String text, String iconPath) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
-      child: SizedBox(
-        height: 85,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color.fromARGB(255, 167, 45, 77),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          onPressed: () {},
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(iconPath, height: 40),
-              const SizedBox(width: 15),
-              Text(
-                text.toUpperCase(),
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
         ),
       ),
     );
