@@ -45,7 +45,9 @@ class _InventoryPageState extends State<InventoryPage> {
   /// si no, filtradas por nombre exacto o parcial (dependiendo de tu implementación).
   void _loadCategories() {
     if (_searchQuery == null || _searchQuery!.isEmpty) {
-      _futureCategories = CategoryApiService.getCategoriesByNegocioId(widget.negocioId);
+      _futureCategories = CategoryApiService.getCategoriesByNegocioId(
+        widget.negocioId,
+      );
     } else {
       // Aquí podrías llamar a getCategoriesByName(_searchQuery!)
       // o primero obtener todas y filtrar en memoria, según tu preferencia.
@@ -68,21 +70,31 @@ class _InventoryPageState extends State<InventoryPage> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Text(
             "Buscar Categoría",
-            style: TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Color(0xFF9B1D42),
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: TextField(
             decoration: InputDecoration(
               hintText: "Nombre exacto o parcial",
-              hintStyle: TextStyle(color: const Color(0xFF9B1D42).withOpacity(0.6)),
+              hintStyle: TextStyle(
+                color: const Color(0xFF9B1D42).withOpacity(0.6),
+              ),
               enabledBorder: OutlineInputBorder(
                 borderSide: const BorderSide(color: Color(0xFF9B1D42)),
                 borderRadius: BorderRadius.circular(10),
               ),
               focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+                borderSide: const BorderSide(
+                  color: Color(0xFF9B1D42),
+                  width: 2,
+                ),
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -97,15 +109,23 @@ class _InventoryPageState extends State<InventoryPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Cancelar", style: TextStyle(color: Color(0xFF9B1D42))),
+              child: const Text(
+                "Cancelar",
+                style: TextStyle(color: Color(0xFF9B1D42)),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF9B1D42),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               onPressed: () => Navigator.pop(context),
-              child: const Text("Buscar", style: TextStyle(color: Colors.white)),
+              child: const Text(
+                "Buscar",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -121,7 +141,8 @@ class _InventoryPageState extends State<InventoryPage> {
   }
 
   void _showAddCategoryDialog() {
-    final TextEditingController _categoryNameController = TextEditingController();
+    final TextEditingController _categoryNameController =
+        TextEditingController();
 
     showDialog(
       context: context,
@@ -130,7 +151,9 @@ class _InventoryPageState extends State<InventoryPage> {
           title: const Text("Nueva Categoría"),
           content: TextField(
             controller: _categoryNameController,
-            decoration: const InputDecoration(hintText: "Nombre de la categoría"),
+            decoration: const InputDecoration(
+              hintText: "Nombre de la categoría",
+            ),
           ),
           actions: [
             TextButton(
@@ -139,10 +162,13 @@ class _InventoryPageState extends State<InventoryPage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                final newName = _categoryNameController.text.trim().toUpperCase();
+                final newName =
+                    _categoryNameController.text.trim().toUpperCase();
                 if (newName.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('El nombre no puede estar vacío')),
+                    const SnackBar(
+                      content: Text('El nombre no puede estar vacío'),
+                    ),
                   );
                   return;
                 }
@@ -151,7 +177,7 @@ class _InventoryPageState extends State<InventoryPage> {
                 final newCategoryData = {
                   "name": newName,
                   "negocio": {"id": widget.negocioId},
-                  "pertenece": "INVENTARIO" 
+                  "pertenece": "INVENTARIO",
                 };
 
                 try {
@@ -176,8 +202,6 @@ class _InventoryPageState extends State<InventoryPage> {
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -189,14 +213,23 @@ class _InventoryPageState extends State<InventoryPage> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             decoration: const BoxDecoration(
               color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 3))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 5,
+                  offset: Offset(0, 3),
+                ),
+              ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 GestureDetector(
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const HomePage()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HomePage()),
+                    );
                   },
                   child: Image.asset('assets/logo.png', height: 62),
                 ),
@@ -204,26 +237,41 @@ class _InventoryPageState extends State<InventoryPage> {
                   children: [
                     IconButton(
                       iconSize: 48,
-                      icon: const Icon(Icons.notifications, color: Colors.black),
+                      icon: const Icon(
+                        Icons.notifications,
+                        color: Colors.black,
+                      ),
                       onPressed: () {
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) => const NotificationsPage()));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationsPage(),
+                          ),
+                        );
                       },
                     ),
                     IconButton(
                       iconSize: 48,
                       icon: const Icon(Icons.person, color: Colors.black),
                       onPressed: () {
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) => const UserProfilePage()));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const UserProfilePage(),
+                          ),
+                        );
                       },
                     ),
                     IconButton(
                       iconSize: 48,
                       icon: const Icon(Icons.logout, color: Colors.black),
                       onPressed: () {
-                        Navigator.pushReplacement(context,
-                            MaterialPageRoute(builder: (context) => const LoginPage()));
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginPage(),
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -266,7 +314,10 @@ class _InventoryPageState extends State<InventoryPage> {
                 backgroundColor: const Color(0xFF9B1D42).withOpacity(0.2),
                 label: Text(
                   "Búsqueda: $_searchQuery",
-                  style: const TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Color(0xFF9B1D42),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 deleteIcon: const Icon(Icons.close, color: Color(0xFF9B1D42)),
                 onDeleted: _clearSearch,
@@ -298,15 +349,15 @@ class _InventoryPageState extends State<InventoryPage> {
                 } else {
                   final categories = snapshot.data!;
                   return CardSwiper(
-  cardsCount: categories.length,
-  numberOfCardsDisplayed: categories.length >= 3 ? 3 : categories.length,
-  onSwipe: (prev, curr, dir) => true,
-  cardBuilder: (context, index, _, __) {
-    final categoria = categories[index];
-    return _buildCategoryCard(categoria);
-  },
-);
-
+                    cardsCount: categories.length,
+                    numberOfCardsDisplayed:
+                        categories.length >= 3 ? 3 : categories.length,
+                    onSwipe: (prev, curr, dir) => true,
+                    cardBuilder: (context, index, _, __) {
+                      final categoria = categories[index];
+                      return _buildCategoryCard(categoria);
+                    },
+                  );
                 }
               },
             ),
@@ -379,12 +430,14 @@ class _InventoryPageState extends State<InventoryPage> {
   }
 
   Widget _buildCategoryCard(Categoria categoria) {
-    final iconData = categoryIcons[categoria.name.toUpperCase()] ?? Icons.category;
+    final iconData =
+        categoryIcons[categoria.name.toUpperCase()] ?? Icons.category;
+
     return Center(
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 20),
         padding: const EdgeInsets.all(20),
-        height: 400,
+        height: 460,
         width: 320,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -404,16 +457,18 @@ class _InventoryPageState extends State<InventoryPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Icon(iconData, size: 150, color: Colors.white),
+            Icon(iconData, size: 120, color: Colors.white),
             Text(
               categoria.name,
               style: const TextStyle(
-                fontSize: 36,
+                fontSize: 32,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'TitanOne',
                 color: Colors.white,
               ),
             ),
+
+            // Botón Ver
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
@@ -426,16 +481,146 @@ class _InventoryPageState extends State<InventoryPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CategoryItemsPage(categoryName: categoria.name),
+                    builder:
+                        (context) =>
+                            CategoryItemsPage(categoryName: categoria.name),
                   ),
                 );
               },
-              icon: const Icon(Icons.visibility, size: 36, color: Color(0xFF9B1D42)),
-              label: const Text("Ver", style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+              icon: const Icon(Icons.visibility, size: 30),
+              label: const Text(
+                "Ver",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
             ),
+
+            // Botones Editar y Eliminar (solo si es INVENTARIO)
+            if (categoria.pertenece == "INVENTARIO")
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    tooltip: "Editar categoría",
+                    icon: const Icon(Icons.edit, color: Colors.white, size: 30),
+                    onPressed: () {
+                      _showEditCategoryDialog(categoria);
+                    },
+                  ),
+                  const SizedBox(width: 20),
+                  IconButton(
+                    tooltip: "Eliminar categoría",
+                    icon: const Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder:
+                            (context) => AlertDialog(
+                              title: const Text("¿Eliminar categoría?"),
+                              content: const Text(
+                                "Esta acción no se puede deshacer.",
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.pop(context, false),
+                                  child: const Text("Cancelar"),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text("Eliminar"),
+                                ),
+                              ],
+                            ),
+                      );
+
+                      if (confirm == true) {
+                        try {
+                          await CategoryApiService.deleteCategory(
+                            categoria.id.toString(),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Categoría eliminada"),
+                            ),
+                          );
+                          _loadCategories(); // esto actualiza el Future internamente
+                          setState(() {}); // esto fuerza el redibujado
+
+                          // recarga
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Error al eliminar: $e")),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showEditCategoryDialog(Categoria categoria) {
+    final TextEditingController _controller = TextEditingController(
+      text: categoria.name,
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Editar Categoría"),
+          content: TextField(
+            controller: _controller,
+            decoration: const InputDecoration(labelText: "Nuevo nombre"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final newName = _controller.text.trim().toUpperCase();
+                if (newName.isEmpty) return;
+
+                final data = {
+                  "id": categoria.id,
+                  "name": newName,
+                  "negocio": {"id": widget.negocioId},
+                  "pertenece": "INVENTARIO",
+                };
+
+                try {
+                  await CategoryApiService.updateCategory(
+                    categoria.id.toString(),
+                    data,
+                  );
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Categoría actualizada")),
+                  );
+                  _loadCategories(); // esto actualiza el Future internamente
+                  setState(() {}); // esto fuerza el redibujado
+                } catch (e) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error al actualizar: $e")),
+                  );
+                }
+              },
+              child: const Text("Guardar"),
+            ),
+          ],
+        );
+      },
     );
   }
 }

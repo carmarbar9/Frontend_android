@@ -26,7 +26,7 @@ class Ingrediente {
       inventario = ProductoInventario(
         id: json['productoInventario'],
         name: 'Desconocido', // Por si solo viene el ID
-        categoria: Categoria(id: '0', name: ''),
+        categoria: Categoria(id: '0', name: '', pertenece: ''),
         precioCompra: 0,
         cantidadDeseada: 0,
         cantidadAviso: 0,
