@@ -63,5 +63,22 @@ class CategoryApiService {
   }
 }
 
+static Future<Categoria> updateCategory(String id, Map<String, dynamic> data) async {
+  final url = Uri.parse('$_baseUrl/$id');
+  final response = await http.put(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode(data),
+  );
+
+  if (response.statusCode == 200) {
+    return Categoria.fromJson(jsonDecode(response.body));
+  } else if (response.statusCode == 404) {
+    throw Exception('Categoría no encontrada');
+  } else {
+    throw Exception('Error al actualizar la categoría: ${response.body}');
+  }
+}
+
 
 }
