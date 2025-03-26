@@ -34,6 +34,7 @@ flutter:
     - assets/employee4.png
     - assets/employee5.png
     - assets/icons/
+    - assets/empleado.png
 
 
   fonts:

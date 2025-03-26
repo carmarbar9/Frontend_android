@@ -39,4 +39,19 @@ class CategoryApiService {
     throw Exception('Error al eliminar categoría');
   }
   }
+
+  static Future<List<Categoria>> getCategoriesByName(String name) async {
+  final url = Uri.parse('$_baseUrl/nombre/$name');
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final List<dynamic> jsonList = jsonDecode(response.body);
+    return jsonList.map((json) => Categoria.fromJson(json)).toList();
+  } else if (response.statusCode == 404) {
+    return []; // Devuelve lista vacía si no hay resultados
+  } else {
+    throw Exception('Error al obtener las categorías por nombre');
+  }
+}
+
 }

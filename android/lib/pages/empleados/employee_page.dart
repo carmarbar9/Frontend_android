@@ -5,6 +5,9 @@ import 'package:android/models/empleados.dart';
 import 'package:android/services/service_empleados.dart';
 import 'package:android/pages/empleados/employee_detail_page.dart';
 import 'package:android/pages/empleados/add_employee_page.dart';
+import 'package:android/pages/user/user_profile.dart';
+import 'package:android/pages/login_page.dart';
+import 'package:android/pages/home_page.dart';
 
 class EmployeesPage extends StatefulWidget {
   const EmployeesPage({Key? key}) : super(key: key);
@@ -15,6 +18,10 @@ class EmployeesPage extends StatefulWidget {
 
 class _EmployeesPageState extends State<EmployeesPage> {
   late Future<List<Empleado>> _empleadosFuture;
+
+  String? _busquedaActiva;
+  String? _tipoBusqueda;
+
 
   @override
   void initState() {
@@ -28,133 +35,312 @@ class _EmployeesPageState extends State<EmployeesPage> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[200],
-      appBar: AppBar(
-        backgroundColor: Colors.grey[200],
-        elevation: 0, // Sin sombra en el AppBar
-        leading: IconButton(
-          icon: Image.asset(
-            'assets/logo.png', // Imagen del logo
-            height: 180,
+  void _showSearchDialog() async {
+  String query = '';
+  String tipoBusqueda = 'Nombre';
+  final opcionesBusqueda = ['Nombre', 'Apellido', 'Email', 'Teléfono'];
+
+  await showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          "Buscar Empleado",
+          style: TextStyle(
+            color: Color(0xFF9B1D42),
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
           ),
-          onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          // Botón de notificaciones
-          IconButton(
-            iconSize: 48,
-            icon: const Icon(Icons.notifications,
-                color: Color.fromARGB(255, 10, 10, 10)),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NotificationsPage()),
-              );
-            },
-          ),
-          // Botón de perfil
-          IconButton(
-            iconSize: 48,
-            icon: const Icon(Icons.person, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: FutureBuilder<List<Empleado>>(
-        future: _empleadosFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          final empleados = snapshot.data ?? [];
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Buscar',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<String>(
+              value: tipoBusqueda,
+              items: opcionesBusqueda.map((String opcion) {
+                return DropdownMenuItem<String>(
+                  value: opcion,
+                  child: Text(opcion),
+                );
+              }).toList(),
+              onChanged: (value) {
+                tipoBusqueda = value!;
+              },
+              decoration: const InputDecoration(
+                labelText: "Buscar por",
+                labelStyle: TextStyle(color: Color(0xFF9B1D42)),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF9B1D42)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF9B1D42), width: 2),
                 ),
               ),
+            ),
+            const SizedBox(height: 15),
+            TextField(
+              decoration: InputDecoration(
+                hintText: "Ingresa valor",
+                hintStyle: TextStyle(color: const Color(0xFF9B1D42).withOpacity(0.6)),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Color(0xFF9B1D42)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              style: const TextStyle(
+                color: Color(0xFF9B1D42),
+                fontWeight: FontWeight.bold,
+              ),
+              onChanged: (value) => query = value,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar", style: TextStyle(color: Color(0xFF9B1D42))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF9B1D42),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+              await _buscarEmpleado(tipoBusqueda, query);
+            },
+            child: const Text("Buscar", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+Future<void> _buscarEmpleado(String tipo, String query) async {
+  try {
+    _busquedaActiva = query;
+    _tipoBusqueda = tipo;
+
+    switch (tipo) {
+      case 'Nombre':
+        setState(() {
+          _empleadosFuture = EmpleadoService.getEmpleadosByNombre(query);
+        });
+        break;
+      case 'Apellido':
+        setState(() {
+          _empleadosFuture = EmpleadoService.getEmpleadosByApellido(query);
+        });
+        break;
+      case 'Email':
+        final empleado = await EmpleadoService.getEmpleadoByEmail(query);
+        setState(() {
+          _empleadosFuture = Future.value(
+              empleado != null ? [empleado] : []);
+        });
+        break;
+      case 'Teléfono':
+        final empleado = await EmpleadoService.getEmpleadoByTelefono(query);
+        setState(() {
+          _empleadosFuture = Future.value(
+              empleado != null ? [empleado] : []);
+        });
+        break;
+    }
+  } catch (e) {
+    print('Error al buscar: $e');
+  }
+}
+
+
+  @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.grey[100],
+    body: Column(
+      children: [
+        // Encabezado
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 3))],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const HomePage()));
+                },
+                child: Image.asset('assets/logo.png', height: 62),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    iconSize: 48,
+                    icon: const Icon(Icons.notifications, color: Colors.black),
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsPage()));
+                    },
+                  ),
+                  IconButton(
+                    iconSize: 48,
+                    icon: const Icon(Icons.person, color: Colors.black),
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const UserProfilePage()));
+                    },
+                  ),
+                  IconButton(
+                    iconSize: 48,
+                    icon: const Icon(Icons.logout, color: Colors.black),
+                    onPressed: () {
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const Padding(
+          padding: EdgeInsets.only(top: 20.0),
+          child: Text(
+            'EMPLEADOS',
+            style: TextStyle(
+              fontSize: 40,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 3,
+              fontFamily: 'PermanentMarker',
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // Botón de buscar
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 60.0),
+          child: SizedBox(
+            width: double.infinity,
+            child: _build3DActionButton(
+              icon: Icons.search,
+              label: "Buscar",
+              onPressed: _showSearchDialog,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Chip + Empleados
+        Expanded(
+          child: Column(
+            children: [
+              if (_busquedaActiva != null)
+  Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Chip(
+      backgroundColor: const Color(0xFF9B1D42).withOpacity(0.2),
+      label: Text(
+        'Búsqueda: $_busquedaActiva',
+        style: const TextStyle(
+          color: Color(0xFF9B1D42),
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      deleteIcon: const Icon(Icons.close, color: Color(0xFF9B1D42)),
+      onDeleted: () {
+        setState(() {
+          _busquedaActiva = null;
+          _tipoBusqueda = null;
+          _refreshEmployees();
+        });
+      },
+    ),
+  ),
+
               Expanded(
-                child: empleados.isEmpty
-                    ? const Center(
-                        child: Text(
-                          "No hay empleados",
-                          style: TextStyle(fontSize: 20, color: Colors.black54),
-                        ),
-                      )
-                    : (empleados.length == 1
+                child: FutureBuilder<List<Empleado>>(
+                  future: _empleadosFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    final empleados = snapshot.data ?? [];
+                    if (empleados.isEmpty) {
+                      return const Center(
+                        child: Text("No hay empleados", style: TextStyle(fontSize: 20, color: Colors.black54)),
+                      );
+                    }
+
+                    return empleados.length == 1
                         ? Center(child: _buildEmployeeCard(empleados.first))
                         : CardSwiper(
                             cardsCount: empleados.length,
-                            onSwipe: (previousIndex, currentIndex, direction) {
-                              debugPrint(
-                                  "Swiped from index: $previousIndex to $currentIndex");
-                              return true;
-                            },
-                            cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
+                            onSwipe: (prev, curr, dir) => true,
+                            cardBuilder: (context, index, _, __) {
                               return _buildEmployeeCard(empleados[index]);
                             },
-                          )),
-              ),
-              const SizedBox(height: 15),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 167, 45, 77),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                onPressed: () async {
-                  // Navega a la página de añadir empleado
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AddEmployeePage()),
-                  );
-                  // Si se creó un empleado, refresca la lista
-                  if (result != null) {
-                    _refreshEmployees();
-                  }
-                },
-                icon: const Icon(Icons.add, size: 30),
-                label: const Text(
-                  "Añadir",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                          );
+                  },
                 ),
               ),
-              const SizedBox(height: 20),
             ],
-          );
-        },
-      ),
-    );
-  }
+          ),
+        ),
+
+        // Botón de añadir
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 60.0, vertical: 20),
+          child: SizedBox(
+            width: double.infinity,
+            child: _build3DActionButton(
+              icon: Icons.add,
+              label: "Añadir",
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AddEmployeePage()),
+                );
+                if (result != null) {
+                  _refreshEmployees();
+                }
+              },
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _buildEmployeeCard(Empleado employee) {
     return Center(
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 20),
         padding: const EdgeInsets.all(15),
-        height: 400,
+        height: 4000,
         width: 320,
         decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 167, 45, 77),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF9B1D42), Color(0xFFB12A50), Color(0xFFD33E66)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
@@ -165,14 +351,12 @@ class _EmployeesPageState extends State<EmployeesPage> {
           ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // Imagen del empleado (usa imagen por defecto)
             const CircleAvatar(
               radius: 60,
-              backgroundImage: AssetImage('assets/employee1.png'),
+              backgroundImage: AssetImage('assets/empleado.png'),
             ),
-            // Nombre completo (firstName y lastName)
             Text(
               '${employee.firstName ?? "Nombre"} ${employee.lastName ?? "Apellido"}',
               style: const TextStyle(
@@ -182,7 +366,6 @@ class _EmployeesPageState extends State<EmployeesPage> {
               ),
               textAlign: TextAlign.center,
             ),
-            // Descripción del empleado
             Text(
               employee.descripcion ?? '',
               style: const TextStyle(
@@ -191,33 +374,100 @@ class _EmployeesPageState extends State<EmployeesPage> {
               ),
               textAlign: TextAlign.center,
             ),
-            // Botón para ver detalles
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            DefaultTextStyle.merge(
+              style: const TextStyle(
+                color: Color(0xFF9B1D42),
+                fontSize: 18,
               ),
-              onPressed: () async {
-                // Navega a la página de detalle pasando el id del empleado y espera el resultado.
-                if (employee.id != null) {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EmployeeDetailPage(employeeId: employee.id!),
-                    ),
-                  );
-                  // Si se regresa un valor (por ejemplo, true tras eliminar o actualizar), refresca la lista.
-                  if (result == true) {
-                    _refreshEmployees();
+              child: _buildFlatWhiteButton(
+                icon: Icons.visibility,
+                label: "Ver",
+                onPressed: () async {
+                  if (employee.id != null) {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EmployeeDetailPage(employeeId: employee.id!),
+                      ),
+                    );
+                    if (result == true) {
+                      _refreshEmployees();
+                    }
                   }
-                }
-              },
-              icon: const Icon(Icons.visibility, size: 30),
-              label: const Text("Ver"),
+                },
+              ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFlatWhiteButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, color: Color(0xFF9B1D42), size: 30),
+      label: Text(
+        label,
+        style: const TextStyle(color: Color(0xFF9B1D42), fontSize: 24),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF9B1D42),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        elevation: 0,
+      ),
+    );
+  }
+
+  Widget _build3DActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 100),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(3, 3)),
+          BoxShadow(color: Colors.white, blurRadius: 4, offset: Offset(-3, -3)),
+        ],
+        gradient: const LinearGradient(
+          colors: [Colors.white, Color(0xFFF5F5F5), Color(0xFFE0E0E0)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: const Color(0xFF9B1D42),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+            side: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+          ),
+          elevation: 0,
+        ),
+        onPressed: onPressed,
+        icon: Icon(icon, size: 28, color: const Color(0xFF9B1D42)),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 23,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'TitanOne',
+            color: Color(0xFF9B1D42),
+            shadows: [
+              Shadow(offset: Offset(1, 1), blurRadius: 2, color: Colors.black12),
+            ],
+          ),
         ),
       ),
     );

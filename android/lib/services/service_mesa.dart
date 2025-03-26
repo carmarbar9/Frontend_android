@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:android/models/mesa.dart';
-import 'package:flutter/foundation.dart';
 
 class MesaService {
   static const String _baseUrl = 'http://10.0.2.2:8080/api/mesas';

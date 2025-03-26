@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:android/models/mesa.dart';
-import 'package:android/services/service_mesa.dart'; 
+import 'package:android/services/service_mesa.dart';
 import 'package:android/pages/login_page.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/pages/user/user_profile.dart';
+import 'package:android/pages/mesas/mesa_detail_page.dart'; // Asegúrate de que la ruta es correcta
 
 class HomePageEmpleado extends StatefulWidget {
   const HomePageEmpleado({Key? key}) : super(key: key);
@@ -14,11 +15,36 @@ class HomePageEmpleado extends StatefulWidget {
 
 class _HomePageEmpleadoState extends State<HomePageEmpleado> {
   late Future<List<Mesa>> _mesasFuture;
+  List<Mesa> _allMesas = [];
+  List<Mesa> _filteredMesas = [];
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _mesasFuture = MesaService.getMesas();
+    _searchController.addListener(_filterMesas);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_filterMesas);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterMesas() {
+    final query = _searchController.text.trim().toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredMesas = List.from(_allMesas);
+      } else {
+        _filteredMesas = _allMesas.where((mesa) {
+          final name = (mesa.name ?? '').toLowerCase();
+          return name.contains(query);
+        }).toList();
+      }
+    });
   }
 
   @override
@@ -27,7 +53,7 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
       backgroundColor: Colors.grey[100],
       body: Column(
         children: [
-          // AppBar similar al del dueño
+          // AppBar personalizado
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
             decoration: const BoxDecoration(
@@ -46,16 +72,6 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
                 Image.asset('assets/logo.png', height: 62),
                 Row(
                   children: [
-                    IconButton(
-                      iconSize: 48,
-                      icon: const Icon(Icons.notifications, color: Colors.black),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const NotificationsPage()),
-                        );
-                      },
-                    ),
                     IconButton(
                       iconSize: 48,
                       icon: const Icon(Icons.person, color: Colors.black),
@@ -86,7 +102,7 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
 
           // Título de la página
           const Text(
-            "TPV - Empleado",
+            "TPV",
             style: TextStyle(
               fontSize: 40,
               fontWeight: FontWeight.bold,
@@ -97,7 +113,26 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
 
           const SizedBox(height: 20),
 
-          // Lista de mesas (GridView)
+          // Campo de búsqueda
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Buscar mesa...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Lista de mesas mostradas como círculos
           Expanded(
             child: FutureBuilder<List<Mesa>>(
               future: _mesasFuture,
@@ -108,87 +143,53 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
                 if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 }
-                final mesas = snapshot.data!;
+                _allMesas = snapshot.data!;
+                if (_searchController.text.trim().isEmpty) {
+                  _filteredMesas = List.from(_allMesas);
+                }
+                if (_filteredMesas.isEmpty) {
+                  return const Center(child: Text("No se encontraron mesas"));
+                }
                 return GridView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 15,
-                    mainAxisSpacing: 15,
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 20,
                   ),
-                  itemCount: mesas.length,
+                  itemCount: _filteredMesas.length,
                   itemBuilder: (context, index) {
-                    return _buildMesaCard(mesas[index]);
+                    final mesa = _filteredMesas[index];
+                    return GestureDetector(
+                      onTap: () {
+                        // Navega a la pantalla de detalle de la mesa
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MesaDetailPage(mesa: mesa),
+                          ),
+                        );
+                      },
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundColor: const Color(0xFF9B1D42),
+                        child: Text(
+                          mesa.name ?? '',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
                   },
                 );
               },
             ),
           ),
-
-          // Botón para ver o finalizar el pedido
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF9B1D42),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onPressed: () {
-                // Lógica para ver o finalizar el pedido
-              },
-              icon: const Icon(Icons.shopping_cart),
-              label: const Text('Ver Pedido'),
-            ),
-          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMesaCard(Mesa mesa) {
-    return GestureDetector(
-      onTap: () {
-        // Acción para ver detalles o asignar la mesa a un pedido
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 5,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              mesa.name ?? '', // Se utiliza un valor por defecto vacío si es null
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Asientos: ${mesa.numeroAsientos ?? 0}',
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.black54,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
