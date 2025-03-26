@@ -1,16 +1,16 @@
-import 'categoria.dart'; // Asegúrate de importar la clase
+import 'categoria.dart'; 
 
 class ProductoVenta {
   final int id;
   final String name;
   final double precioVenta;
-  final Categoria categoria; // 👈 Añadir esta línea
+  final Categoria categoria; 
 
   ProductoVenta({
     required this.id,
     required this.name,
     required this.precioVenta,
-    required this.categoria, // 👈 Añadirlo también al constructor
+    required this.categoria, 
   });
 
 factory ProductoVenta.fromJson(Map<String, dynamic> json) {
@@ -21,7 +21,7 @@ factory ProductoVenta.fromJson(Map<String, dynamic> json) {
     precioVenta: (json['precioVenta'] as num).toDouble(),
     categoria: categoriaJson is Map<String, dynamic>
         ? Categoria.fromJson(categoriaJson)
-        : Categoria(id: categoriaJson.toString(), name: '', pertenece: ''), // 👈 Aquí el cambio
+        : Categoria(id: categoriaJson.toString(), name: '', pertenece: ''), 
   );
 }
 
