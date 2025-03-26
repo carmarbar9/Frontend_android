@@ -20,6 +20,22 @@ class CategoryApiService {
   }
 }
 
+  static Future<List<Categoria>> getCategoriesByNegocioIdVenta(String negocioId) async {
+  final url = Uri.parse('$_baseUrl/negocio/$negocioId');
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final List<dynamic> jsonList = jsonDecode(response.body);
+
+    final filteredList = jsonList.where((json) => json['pertenece'] == "VENTA").toList();
+
+    return filteredList.map((json) => Categoria.fromJson(json)).toList();
+  } else {
+    throw Exception('Error al obtener las categorías');
+  }
+}
+
+
   static Future<Categoria> createCategory(Map<String, dynamic> data) async {
     final url = Uri.parse('$_baseUrl');
     final response = await http.post(

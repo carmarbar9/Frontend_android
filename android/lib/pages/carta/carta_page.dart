@@ -18,7 +18,7 @@ class _CartaPageState extends State<CartaPage> {
   @override
   void initState() {
     super.initState();
-    _categorias = CategoryApiService.getCategoriesByNegocioId(negocioId);
+    _categorias = CategoryApiService.getCategoriesByNegocioIdVenta(negocioId);
   }
 
   void _mostrarDialogoCrearCategoria() {
@@ -46,12 +46,12 @@ class _CartaPageState extends State<CartaPage> {
                   await CategoryApiService.createCategory({
                     "name": nombre,
                     "negocio": {"id": negocioId},
-                    "pertenece": 1 
+                    "pertenece": "VENTA"
                   });
 
                   Navigator.pop(context);
                   setState(() {
-                    _categorias = CategoryApiService.getCategoriesByNegocioId(negocioId);
+                    _categorias = CategoryApiService.getCategoriesByNegocioIdVenta(negocioId);
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Categoría creada correctamente")),
@@ -72,11 +72,17 @@ class _CartaPageState extends State<CartaPage> {
   }
 
   Future<void> _eliminarCategoria(Categoria categoria) async {
-    try {
-      await CategoryApiService.deleteCategory(categoria.id.toString());
+  try {
+  setState(() {
+    _categorias = Future.value([]); // Limpia la lista temporalmente
+  });
+
+  await CategoryApiService.deleteCategory(categoria.id.toString());
+
       setState(() {
-        _categorias = CategoryApiService.getCategoriesByNegocioId(negocioId);
+        _categorias = CategoryApiService.getCategoriesByNegocioIdVenta(negocioId); 
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Categoría '${categoria.name}' eliminada")),
       );
@@ -222,7 +228,7 @@ class _CartaPageState extends State<CartaPage> {
                                 height: 40,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Image.asset(
-                                    'assets/logo.png', // 👈 tu icono por defecto
+                                    'assets/logo.png', // 👈 icono por defecto
                                     height: 40,
                                   );
                                 },
