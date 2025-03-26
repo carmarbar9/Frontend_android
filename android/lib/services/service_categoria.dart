@@ -24,9 +24,6 @@ class CategoryApiService {
       body: jsonEncode(data),
     );
 
-    print('Código de estado: ${response.statusCode}');
-    print('Cuerpo de la respuesta: ${response.body}');
-
     if (response.statusCode == 201) {
       return Categoria.fromJson(jsonDecode(response.body));
     } else {
@@ -34,6 +31,16 @@ class CategoryApiService {
     }
   }
 
+  
+  static Future<void> deleteCategory(String id) async {
+  final response = await http.delete(
+    Uri.parse('http://10.0.2.2:8080/api/categorias/$id'),
+  );
+
+  if (response.statusCode != 204) {
+    throw Exception('Error al eliminar categoría');
+  }
+  }
 
   static Future<List<Categoria>> getCategoriesByName(String name) async {
   final url = Uri.parse('$_baseUrl/nombre/$name');

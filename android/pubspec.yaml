@@ -33,12 +33,7 @@ flutter:
     - assets/employee3.png
     - assets/employee4.png
     - assets/employee5.png
-    - assets/icons/tapas.png
-    - assets/icons/ensaladas.png
-    - assets/icons/carnes.png
-    - assets/icons/pescados.png
-    - assets/icons/bebidas.png
-    - assets/icons/postres.png
+    - assets/icons/
     - assets/empleado.png
 
 
