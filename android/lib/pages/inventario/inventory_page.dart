@@ -20,7 +20,9 @@ class InventoryPage extends StatefulWidget {
 
 class _InventoryPageState extends State<InventoryPage> {
   late Future<List<Categoria>> _futureCategories;
-  final TextEditingController _searchController = TextEditingController();
+
+  // Variable para guardar la cadena de búsqueda
+  String? _searchQuery;
 
   final Map<String, IconData> categoryIcons = {
     'COMIDA': FontAwesomeIcons.carrot,
@@ -36,30 +38,45 @@ class _InventoryPageState extends State<InventoryPage> {
   @override
   void initState() {
     super.initState();
-    _searchController.clear();
-    _futureCategories = CategoryApiService.getCategoriesByNegocioId(widget.negocioId);
+    _loadCategories();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  /// Carga las categorías; si _searchQuery está vacío, las del negocio;
+  /// si no, filtradas por nombre exacto o parcial (dependiendo de tu implementación).
+  void _loadCategories() {
+    if (_searchQuery == null || _searchQuery!.isEmpty) {
+      _futureCategories = CategoryApiService.getCategoriesByNegocioId(widget.negocioId);
+    } else {
+      // Aquí podrías llamar a getCategoriesByName(_searchQuery!)
+      // o primero obtener todas y filtrar en memoria, según tu preferencia.
+      _futureCategories = CategoryApiService.getCategoriesByName(_searchQuery!);
+    }
   }
 
-  void _showAddCategoryDialog() {
-    final TextEditingController _categoryNameController = TextEditingController();
-    showDialog(
+  /// Limpia la búsqueda y recarga categorías
+  void _clearSearch() {
+    setState(() {
+      _searchQuery = null;
+      _loadCategories();
+    });
+  }
+
+  void _showSearchDialog() async {
+    String? query;
+    await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("Nueva Categoría",
-              style: TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold)),
+          title: const Text(
+            "Buscar Categoría",
+            style: TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
+          ),
           content: TextField(
-            controller: _categoryNameController,
             decoration: InputDecoration(
-              hintText: "Nombre de la categoría",
+              hintText: "Nombre exacto o parcial",
+              hintStyle: TextStyle(color: const Color(0xFF9B1D42).withOpacity(0.6)),
               enabledBorder: OutlineInputBorder(
                 borderSide: const BorderSide(color: Color(0xFF9B1D42)),
                 borderRadius: BorderRadius.circular(10),
@@ -69,6 +86,13 @@ class _InventoryPageState extends State<InventoryPage> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
+            style: const TextStyle(
+              color: Color(0xFF9B1D42),
+              fontWeight: FontWeight.bold,
+            ),
+            onChanged: (value) {
+              query = value.trim();
+            },
           ),
           actions: [
             TextButton(
@@ -80,6 +104,40 @@ class _InventoryPageState extends State<InventoryPage> {
                 backgroundColor: const Color(0xFF9B1D42),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Buscar", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+    // Asignar la búsqueda y recargar
+    if ((query ?? '').isNotEmpty) {
+      setState(() {
+        _searchQuery = query;
+      });
+      _loadCategories();
+    }
+  }
+
+  void _showAddCategoryDialog() {
+    final TextEditingController _categoryNameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Nueva Categoría"),
+          content: TextField(
+            controller: _categoryNameController,
+            decoration: const InputDecoration(hintText: "Nombre de la categoría"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
               onPressed: () async {
                 final newName = _categoryNameController.text.trim().toUpperCase();
                 if (newName.isEmpty) {
@@ -88,16 +146,20 @@ class _InventoryPageState extends State<InventoryPage> {
                   );
                   return;
                 }
+
+                // Agrega el campo "pertenece" con el valor que tu backend requiera:
                 final newCategoryData = {
                   "name": newName,
                   "negocio": {"id": widget.negocioId},
+                  "pertenece": "INVENTARIO" 
                 };
+
                 try {
                   await CategoryApiService.createCategory(newCategoryData);
                   Navigator.pop(context);
                   setState(() {
-                    _futureCategories = CategoryApiService.getCategoriesByNegocioId(widget.negocioId);
-                    _searchController.clear();
+                    _searchQuery = null; // Si quieres resetear la búsqueda
+                    _loadCategories();
                   });
                 } catch (e) {
                   Navigator.pop(context);
@@ -106,13 +168,15 @@ class _InventoryPageState extends State<InventoryPage> {
                   );
                 }
               },
-              child: const Text("Guardar", style: TextStyle(color: Colors.white)),
+              child: const Text("Guardar"),
             ),
           ],
         );
       },
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -181,19 +245,33 @@ class _InventoryPageState extends State<InventoryPage> {
             ),
           ),
 
-          // Campo de búsqueda gourmet
+          // Botón Buscar
           Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 60.0),
-  child: SizedBox(
-    width: double.infinity,
-    child: _build3DActionButton(
-      icon: Icons.search,
-      label: "Buscar",
-      onPressed: _showSearchDialog,
-    ),
-  ),
-),
+            padding: const EdgeInsets.symmetric(horizontal: 60.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: _build3DActionButton(
+                icon: Icons.search,
+                label: "Buscar",
+                onPressed: _showSearchDialog,
+              ),
+            ),
+          ),
 
+          // Si hay una búsqueda activa, mostramos el Chip para limpiarla
+          if (_searchQuery != null && _searchQuery!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Chip(
+                backgroundColor: const Color(0xFF9B1D42).withOpacity(0.2),
+                label: Text(
+                  "Búsqueda: $_searchQuery",
+                  style: const TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
+                ),
+                deleteIcon: const Icon(Icons.close, color: Color(0xFF9B1D42)),
+                onDeleted: _clearSearch,
+              ),
+            ),
 
           const SizedBox(height: 10),
 
@@ -209,7 +287,7 @@ class _InventoryPageState extends State<InventoryPage> {
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Center(
                     child: Text(
-                      'No se encontraron categorías con ese nombre',
+                      'No se encontraron categorías',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -234,6 +312,7 @@ class _InventoryPageState extends State<InventoryPage> {
 
           const SizedBox(height: 20),
 
+          // Botón "Añadir categoría"
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 60.0),
             child: SizedBox(
@@ -357,60 +436,4 @@ class _InventoryPageState extends State<InventoryPage> {
       ),
     );
   }
-
-  void _showSearchDialog() async {
-  String name = '';
-
-  await showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          "Buscar Categoría",
-          style: TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
-        ),
-        content: TextField(
-          decoration: InputDecoration(
-            hintText: "Nombre exacto",
-            hintStyle: TextStyle(color: const Color(0xFF9B1D42).withOpacity(0.6)),
-            enabledBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xFF9B1D42)),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xFF9B1D42), width: 2),
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          style: const TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
-          onChanged: (value) => name = value.trim(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar", style: TextStyle(color: Color(0xFF9B1D42))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF9B1D42),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              if (name.isNotEmpty) {
-                setState(() {
-                  _futureCategories = CategoryApiService.getCategoriesByName(name);
-                });
-              }
-            },
-            child: const Text("Buscar", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      );
-    },
-  );
-}
-
 }

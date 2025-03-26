@@ -1,5 +1,4 @@
 import 'package:android/models/producto_inventario.dart';
-import 'package:android/models/categoria.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/services/service_inventory.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,7 @@ import 'package:line_icons/line_icons.dart';
 
 class ItemDetailsPage extends StatefulWidget {
   final String itemName;
-  final String category; // Este valor podría ser utilizado para iconos o navegación
+  final String category; // Para íconos o navegación
 
   const ItemDetailsPage({super.key, required this.itemName, required this.category});
 
@@ -17,13 +16,11 @@ class ItemDetailsPage extends StatefulWidget {
 }
 
 class _ItemDetailsPageState extends State<ItemDetailsPage> {
+  // Guardará el producto que cargamos
   late Future<ProductoInventario?> _futureProduct;
 
-  @override
-  void initState() {
-    super.initState();
-    _futureProduct = InventoryApiService.getProductoInventarioByName(widget.itemName);
-  }
+  // Para la búsqueda
+  String? _searchQuery;
 
   // Mapa de íconos (puedes actualizarlo según tus necesidades)
   final Map<String, IconData> categoryIcons = {
@@ -37,12 +34,90 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
     'Otros': LineIcons.box,
   };
 
-  TextStyle _textStyle() {
-    return const TextStyle(
-      color: Colors.white,
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
+  @override
+  void initState() {
+    super.initState();
+    _loadItem(); // Cargamos el producto según itemName
+  }
+
+  // =====================================
+  // 1. Lógica de carga y búsqueda
+  // =====================================
+  void _loadItem() {
+    // Si _searchQuery está vacío, usamos widget.itemName (lo original)
+    // Si _searchQuery tiene algo, buscamos ese nuevo nombre
+    if (_searchQuery == null || _searchQuery!.isEmpty) {
+      _futureProduct = InventoryApiService.getProductoInventarioByName(widget.itemName);
+    } else {
+      // Aquí podrías usar un método que haga búsqueda parcial
+      // o primero obtener todos y filtrar en memoria
+      // Por simplicidad, llamamos al mismo getProductoInventarioByName
+      // y asumimos que el backend admite nombres parciales (o devuelva el primero que coincida)
+      _futureProduct = InventoryApiService.getProductoInventarioByName(_searchQuery!);
+    }
+  }
+
+  void _showSearchDialog() async {
+    String? query;
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            "Buscar Producto",
+            style: TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
+          ),
+          content: TextField(
+            decoration: InputDecoration(
+              hintText: "Ingresa parte del nombre",
+              hintStyle: TextStyle(color: const Color(0xFF9B1D42).withOpacity(0.6)),
+              enabledBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Color(0xFF9B1D42)),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            style: const TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
+            onChanged: (value) {
+              query = value.trim();
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar", style: TextStyle(color: Color(0xFF9B1D42))),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF9B1D42),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Buscar", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
     );
+
+    if ((query ?? '').isNotEmpty) {
+      setState(() {
+        _searchQuery = query;
+      });
+      _loadItem(); // Recargamos con la nueva búsqueda
+    }
+  }
+
+  void _clearSearch() {
+    setState(() {
+      _searchQuery = null;
+      _loadItem();
+    });
   }
 
   // Diálogo para editar producto.
@@ -156,6 +231,14 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
     );
   }
 
+   TextStyle _textStyle() {
+    return const TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -163,17 +246,8 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
         backgroundColor: Colors.grey[200],
         elevation: 0,
         leading: IconButton(
-          icon: Container(
-            height: 120,
-            width: 120,
-            child: Image.asset(
-              'assets/logo.png',
-              fit: BoxFit.contain,
-            ),
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          icon: Image.asset('assets/logo.png', fit: BoxFit.contain),
+          onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
@@ -193,109 +267,160 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
           ),
         ],
       ),
-      body: FutureBuilder<ProductoInventario?>(
-        future: _futureProduct,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data == null) {
-            return const Center(child: Text('Producto no encontrado'));
-          } else {
-            final producto = snapshot.data!;
-            // Usa el nombre de la categoría del producto para elegir el ícono.
-            final iconData = categoryIcons[producto.categoria.name] ?? Icons.category;
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(15.0),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        width: double.infinity,
-                        constraints: const BoxConstraints(minHeight: 400),
-                        decoration: BoxDecoration(
-                          color: const Color.fromARGB(255, 167, 45, 77),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 6,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Icon(iconData, size: 100, color: Colors.white),
-                            const SizedBox(height: 20),
-                            Text('Nombre: ${producto.name}', style: _textStyle()),
-                            Text('Categoría: ${producto.categoria.name}', style: _textStyle()),
-                            Text('Precio Compra: ${producto.precioCompra}', style: _textStyle()),
-                            Text('Cantidad Deseada: ${producto.cantidadDeseada}', style: _textStyle()),
-                            Text('Cantidad Aviso: ${producto.cantidadAviso}', style: _textStyle()),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                              textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                            ),
-                            onPressed: () {
-                              _showEditDialog(producto);
-                            },
-                            icon: const Icon(Icons.edit),
-                            label: const Text("Editar"),
-                          ),
-                          const SizedBox(width: 10),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                              textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                            ),
-                            onPressed: () {
-                              _deleteProduct(producto);
-                            },
-                            icon: const Icon(Icons.delete),
-                            label: const Text("Eliminar"),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                          textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(Icons.arrow_back),
-                        label: const Text("Volver"),
-                      ),
-                    ],
+      body: Column(
+        children: [
+          // Título y Botón de Buscar
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                const Text(
+                  'DETALLE PRODUCTO',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 3,
+                    fontFamily: 'PermanentMarker',
                   ),
                 ),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF9B1D42),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: _showSearchDialog,
+                  icon: const Icon(Icons.search),
+                  label: const Text("Buscar"),
+                ),
+              ],
+            ),
+          ),
+
+          // Si hay una búsqueda, mostramos el Chip
+          if (_searchQuery != null && _searchQuery!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Chip(
+                backgroundColor: const Color(0xFF9B1D42).withOpacity(0.2),
+                label: Text(
+                  "Búsqueda: $_searchQuery",
+                  style: const TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
+                ),
+                deleteIcon: const Icon(Icons.close, color: Color(0xFF9B1D42)),
+                onDeleted: _clearSearch,
               ),
-            );
-          }
-        },
+            ),
+
+          // Expandimos para mostrar el FutureBuilder
+          Expanded(
+            child: FutureBuilder<ProductoInventario?>(
+              future: _futureProduct,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data == null) {
+                  return const Center(child: Text('Producto no encontrado'));
+                } else {
+                  final producto = snapshot.data!;
+                  final iconData = categoryIcons[producto.categoria.name] ?? Icons.category;
+                  return _buildProductDetails(producto, iconData);
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductDetails(ProductoInventario producto, IconData iconData) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                width: double.infinity,
+                constraints: const BoxConstraints(minHeight: 400),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 167, 45, 77),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 6,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(iconData, size: 100, color: Colors.white),
+                    const SizedBox(height: 20),
+                    Text('Nombre: ${producto.name}', style: _textStyle()),
+                    Text('Categoría: ${producto.categoria.name}', style: _textStyle()),
+                    Text('Precio Compra: ${producto.precioCompra}', style: _textStyle()),
+                    Text('Cantidad Deseada: ${producto.cantidadDeseada}', style: _textStyle()),
+                    Text('Cantidad Aviso: ${producto.cantidadAviso}', style: _textStyle()),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () => _showEditDialog(producto),
+                    icon: const Icon(Icons.edit),
+                    label: const Text("Editar"),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () => _deleteProduct(producto),
+                    icon: const Icon(Icons.delete),
+                    label: const Text("Eliminar"),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: const Icon(Icons.arrow_back),
+                label: const Text("Volver"),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

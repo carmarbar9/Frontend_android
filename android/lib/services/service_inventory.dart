@@ -60,6 +60,21 @@ class InventoryApiService {
     }
   }
 
+  /// Crea un producto de inventario
+  static Future<ProductoInventario> createProductoInventario(Map<String, dynamic> data) async {
+    final url = Uri.parse('$_baseUrl');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 201) {
+      return ProductoInventario.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Error al crear el producto: ${response.body}');
+    }
+  }
+
 
   /// Actualiza un producto de inventario
   static Future<void> updateProductoInventario(ProductoInventario producto) async {

@@ -23,13 +23,15 @@ class CategoryApiService {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
     );
+
     if (response.statusCode == 201) {
       return Categoria.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Error al crear la categoría');
+      throw Exception('Error al crear la categoría: ${response.body}');
     }
   }
 
+  
   static Future<void> deleteCategory(String id) async {
   final response = await http.delete(
     Uri.parse('http://10.0.2.2:8080/api/categorias/$id'),
