@@ -26,7 +26,8 @@ class ProductoInventario {
       // Si no es Map, asumimos que es un id (int o String)
       categoria = Categoria(
         id: json['categoria'].toString(),
-        name: '', // Si se conoce otro valor por defecto, se puede asignar aquí.
+        name: '',
+        pertenece: '',
       );
     }
 

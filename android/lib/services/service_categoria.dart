@@ -6,15 +6,19 @@ class CategoryApiService {
   static const String _baseUrl = 'http://10.0.2.2:8080/api/categorias';
 
   static Future<List<Categoria>> getCategoriesByNegocioId(String negocioId) async {
-    final url = Uri.parse('$_baseUrl/negocio/$negocioId');
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
-      return jsonList.map((json) => Categoria.fromJson(json)).toList();
-    } else {
-      throw Exception('Error al obtener las categorías');
-    }
+  final url = Uri.parse('$_baseUrl/negocio/$negocioId');
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final List<dynamic> jsonList = jsonDecode(response.body);
+
+    final filteredList = jsonList.where((json) => json['pertenece'] == "INVENTARIO").toList();
+
+    return filteredList.map((json) => Categoria.fromJson(json)).toList();
+  } else {
+    throw Exception('Error al obtener las categorías');
   }
+}
 
   static Future<Categoria> createCategory(Map<String, dynamic> data) async {
     final url = Uri.parse('$_baseUrl');
@@ -48,12 +52,33 @@ class CategoryApiService {
 
   if (response.statusCode == 200) {
     final List<dynamic> jsonList = jsonDecode(response.body);
-    return jsonList.map((json) => Categoria.fromJson(json)).toList();
+
+    final filteredList = jsonList.where((json) => json['pertenece'] == "INVENTARIO").toList();
+
+    return filteredList.map((json) => Categoria.fromJson(json)).toList();
   } else if (response.statusCode == 404) {
-    return []; // Devuelve lista vacía si no hay resultados
+    return [];
   } else {
-    throw Exception('Error al obtener las categorías por nombre');
+    throw Exception('Error al obtener las categorías de inventario por nombre');
   }
 }
+
+static Future<Categoria> updateCategory(String id, Map<String, dynamic> data) async {
+  final url = Uri.parse('$_baseUrl/$id');
+  final response = await http.put(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode(data),
+  );
+
+  if (response.statusCode == 200) {
+    return Categoria.fromJson(jsonDecode(response.body));
+  } else if (response.statusCode == 404) {
+    throw Exception('Categoría no encontrada');
+  } else {
+    throw Exception('Error al actualizar la categoría: ${response.body}');
+  }
+}
+
 
 }

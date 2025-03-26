@@ -21,7 +21,7 @@ factory ProductoVenta.fromJson(Map<String, dynamic> json) {
     precioVenta: (json['precioVenta'] as num).toDouble(),
     categoria: categoriaJson is Map<String, dynamic>
         ? Categoria.fromJson(categoriaJson)
-        : Categoria(id: categoriaJson.toString(), name: ''), // 👈 Aquí el cambio
+        : Categoria(id: categoriaJson.toString(), name: '', pertenece: ''), // 👈 Aquí el cambio
   );
 }
 

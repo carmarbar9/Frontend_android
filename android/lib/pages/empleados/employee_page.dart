@@ -38,7 +38,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
   void _showSearchDialog() async {
   String query = '';
   String tipoBusqueda = 'Nombre';
-  final opcionesBusqueda = ['Nombre', 'Apellido', 'Email', 'Teléfono'];
+  final opcionesBusqueda = ['Nombre', 'Apellido'];
 
   await showDialog(
     context: context,
@@ -137,20 +137,6 @@ Future<void> _buscarEmpleado(String tipo, String query) async {
       case 'Apellido':
         setState(() {
           _empleadosFuture = EmpleadoService.getEmpleadosByApellido(query);
-        });
-        break;
-      case 'Email':
-        final empleado = await EmpleadoService.getEmpleadoByEmail(query);
-        setState(() {
-          _empleadosFuture = Future.value(
-              empleado != null ? [empleado] : []);
-        });
-        break;
-      case 'Teléfono':
-        final empleado = await EmpleadoService.getEmpleadoByTelefono(query);
-        setState(() {
-          _empleadosFuture = Future.value(
-              empleado != null ? [empleado] : []);
         });
         break;
     }
