@@ -86,4 +86,16 @@ class InventoryApiService {
     }
   }
 
+  static Future<List<ProductoInventario>> getAllProductosInventario() async {
+  final url = Uri.parse('http://10.0.2.2:8080/api/productosInventario');
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((json) => ProductoInventario.fromJson(json)).toList();
+  } else {
+    throw Exception('Error al cargar productos de inventario');
+  }
+}
+
 }

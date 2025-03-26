@@ -29,4 +29,14 @@ class CategoryApiService {
       throw Exception('Error al crear la categoría');
     }
   }
+
+  static Future<void> deleteCategory(String id) async {
+  final response = await http.delete(
+    Uri.parse('http://10.0.2.2:8080/api/categorias/$id'),
+  );
+
+  if (response.statusCode != 204) {
+    throw Exception('Error al eliminar categoría');
+  }
+  }
 }
