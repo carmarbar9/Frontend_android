@@ -1,3 +1,11 @@
 class SessionManager {
-  static String negocioId = '1'; // Normalmente tiene que estar en '' pero para efectos de prueba se deja en '1'
+  static String? negocioId; // Por defecto "1" en pruebas
+  static String? negocioNombre;
+  static String? ciudad;
+
+  static void clear() {
+    negocioId = null;
+    negocioNombre = null;
+    ciudad = null;
+  }
 }
