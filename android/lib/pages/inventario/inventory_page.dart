@@ -51,7 +51,18 @@ class _InventoryPageState extends State<InventoryPage> {
     } else {
       // Aquí podrías llamar a getCategoriesByName(_searchQuery!)
       // o primero obtener todas y filtrar en memoria, según tu preferencia.
-      _futureCategories = CategoryApiService.getCategoriesByName(_searchQuery!);
+      _futureCategories = CategoryApiService.getCategoriesByNegocioId(
+        widget.negocioId,
+      ).then(
+        (lista) =>
+            lista
+                .where(
+                  (c) => c.name.toLowerCase().contains(
+                    _searchQuery!.toLowerCase(),
+                  ),
+                )
+                .toList(),
+      );
     }
   }
 
@@ -487,7 +498,11 @@ class _InventoryPageState extends State<InventoryPage> {
                   ),
                 );
               },
-              icon: const Icon(Icons.visibility, size: 30, color: Color(0xFF9B1D42)),
+              icon: const Icon(
+                Icons.visibility,
+                size: 30,
+                color: Color(0xFF9B1D42),
+              ),
               label: const Text(
                 "Ver",
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -497,77 +512,98 @@ class _InventoryPageState extends State<InventoryPage> {
             // Botones Editar y Eliminar (solo si es INVENTARIO)
             if (categoria.pertenece == "INVENTARIO")
               Row(
-  mainAxisAlignment: MainAxisAlignment.center,
-  children: [
-    ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF9B1D42),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-      ),
-      icon: const Icon(Icons.edit, size: 26, color: Color(0xFF9B1D42)),
-      label: const Text(
-        "Editar",
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
-      onPressed: () {
-        _showEditCategoryDialog(categoria);
-      },
-    ),
-    const SizedBox(width: 15),
-    ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF9B1D42),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-      ),
-      icon: const Icon(Icons.delete, size: 26, color: Color(0xFF9B1D42)),
-      label: const Text(
-        "Eliminar",
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
-      onPressed: () async {
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text("¿Eliminar categoría?"),
-            content: const Text("Esta acción no se puede deshacer."),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text("Cancelar"),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text("Eliminar"),
-              ),
-            ],
-          ),
-        );
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF9B1D42),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.edit,
+                      size: 26,
+                      color: Color(0xFF9B1D42),
+                    ),
+                    label: const Text(
+                      "Editar",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: () {
+                      _showEditCategoryDialog(categoria);
+                    },
+                  ),
+                  const SizedBox(width: 15),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF9B1D42),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.delete,
+                      size: 26,
+                      color: Color(0xFF9B1D42),
+                    ),
+                    label: const Text(
+                      "Eliminar",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder:
+                            (context) => AlertDialog(
+                              title: const Text("¿Eliminar categoría?"),
+                              content: const Text(
+                                "Esta acción no se puede deshacer.",
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.pop(context, false),
+                                  child: const Text("Cancelar"),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text("Eliminar"),
+                                ),
+                              ],
+                            ),
+                      );
 
-        if (confirm == true) {
-          try {
-            await CategoryApiService.deleteCategory(categoria.id.toString());
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Categoría eliminada")),
-            );
-            _loadCategories();
-            setState(() {});
-          } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Error al eliminar: $e")),
-            );
-          }
-        }
-      },
-    ),
-  ],
-),
-
+                      if (confirm == true) {
+                        try {
+                          await CategoryApiService.deleteCategory(
+                            categoria.id.toString(),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Categoría eliminada"),
+                            ),
+                          );
+                          _loadCategories();
+                          setState(() {});
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Error al eliminar: $e")),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
           ],
         ),
       ),

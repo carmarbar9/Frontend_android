@@ -5,7 +5,7 @@ import 'package:android/services/service_categoria.dart';
 import 'package:android/pages/inventario/itemsDetails_page.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/pages/user/user_profile.dart';
-import 'package:android/pages/login_page.dart';
+import 'package:android/pages/login/login_page.dart';
 
 class CategoryItemsPage extends StatefulWidget {
   final String categoryName;

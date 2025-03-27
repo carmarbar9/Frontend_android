@@ -3,7 +3,7 @@ import 'package:android/models/producto_inventario.dart';
 import 'package:android/services/service_inventory.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/pages/user/user_profile.dart';
-import 'package:android/pages/login_page.dart';
+import 'package:android/pages/login/login_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:android/models/lote.dart';

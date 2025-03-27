@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:android/models/proveedor.dart';
 import 'package:android/models/dia_reparto.dart';
 import 'package:android/services/service_proveedores.dart';
+import 'package:android/models/session_manager.dart';
 
 class ProviderFormPage extends StatefulWidget {
   final Proveedor? proveedor;
@@ -76,7 +77,6 @@ class _ProviderFormPageState extends State<ProviderFormPage> {
           proveedorFinal = await ApiService.updateProveedor(proveedorData);
         }
 
-        final negocioId = 1; // ID fijo de pruebas, hasta tener login
 
         for (var dia in _diasReparto) {
           final nuevoDia = DiaReparto(
@@ -84,7 +84,7 @@ class _ProviderFormPageState extends State<ProviderFormPage> {
             diaSemana: dia.diaSemana,
             descripcion: dia.descripcion,
             proveedorId: proveedorFinal.id!,
-            negocioId: negocioId,
+            negocioId: int.parse(SessionManager.negocioId!),
           );
 
           if (dia.id == 0) {
