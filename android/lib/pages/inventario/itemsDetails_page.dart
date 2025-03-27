@@ -1,28 +1,35 @@
-import 'package:android/models/producto_inventario.dart';
-import 'package:android/pages/notificaciones/notifications_page.dart';
-import 'package:android/services/service_inventory.dart';
 import 'package:flutter/material.dart';
+import 'package:android/models/producto_inventario.dart';
+import 'package:android/services/service_inventory.dart';
+import 'package:android/pages/notificaciones/notifications_page.dart';
+import 'package:android/pages/user/user_profile.dart';
+import 'package:android/pages/login_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:android/models/lote.dart';
+import 'package:android/services/service_lote.dart';
+import 'package:android/pages/inventario/lote_detail_page.dart';
 
 class ItemDetailsPage extends StatefulWidget {
   final String itemName;
-  final String category; // Para íconos o navegación
+  final String category;
 
-  const ItemDetailsPage({super.key, required this.itemName, required this.category});
+  const ItemDetailsPage({
+    super.key,
+    required this.itemName,
+    required this.category,
+  });
 
   @override
-  _ItemDetailsPageState createState() => _ItemDetailsPageState();
+  State<ItemDetailsPage> createState() => _ItemDetailsPageState();
 }
 
 class _ItemDetailsPageState extends State<ItemDetailsPage> {
-  // Guardará el producto que cargamos
-  late Future<ProductoInventario?> _futureProduct;
+  Future<ProductoInventario?>? _futureProduct;
+  Future<List<Lote>>? _futureLotes; // 👈 AÑADE ESTO
+  List<Lote> _lotes = [];
+  int _currentLoteIndex = 0;
 
-  // Para la búsqueda
-  String? _searchQuery;
-
-  // Mapa de íconos (puedes actualizarlo según tus necesidades)
   final Map<String, IconData> categoryIcons = {
     'Verduras': FontAwesomeIcons.carrot,
     'Carnes': LineIcons.drumstickWithBiteTakenOut,
@@ -37,284 +44,340 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
   @override
   void initState() {
     super.initState();
-    _loadItem(); // Cargamos el producto según itemName
+    _loadProduct();
   }
 
-  // =====================================
-  // 1. Lógica de carga y búsqueda
-  // =====================================
-  void _loadItem() {
-    // Si _searchQuery está vacío, usamos widget.itemName (lo original)
-    // Si _searchQuery tiene algo, buscamos ese nuevo nombre
-    if (_searchQuery == null || _searchQuery!.isEmpty) {
-      _futureProduct = InventoryApiService.getProductoInventarioByName(widget.itemName);
-    } else {
-      // Aquí podrías usar un método que haga búsqueda parcial
-      // o primero obtener todos y filtrar en memoria
-      // Por simplicidad, llamamos al mismo getProductoInventarioByName
-      // y asumimos que el backend admite nombres parciales (o devuelva el primero que coincida)
-      _futureProduct = InventoryApiService.getProductoInventarioByName(_searchQuery!);
-    }
-  }
-
-  void _showSearchDialog() async {
-    String? query;
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
-            "Buscar Producto",
-            style: TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
-          ),
-          content: TextField(
-            decoration: InputDecoration(
-              hintText: "Ingresa parte del nombre",
-              hintStyle: TextStyle(color: const Color(0xFF9B1D42).withOpacity(0.6)),
-              enabledBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Color(0xFF9B1D42)),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Color(0xFF9B1D42), width: 2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            style: const TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
-            onChanged: (value) {
-              query = value.trim();
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancelar", style: TextStyle(color: Color(0xFF9B1D42))),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF9B1D42),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Buscar", style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
+  void _loadProduct() {
+    _futureProduct = InventoryApiService.getProductoInventarioByName(
+      widget.itemName,
     );
-
-    if ((query ?? '').isNotEmpty) {
-      setState(() {
-        _searchQuery = query;
-      });
-      _loadItem(); // Recargamos con la nueva búsqueda
-    }
-  }
-
-  void _clearSearch() {
-    setState(() {
-      _searchQuery = null;
-      _loadItem();
+    _futureProduct!.then((producto) {
+      if (producto != null) {
+        final future = LoteProductoService.getLotesByProductoId(producto.id);
+        setState(() {
+          _futureLotes = future;
+        });
+        future.then((data) {
+          setState(() {
+            _lotes = data;
+            _currentLoteIndex = 0;
+          });
+        });
+      }
     });
   }
 
-  // Diálogo para editar producto.
-  void _showEditDialog(ProductoInventario producto) {
-    final _nameController = TextEditingController(text: producto.name);
-    final _precioController = TextEditingController(text: producto.precioCompra.toString());
-    final _cantidadDeseadaController = TextEditingController(text: producto.cantidadDeseada.toString());
-    final _cantidadAvisoController = TextEditingController(text: producto.cantidadAviso.toString());
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Editar producto'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Nombre'),
-                ),
-                TextField(
-                  controller: _precioController,
-                  decoration: const InputDecoration(labelText: 'Precio Compra'),
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                ),
-                TextField(
-                  controller: _cantidadDeseadaController,
-                  decoration: const InputDecoration(labelText: 'Cantidad Deseada'),
-                  keyboardType: TextInputType.number,
-                ),
-                TextField(
-                  controller: _cantidadAvisoController,
-                  decoration: const InputDecoration(labelText: 'Cantidad Aviso'),
-                  keyboardType: TextInputType.number,
-                ),
-              ],
-            ),
+  Widget _build3DButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(3, 3)),
+          BoxShadow(color: Colors.white, blurRadius: 4, offset: Offset(-3, -3)),
+        ],
+        gradient: const LinearGradient(
+          colors: [Colors.white, Color(0xFFF5F5F5), Color(0xFFE0E0E0)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: const Color(0xFF9B1D42),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+            side: const BorderSide(color: Color(0xFF9B1D42), width: 2),
           ),
-          actions: [
-            TextButton(
-              child: const Text('Cancelar'),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            ElevatedButton(
-              child: const Text('Guardar'),
-              onPressed: () async {
-                // Crear un nuevo objeto actualizado, manteniendo la categoría actual.
-                final updatedProduct = ProductoInventario(
-                  id: producto.id,
-                  name: _nameController.text,
-                  categoria: producto.categoria,
-                  precioCompra: double.tryParse(_precioController.text) ?? producto.precioCompra,
-                  cantidadDeseada: int.tryParse(_cantidadDeseadaController.text) ?? producto.cantidadDeseada,
-                  cantidadAviso: int.tryParse(_cantidadAvisoController.text) ?? producto.cantidadAviso,
-                );
-                try {
-                  await InventoryApiService.updateProductoInventario(updatedProduct);
-                  Navigator.pop(context); // Cierra el diálogo
-                  setState(() {
-                    // Refresca para mostrar los datos actualizados.
-                    _futureProduct = InventoryApiService.getProductoInventarioByName(widget.itemName);
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Producto actualizado')));
-                } catch (e) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
-                }
-              },
-            ),
-          ],
-        );
-      },
+          elevation: 0,
+        ),
+        onPressed: onPressed,
+        icon: Icon(icon, size: 24, color: const Color(0xFF9B1D42)),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'TitanOne',
+            color: Color(0xFF9B1D42),
+          ),
+        ),
+      ),
     );
   }
 
-  // Función para eliminar el producto.
-  void _deleteProduct(ProductoInventario producto) {
-    showDialog(
+  Widget _buildEliminarButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(3, 3)),
+          BoxShadow(color: Colors.white, blurRadius: 4, offset: Offset(-3, -3)),
+        ],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF9B1D42), Color(0xFF7B1533)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+            side: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+          ),
+          elevation: 0,
+        ),
+        onPressed: onPressed,
+        icon: const Icon(Icons.delete, size: 24, color: Colors.white),
+        label: const Text(
+          "Eliminar",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'TitanOne',
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _editProduct(ProductoInventario producto) async {
+    final nameController = TextEditingController(text: producto.name);
+    final precioController = TextEditingController(
+      text: producto.precioCompra.toString(),
+    );
+    final deseadaController = TextEditingController(
+      text: producto.cantidadDeseada.toString(),
+    );
+    final avisoController = TextEditingController(
+      text: producto.cantidadAviso.toString(),
+    );
+
+    await showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Eliminar producto'),
-          content: const Text('¿Estás seguro de eliminar este producto?'),
-          actions: [
-            TextButton(
-              child: const Text('Cancelar'),
-              onPressed: () {
-                Navigator.pop(context);
-              },
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Editar producto'),
+            content: SingleChildScrollView(
+              child: Column(
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Nombre'),
+                  ),
+                  TextField(
+                    controller: precioController,
+                    decoration: const InputDecoration(
+                      labelText: 'Precio Compra',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  TextField(
+                    controller: deseadaController,
+                    decoration: const InputDecoration(
+                      labelText: 'Cantidad Deseada',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  TextField(
+                    controller: avisoController,
+                    decoration: const InputDecoration(
+                      labelText: 'Cantidad Aviso',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
+              ),
             ),
-            ElevatedButton(
-              child: const Text('Eliminar'),
-              onPressed: () async {
-                try {
-                  await InventoryApiService.deleteProductoInventario(producto.id);
-                  Navigator.pop(context); // Cierra el diálogo
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Producto eliminado')));
-                  Navigator.pop(context); // Vuelve a la pantalla anterior
-                } catch (e) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al eliminar: $e')));
-                }
-              },
-            ),
-          ],
-        );
-      },
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final updated = ProductoInventario(
+                    id: producto.id,
+                    name: nameController.text,
+                    categoria:
+                        producto
+                            .categoria, // Asegúrate de que tenga al menos el .id
+                    precioCompra:
+                        double.tryParse(precioController.text) ??
+                        producto.precioCompra,
+                    cantidadDeseada:
+                        int.tryParse(deseadaController.text) ??
+                        producto.cantidadDeseada,
+                    cantidadAviso:
+                        int.tryParse(avisoController.text) ??
+                        producto.cantidadAviso,
+                  );
+
+                  try {
+                    await InventoryApiService.updateProductoInventario(updated);
+                    Navigator.pop(context);
+
+                    await Future.delayed(const Duration(milliseconds: 300));
+
+                    setState(() {
+                      _futureProduct =
+                          InventoryApiService.getProductoInventarioById(
+                            updated.id,
+                          );
+                    });
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                          'Producto actualizado correctamente',
+                        ),
+                        backgroundColor: Colors.green[700],
+                      ),
+                    );
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error al actualizar: $e')),
+                    );
+                  }
+                },
+                child: const Text('Guardar'),
+              ),
+            ],
+          ),
     );
   }
 
-   TextStyle _textStyle() {
-    return const TextStyle(
-      color: Colors.white,
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
+  void _deleteProduct(int id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Eliminar producto'),
+            content: const Text(
+              '¿Estás seguro de que quieres eliminar este producto?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Eliminar'),
+              ),
+            ],
+          ),
     );
+
+    if (confirm == true) {
+      await InventoryApiService.deleteProductoInventario(id);
+
+      // Cerrar diálogo y salir de la pantalla
+      Navigator.pop(context); // cierra diálogo
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Producto eliminado correctamente')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.grey[200],
-        elevation: 0,
-        leading: IconButton(
-          icon: Image.asset('assets/logo.png', fit: BoxFit.contain),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            iconSize: 48,
-            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NotificationsPage()),
-              );
-            },
-          ),
-          IconButton(
-            iconSize: 48,
-            icon: const Icon(Icons.person, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
-      ),
+      backgroundColor: Colors.grey[100],
       body: Column(
         children: [
-          // Título y Botón de Buscar
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                const Text(
-                  'DETALLE PRODUCTO',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 3,
-                    fontFamily: 'PermanentMarker',
-                  ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 5,
+                  offset: Offset(0, 3),
                 ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF9B1D42),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: _showSearchDialog,
-                  icon: const Icon(Icons.search),
-                  label: const Text("Buscar"),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Image.asset('assets/logo.png', height: 62),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(
+                        Icons.notifications,
+                        color: Colors.black,
+                      ),
+                      onPressed:
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const NotificationsPage(),
+                            ),
+                          ),
+                    ),
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(Icons.person, color: Colors.black),
+                      onPressed:
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const UserProfilePage(),
+                            ),
+                          ),
+                    ),
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(Icons.logout, color: Colors.black),
+                      onPressed:
+                          () => Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LoginPage(),
+                            ),
+                          ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-
-          // Si hay una búsqueda, mostramos el Chip
-          if (_searchQuery != null && _searchQuery!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              child: Chip(
-                backgroundColor: const Color(0xFF9B1D42).withOpacity(0.2),
-                label: Text(
-                  "Búsqueda: $_searchQuery",
-                  style: const TextStyle(color: Color(0xFF9B1D42), fontWeight: FontWeight.bold),
-                ),
-                deleteIcon: const Icon(Icons.close, color: Color(0xFF9B1D42)),
-                onDeleted: _clearSearch,
-              ),
+          const SizedBox(height: 20),
+          const Text(
+            'DETALLE PRODUCTO',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 3,
+              fontFamily: 'PermanentMarker',
+              color: Color.fromARGB(255, 0, 0, 0),
             ),
-
-          // Expandimos para mostrar el FutureBuilder
+          ),
+          const SizedBox(height: 20),
           Expanded(
             child: FutureBuilder<ProductoInventario?>(
               future: _futureProduct,
@@ -325,102 +388,226 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data == null) {
                   return const Center(child: Text('Producto no encontrado'));
-                } else {
-                  final producto = snapshot.data!;
-                  final iconData = categoryIcons[producto.categoria.name] ?? Icons.category;
-                  return _buildProductDetails(producto, iconData);
                 }
+                final producto = snapshot.data!;
+                final icon =
+                    categoryIcons[producto.categoria.name] ?? Icons.inventory_2;
+                return Center(
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.85,
+                    padding: const EdgeInsets.all(20),
+                    margin: const EdgeInsets.only(bottom: 30),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 6,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(icon, size: 100, color: const Color(0xFF9B1D42)),
+                        const SizedBox(height: 20),
+                        Text(
+                          producto.name.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF9B1D42),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Categoría: ${producto.categoria.name}',
+                          style: const TextStyle(fontSize: 22),
+                        ),
+                        Text(
+                          'Precio compra: €${producto.precioCompra.toStringAsFixed(2)}',
+                          style: const TextStyle(fontSize: 22),
+                        ),
+                        Text(
+                          'Cantidad deseada: ${producto.cantidadDeseada}',
+                          style: const TextStyle(fontSize: 22),
+                        ),
+                        Text(
+                          'Cantidad aviso: ${producto.cantidadAviso}',
+                          style: const TextStyle(fontSize: 22),
+                        ),
+                        const SizedBox(height: 30),
+                        const Text(
+                          "Lotes",
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF9B1D42),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        FutureBuilder<List<Lote>>(
+                          future: _futureLotes,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const CircularProgressIndicator();
+                            } else if (snapshot.hasError) {
+                              return Text(
+                                "Error al cargar lotes: ${snapshot.error}",
+                              );
+                            } else if (!snapshot.hasData ||
+                                snapshot.data!.isEmpty) {
+                              return const Text(
+                                "No hay lotes registrados para este producto",
+                              );
+                            }
+
+                            final lotes = snapshot.data!;
+                            final cantidadTotal = lotes.fold<int>(
+                              0,
+                              (sum, lote) => sum + lote.cantidad,
+                            );
+
+                            // Control de índice por fuera
+                            final lote = lotes[_currentLoteIndex];
+
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "Cantidad total: $cantidadTotal",
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF9B1D42),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 10),
+                                GestureDetector(
+                                  onTap: () async {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) => LoteDetailPage(lote: lote),
+                                      ),
+                                    );
+
+                                    // Cuando vuelve, recarga los lotes y ajusta el índice
+                                    final nuevosLotes =
+                                        await LoteProductoService.getLotesByProductoId(
+                                          producto.id,
+                                        );
+                                    setState(() {
+                                      _lotes = nuevosLotes;
+                                      _futureLotes = Future.value(nuevosLotes);
+                                      if (_currentLoteIndex >=
+                                          nuevosLotes.length) {
+                                        _currentLoteIndex =
+                                            nuevosLotes.isEmpty
+                                                ? 0
+                                                : nuevosLotes.length - 1;
+                                      }
+                                    });
+                                  },
+
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          "Cantidad: ${lote.cantidad}",
+                                          style: const TextStyle(fontSize: 18),
+                                        ),
+                                        Text(
+                                          "Caduca: ${lote.fechaCaducidad.toLocal().toString().split(' ')[0]}",
+                                          style: const TextStyle(fontSize: 18),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.arrow_left,
+                                        size: 30,
+                                      ),
+                                      onPressed:
+                                          _currentLoteIndex > 0
+                                              ? () => setState(() {
+                                                _currentLoteIndex--;
+                                              })
+                                              : null,
+                                    ),
+                                    Text(
+                                      "Lote ${_currentLoteIndex + 1} de ${lotes.length}",
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.arrow_right,
+                                        size: 30,
+                                      ),
+                                      onPressed:
+                                          _currentLoteIndex < lotes.length - 1
+                                              ? () => setState(() {
+                                                _currentLoteIndex++;
+                                              })
+                                              : null,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 30),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _build3DButton(
+                              label: "Editar",
+                              icon: Icons.edit,
+                              onPressed: () => _editProduct(producto),
+                            ),
+                            const SizedBox(width: 16),
+                            _buildEliminarButton(
+                              label: "Eliminar",
+                              icon: Icons.delete,
+                              onPressed: () => _deleteProduct(producto.id),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               },
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildProductDetails(ProductoInventario producto, IconData iconData) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(15.0),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                width: double.infinity,
-                constraints: const BoxConstraints(minHeight: 400),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 167, 45, 77),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(iconData, size: 100, color: Colors.white),
-                    const SizedBox(height: 20),
-                    Text('Nombre: ${producto.name}', style: _textStyle()),
-                    Text('Categoría: ${producto.categoria.name}', style: _textStyle()),
-                    Text('Precio Compra: ${producto.precioCompra}', style: _textStyle()),
-                    Text('Cantidad Deseada: ${producto.cantidadDeseada}', style: _textStyle()),
-                    Text('Cantidad Aviso: ${producto.cantidadAviso}', style: _textStyle()),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () => _showEditDialog(producto),
-                    icon: const Icon(Icons.edit),
-                    label: const Text("Editar"),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () => _deleteProduct(producto),
-                    icon: const Icon(Icons.delete),
-                    label: const Text("Eliminar"),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                icon: const Icon(Icons.arrow_back),
-                label: const Text("Volver"),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

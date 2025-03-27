@@ -86,7 +86,7 @@ class InventoryApiService {
       body: jsonEncode(producto.toJson()),
     );
 
-    if (response.statusCode != 204) { // Según el controller devuelve NO_CONTENT
+    if (response.statusCode != 200) { // Según el controller devuelve NO_CONTENT
       throw Exception('Error al actualizar el producto de inventario');
     }
   }
