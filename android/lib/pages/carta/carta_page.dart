@@ -71,16 +71,71 @@ class _CartaPageState extends State<CartaPage> {
     );
   }
 
-  Future<void> _eliminarCategoria(Categoria categoria) async {
-  try {
-  setState(() {
-    _categorias = Future.value([]); // Limpia la lista temporalmente
-  });
+  void _mostrarDialogoEditarCategoria(Categoria categoria) {
+    final TextEditingController _nombreController = TextEditingController(text: categoria.name);
 
-  await CategoryApiService.deleteCategory(categoria.id.toString());
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Editar categoría"),
+          content: TextField(
+            controller: _nombreController,
+            decoration: const InputDecoration(labelText: "Nuevo nombre"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final nuevoNombre = _nombreController.text.trim().toUpperCase();
+                if (nuevoNombre.isEmpty || nuevoNombre == categoria.name) return;
+
+                try {
+                  await CategoryApiService.updateCategory(
+                    categoria.id,
+                    {
+                      "id": categoria.id,
+                      "name": nuevoNombre,
+                      "negocio": {"id": negocioId},
+                      "pertenece": categoria.pertenece,
+                    },
+                  );
+
+                  Navigator.pop(context);
+                  setState(() {
+                    _categorias = CategoryApiService.getCategoriesByNegocioIdVenta(negocioId);
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Categoría actualizada correctamente")),
+                  );
+                } catch (e) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error al actualizar categoría: $e")),
+                  );
+                }
+              },
+              child: const Text("Guardar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _eliminarCategoria(Categoria categoria) async {
+    try {
+      setState(() {
+        _categorias = Future.value([]);
+      });
+
+      await CategoryApiService.deleteCategory(categoria.id.toString());
 
       setState(() {
-        _categorias = CategoryApiService.getCategoriesByNegocioIdVenta(negocioId); 
+        _categorias = CategoryApiService.getCategoriesByNegocioIdVenta(negocioId);
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -223,16 +278,16 @@ class _CartaPageState extends State<CartaPage> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                               Image.asset(
-                                'assets/icons/${cat.name.toLowerCase()}.png',
-                                height: 40,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Image.asset(
-                                    'assets/logo.png', // 👈 icono por defecto
-                                    height: 40,
-                                  );
-                                },
-                              ),
+                                Image.asset(
+                                  'assets/icons/${cat.name.toLowerCase()}.png',
+                                  height: 40,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Image.asset(
+                                      'assets/logo.png',
+                                      height: 40,
+                                    );
+                                  },
+                                ),
                                 const SizedBox(width: 15),
                                 Expanded(
                                   child: Text(
@@ -240,9 +295,18 @@ class _CartaPageState extends State<CartaPage> {
                                     style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.white),
-                                  onPressed: () => _eliminarCategoria(cat),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, color: Colors.white),
+                                      onPressed: () => _mostrarDialogoEditarCategoria(cat),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, color: Colors.white),
+                                      onPressed: () => _eliminarCategoria(cat),
+                                    ),
+                                  ],
                                 )
                               ],
                             ),
