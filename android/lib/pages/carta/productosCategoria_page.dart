@@ -3,6 +3,7 @@ import 'package:android/models/producto_venta.dart';
 import 'package:android/services/service_carta.dart';
 import 'package:android/pages/carta/editProductoVenta_page.dart';
 import 'package:android/models/categoria.dart';
+import 'package:android/models/session_manager.dart';
 
 class ProductosPorCategoriaPage extends StatefulWidget {
   final Categoria categoria;
@@ -19,12 +20,24 @@ class _ProductosPorCategoriaPageState extends State<ProductosPorCategoriaPage> {
   @override
   void initState() {
     super.initState();
-    _futureProductos = ProductoVentaService().getProductosByCategoriaNombre(widget.categoria.name);
+    _cargarProductosFiltrados();
   }
+
+void _cargarProductosFiltrados() {
+  final categoriaId = widget.categoria.id;
+
+  _futureProductos = ProductoVentaService()
+      .getProductosByCategoriaNombre(widget.categoria.name)
+      .then((productos) {
+    return productos
+.where((p) => p.categoria.id.toString() == categoriaId.toString())
+        .toList();
+  });
+}
 
   void _refrescar() {
     setState(() {
-      _futureProductos = ProductoVentaService().getProductosByCategoriaNombre(widget.categoria.name);
+      _cargarProductosFiltrados();
     });
   }
 
@@ -105,7 +118,10 @@ class _ProductosPorCategoriaPageState extends State<ProductosPorCategoriaPage> {
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => EditProductoVentaPage(producto: nuevoProducto, isCreating: true),
+              builder: (context) => EditProductoVentaPage(
+                producto: nuevoProducto,
+                isCreating: true,
+              ),
             ),
           );
 

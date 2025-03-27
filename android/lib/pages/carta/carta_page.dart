@@ -1,3 +1,4 @@
+import 'package:android/models/session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:android/models/categoria.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
@@ -13,7 +14,8 @@ class CartaPage extends StatefulWidget {
 
 class _CartaPageState extends State<CartaPage> {
   late Future<List<Categoria>> _categorias;
-  final String negocioId = "1";
+  final String negocioId = SessionManager.negocioId!;
+
 
   @override
   void initState() {
