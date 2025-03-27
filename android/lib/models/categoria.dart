@@ -15,8 +15,8 @@ class Categoria {
     return Categoria(
       id: json['id'].toString(),
       name: json['name'] ?? '',
-      pertenece: json['pertenece'] ?? '',
       negocioId: json['negocio']?['id']?.toString() ?? '', // 👈 Lo extraemos del JSON anidado
+      pertenece: json['pertenece']?.toString() ?? '', // 👈 Aquí lo traes del backend
     );
   }
 
