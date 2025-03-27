@@ -8,6 +8,7 @@ import 'package:android/pages/empleados/add_employee_page.dart';
 import 'package:android/pages/user/user_profile.dart';
 import 'package:android/pages/login/login_page.dart';
 import 'package:android/pages/home_page.dart';
+import 'package:android/models/session_manager.dart';
 
 class EmployeesPage extends StatefulWidget {
   const EmployeesPage({Key? key}) : super(key: key);
@@ -22,7 +23,6 @@ class _EmployeesPageState extends State<EmployeesPage> {
   String? _busquedaActiva;
   String? _tipoBusqueda;
 
-
   @override
   void initState() {
     super.initState();
@@ -31,112 +31,138 @@ class _EmployeesPageState extends State<EmployeesPage> {
 
   void _refreshEmployees() {
     setState(() {
-      _empleadosFuture = EmpleadoService.getAllEmpleados();
+      final negocioId = int.parse(SessionManager.negocioId!);
+
+      _empleadosFuture = EmpleadoService.getAllEmpleados().then(
+        (lista) => lista.where((e) => e.negocio?.id == negocioId).toList(),
+      );
     });
   }
 
   void _showSearchDialog() async {
-  String query = '';
-  String tipoBusqueda = 'Nombre';
-  final opcionesBusqueda = ['Nombre', 'Apellido'];
+    String query = '';
+    String tipoBusqueda = 'Nombre';
+    final opcionesBusqueda = ['Nombre', 'Apellido'];
 
-  await showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          "Buscar Empleado",
-          style: TextStyle(
-            color: Color(0xFF9B1D42),
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField<String>(
-              value: tipoBusqueda,
-              items: opcionesBusqueda.map((String opcion) {
-                return DropdownMenuItem<String>(
-                  value: opcion,
-                  child: Text(opcion),
-                );
-              }).toList(),
-              onChanged: (value) {
-                tipoBusqueda = value!;
-              },
-              decoration: const InputDecoration(
-                labelText: "Buscar por",
-                labelStyle: TextStyle(color: Color(0xFF9B1D42)),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF9B1D42)),
+          title: const Text(
+            "Buscar Empleado",
+            style: TextStyle(
+              color: Color(0xFF9B1D42),
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: tipoBusqueda,
+                items:
+                    opcionesBusqueda.map((String opcion) {
+                      return DropdownMenuItem<String>(
+                        value: opcion,
+                        child: Text(opcion),
+                      );
+                    }).toList(),
+                onChanged: (value) {
+                  tipoBusqueda = value!;
+                },
+                decoration: const InputDecoration(
+                  labelText: "Buscar por",
+                  labelStyle: TextStyle(color: Color(0xFF9B1D42)),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF9B1D42)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF9B1D42), width: 2),
+                  ),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF9B1D42), width: 2),
+              ),
+              const SizedBox(height: 15),
+              TextField(
+                decoration: InputDecoration(
+                  hintText: "Ingresa valor",
+                  hintStyle: TextStyle(
+                    color: const Color(0xFF9B1D42).withOpacity(0.6),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFF9B1D42)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(
+                      color: Color(0xFF9B1D42),
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
+                style: const TextStyle(
+                  color: Color(0xFF9B1D42),
+                  fontWeight: FontWeight.bold,
+                ),
+                onChanged: (value) => query = value,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                "Cancelar",
+                style: TextStyle(color: Color(0xFF9B1D42)),
               ),
             ),
-            const SizedBox(height: 15),
-            TextField(
-              decoration: InputDecoration(
-                hintText: "Ingresa valor",
-                hintStyle: TextStyle(color: const Color(0xFF9B1D42).withOpacity(0.6)),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFF9B1D42)),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF9B1D42),
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              style: const TextStyle(
-                color: Color(0xFF9B1D42),
-                fontWeight: FontWeight.bold,
+              onPressed: () async {
+                Navigator.pop(context);
+                await _buscarEmpleado(tipoBusqueda, query);
+              },
+              child: const Text(
+                "Buscar",
+                style: TextStyle(color: Colors.white),
               ),
-              onChanged: (value) => query = value,
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar", style: TextStyle(color: Color(0xFF9B1D42))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF9B1D42),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () async {
-              Navigator.pop(context);
-              await _buscarEmpleado(tipoBusqueda, query);
-            },
-            child: const Text("Buscar", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
-Future<void> _buscarEmpleado(String tipo, String query) async {
+  Future<void> _buscarEmpleado(String tipo, String query) async {
   try {
     _busquedaActiva = query;
     _tipoBusqueda = tipo;
 
+    final negocioId = int.parse(SessionManager.negocioId!);
+
     switch (tipo) {
       case 'Nombre':
         setState(() {
-          _empleadosFuture = EmpleadoService.getEmpleadosByNombre(query);
+          _empleadosFuture = EmpleadoService.getEmpleadosByNombre(query).then(
+            (lista) => lista.where((e) => e.negocio?.id == negocioId).toList(),
+          );
         });
         break;
       case 'Apellido':
         setState(() {
-          _empleadosFuture = EmpleadoService.getEmpleadosByApellido(query);
+          _empleadosFuture = EmpleadoService.getEmpleadosByApellido(query).then(
+            (lista) => lista.where((e) => e.negocio?.id == negocioId).toList(),
+          );
         });
         break;
     }
@@ -147,172 +173,209 @@ Future<void> _buscarEmpleado(String tipo, String query) async {
 
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: Colors.grey[100],
-    body: Column(
-      children: [
-        // Encabezado
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 3))],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const HomePage()));
-                },
-                child: Image.asset('assets/logo.png', height: 62),
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    iconSize: 48,
-                    icon: const Icon(Icons.notifications, color: Colors.black),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsPage()));
-                    },
-                  ),
-                  IconButton(
-                    iconSize: 48,
-                    icon: const Icon(Icons.person, color: Colors.black),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const UserProfilePage()));
-                    },
-                  ),
-                  IconButton(
-                    iconSize: 48,
-                    icon: const Icon(Icons.logout, color: Colors.black),
-                    onPressed: () {
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        const Padding(
-          padding: EdgeInsets.only(top: 20.0),
-          child: Text(
-            'EMPLEADOS',
-            style: TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 3,
-              fontFamily: 'PermanentMarker',
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      body: Column(
+        children: [
+          // Encabezado
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 5,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HomePage()),
+                    );
+                  },
+                  child: Image.asset('assets/logo.png', height: 62),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(
+                        Icons.notifications,
+                        color: Colors.black,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationsPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(Icons.person, color: Colors.black),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const UserProfilePage(),
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      iconSize: 48,
+                      icon: const Icon(Icons.logout, color: Colors.black),
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginPage(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ),
 
-        const SizedBox(height: 10),
-
-        // Botón de buscar
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 60.0),
-          child: SizedBox(
-            width: double.infinity,
-            child: _build3DActionButton(
-              icon: Icons.search,
-              label: "Buscar",
-              onPressed: _showSearchDialog,
+          const Padding(
+            padding: EdgeInsets.only(top: 20.0),
+            child: Text(
+              'EMPLEADOS',
+              style: TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 3,
+                fontFamily: 'PermanentMarker',
+              ),
             ),
           ),
-        ),
 
-        const SizedBox(height: 20),
+          const SizedBox(height: 10),
 
-        // Chip + Empleados
-        Expanded(
-          child: Column(
-            children: [
-              if (_busquedaActiva != null)
-  Padding(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    child: Chip(
-      backgroundColor: const Color(0xFF9B1D42).withOpacity(0.2),
-      label: Text(
-        'Búsqueda: $_busquedaActiva',
-        style: const TextStyle(
-          color: Color(0xFF9B1D42),
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      deleteIcon: const Icon(Icons.close, color: Color(0xFF9B1D42)),
-      onDeleted: () {
-        setState(() {
-          _busquedaActiva = null;
-          _tipoBusqueda = null;
-          _refreshEmployees();
-        });
-      },
-    ),
-  ),
+          // Botón de buscar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 60.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: _build3DActionButton(
+                icon: Icons.search,
+                label: "Buscar",
+                onPressed: _showSearchDialog,
+              ),
+            ),
+          ),
 
-              Expanded(
-                child: FutureBuilder<List<Empleado>>(
-                  future: _empleadosFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    }
+          const SizedBox(height: 20),
 
-                    final empleados = snapshot.data ?? [];
-                    if (empleados.isEmpty) {
-                      return const Center(
-                        child: Text("No hay empleados", style: TextStyle(fontSize: 20, color: Colors.black54)),
-                      );
-                    }
+          // Chip + Empleados
+          Expanded(
+            child: Column(
+              children: [
+                if (_busquedaActiva != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Chip(
+                      backgroundColor: const Color(0xFF9B1D42).withOpacity(0.2),
+                      label: Text(
+                        'Búsqueda: $_busquedaActiva',
+                        style: const TextStyle(
+                          color: Color(0xFF9B1D42),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      deleteIcon: const Icon(
+                        Icons.close,
+                        color: Color(0xFF9B1D42),
+                      ),
+                      onDeleted: () {
+                        setState(() {
+                          _busquedaActiva = null;
+                          _tipoBusqueda = null;
+                          _refreshEmployees();
+                        });
+                      },
+                    ),
+                  ),
 
-                    return empleados.length == 1
-                        ? Center(child: _buildEmployeeCard(empleados.first))
-                        : CardSwiper(
+                Expanded(
+                  child: FutureBuilder<List<Empleado>>(
+                    future: _empleadosFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      }
+
+                      final empleados = snapshot.data ?? [];
+                      if (empleados.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            "No hay empleados",
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        );
+                      }
+
+                      return empleados.length == 1
+                          ? Center(child: _buildEmployeeCard(empleados.first))
+                          : CardSwiper(
                             cardsCount: empleados.length,
                             onSwipe: (prev, curr, dir) => true,
                             cardBuilder: (context, index, _, __) {
                               return _buildEmployeeCard(empleados[index]);
                             },
                           );
-                  },
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-
-        // Botón de añadir
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 60.0, vertical: 20),
-          child: SizedBox(
-            width: double.infinity,
-            child: _build3DActionButton(
-              icon: Icons.add,
-              label: "Añadir",
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AddEmployeePage()),
-                );
-                if (result != null) {
-                  _refreshEmployees();
-                }
-              },
+              ],
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
 
+          // Botón de añadir
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 60.0, vertical: 20),
+            child: SizedBox(
+              width: double.infinity,
+              child: _build3DActionButton(
+                icon: Icons.add,
+                label: "Añadir",
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddEmployeePage(),
+                    ),
+                  );
+                  if (result != null) {
+                    _refreshEmployees();
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildEmployeeCard(Empleado employee) {
     return Center(
@@ -354,17 +417,11 @@ Widget build(BuildContext context) {
             ),
             Text(
               employee.descripcion ?? '',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 24),
               textAlign: TextAlign.center,
             ),
             DefaultTextStyle.merge(
-              style: const TextStyle(
-                color: Color(0xFF9B1D42),
-                fontSize: 18,
-              ),
+              style: const TextStyle(color: Color(0xFF9B1D42), fontSize: 18),
               child: _buildFlatWhiteButton(
                 icon: Icons.visibility,
                 label: "Ver",
@@ -373,7 +430,9 @@ Widget build(BuildContext context) {
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => EmployeeDetailPage(employeeId: employee.id!),
+                        builder:
+                            (context) =>
+                                EmployeeDetailPage(employeeId: employee.id!),
                       ),
                     );
                     if (result == true) {
@@ -451,7 +510,11 @@ Widget build(BuildContext context) {
             fontFamily: 'TitanOne',
             color: Color(0xFF9B1D42),
             shadows: [
-              Shadow(offset: Offset(1, 1), blurRadius: 2, color: Colors.black12),
+              Shadow(
+                offset: Offset(1, 1),
+                blurRadius: 2,
+                color: Colors.black12,
+              ),
             ],
           ),
         ),

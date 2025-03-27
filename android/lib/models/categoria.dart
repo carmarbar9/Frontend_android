@@ -13,7 +13,7 @@ class Categoria {
     return Categoria(
       id: json['id'].toString(),
       name: json['name'] ?? '',
-      pertenece: json['pertenece'] ?? '', // 👈 Aquí lo traes del backend
+      pertenece: json['pertenece']?.toString() ?? '', // 👈 Aquí lo traes del backend
     );
   }
 
