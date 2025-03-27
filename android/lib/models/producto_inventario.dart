@@ -28,6 +28,7 @@ class ProductoInventario {
         id: json['categoria'].toString(),
         name: '',
         pertenece: '',
+        negocioId: ''
       );
     }
 
