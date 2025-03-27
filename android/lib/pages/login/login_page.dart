@@ -1,12 +1,14 @@
+import 'package:android/pages/login/elegirNegocio_page.dart';
 import 'package:flutter/material.dart';
 import 'package:android/pages/home_page.dart';
 import 'package:android/pages/home_page_empleado.dart';
 import 'package:android/services/service_login.dart';
 import 'package:android/models/session_manager.dart';
+import 'package:android/models/user.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
-  
+
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -18,65 +20,66 @@ class _LoginPageState extends State<LoginPage> {
   String _password = '';
   bool _isLoading = false;
 
-  // Función de login: siempre navega a HomePage, independientemente del resultado.
   void _login() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      setState(() => _isLoading = true);
+  if (_formKey.currentState!.validate()) {
+    _formKey.currentState!.save();
+    setState(() => _isLoading = true);
 
-      try {
-        // Intentamos realizar el login (aunque el resultado no se utiliza)
-        // Aquí, tras el login, supongamos que obtienes el negocioId del backend.
-        // Por ejemplo:
-        final negocioIdObtenido = await ApiService.login(_username, _password);
-        // Si ApiService.login devuelve el id del negocio, lo asignamos a SessionManager.
-        // En este ejemplo, si no lo devuelve, lo asignamos de forma manual.
-        SessionManager.negocioId = negocioIdObtenido ?? '1';
-      } catch (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $error')),
-        );
-      } finally {
-        setState(() => _isLoading = false);
-        // Navegamos a HomePage (que luego usará SessionManager.negocioId para pasar a InventoryPage)
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
+    try {
+      final user = await ApiService.fetchUser(_username, _password);
+      if (user == null) {
+        throw 'Usuario o contraseña incorrectos';
       }
+
+      // Debug
+      print('Usuario logueado: ${user.username}');
+      print('Authority cruda: ${user.authority?.authority}');
+
+      final rawAuthority = user.authority?.authority?.toLowerCase();
+
+      // Solución temporal: corregir error de codificación
+      final authority = (rawAuthority == 'dueã±o') ? 'dueño' : rawAuthority;
+
+      print('Authority corregida: $authority');
+
+      SessionManager.clear();
+
+      if (authority == 'dueño') {
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => ElegirNegocioPage(user: user)),
+  );
+} else if (authority == 'encargado' || authority == 'camarero') {
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => HomePageEmpleado(user: user)),
+  );
+} else {
+  throw 'Rol no reconocido';
+}
+
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $error')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
+}
 
-  // Navega a la pantalla de registro
+
   void _navigateToRegister() {
     // Lógica para registro
   }
-  
-  // Navega a la pantalla de recuperación de contraseña
+
   void _navigateToForgotPassword() {
     // Lógica para recuperación de contraseña
-  }
-
-  // Botón "Dueño": navega a HomePage
-  void _goToHomePageDueno() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const HomePage()),
-    );
-  }
-
-  // Botón "Empleado": navega a HomePageEmpleado
-  void _goToHomePageEmpleado() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const HomePageEmpleado()),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Fondo blanco y diseño limpio
       backgroundColor: Colors.white,
       body: Center(
         child: SingleChildScrollView(
@@ -85,10 +88,8 @@ class _LoginPageState extends State<LoginPage> {
             key: _formKey,
             child: Column(
               children: [
-                // Logo
                 Image.asset('assets/logo.png', height: 100),
                 const SizedBox(height: 20),
-                // Título "GastroSTOCK" (con "STOCK" en negrita)
                 RichText(
                   text: const TextSpan(
                     children: [
@@ -111,7 +112,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // Subtítulo
                 const Text(
                   'Iniciar Sesión con Correo y Contraseña',
                   style: TextStyle(
@@ -120,7 +120,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                // Caja para el correo
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                   decoration: BoxDecoration(
@@ -144,7 +143,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Caja para la contraseña
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                   decoration: BoxDecoration(
@@ -169,7 +167,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Caja para el botón "Entrar"
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -203,7 +200,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                // Enlaces para recuperar contraseña y registrarse
                 GestureDetector(
                   onTap: _navigateToForgotPassword,
                   child: const Text(
@@ -220,7 +216,7 @@ class _LoginPageState extends State<LoginPage> {
                 GestureDetector(
                   onTap: _navigateToRegister,
                   child: const Text(
-                    '¿No tienes cuenta?\nREGISTRATE',
+                    '¿No tienes cuenta?\nREGÍSTRATE',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.black,
@@ -228,32 +224,6 @@ class _LoginPageState extends State<LoginPage> {
                       decoration: TextDecoration.underline,
                     ),
                   ),
-                ),
-                const SizedBox(height: 40),
-                // Botones "Dueño" y "Empleado"
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[800],
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      ),
-                      onPressed: _goToHomePageDueno,
-                      child: const Text('Dueño'),
-                    ),
-                    const SizedBox(width: 20),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[800],
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      ),
-                      onPressed: _goToHomePageEmpleado,
-                      child: const Text('Empleado'),
-                    ),
-                  ],
                 ),
               ],
             ),

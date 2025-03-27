@@ -1,13 +1,14 @@
+import 'package:android/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:android/models/mesa.dart';
 import 'package:android/services/service_mesa.dart';
-import 'package:android/pages/login_page.dart';
+import 'package:android/pages/login/login_page.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/pages/user/user_profile.dart';
 import 'package:android/pages/mesas/mesa_detail_page.dart'; // Asegúrate de que la ruta es correcta
 
 class HomePageEmpleado extends StatefulWidget {
-  const HomePageEmpleado({Key? key}) : super(key: key);
+  const HomePageEmpleado({Key? key, required User user}) : super(key: key);
 
   @override
   _HomePageEmpleadoState createState() => _HomePageEmpleadoState();

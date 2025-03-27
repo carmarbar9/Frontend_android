@@ -4,7 +4,7 @@ import 'package:android/models/proveedor.dart';
 import 'package:android/services/service_proveedores.dart';
 import 'package:android/pages/proveedores/provider_form_page.dart';
 import 'package:android/pages/user/user_profile.dart';
-import 'package:android/pages/login_page.dart';
+import 'package:android/pages/login/login_page.dart';
 import 'package:android/pages/home_page.dart';
 
 class ProvidersPage extends StatefulWidget {
