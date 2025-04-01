@@ -42,12 +42,12 @@ class UserProfileService {
     }
   }
 
-  /// Elimina el perfil (DELETE /api/duenos/{id})
-  Future<void> deleteUserProfile(int id) async {
-    final url = Uri.parse('$duenoApiUrl$id');
-    final response = await http.delete(url);
-    if (response.statusCode != 204) {
-      throw Exception('Error al eliminar perfil: ${response.statusCode}');
-    }
+  Future<bool> deleteUserProfile(int duenoId) async {
+    final url = 'http://10.0.2.2:8080/api/duenos/$duenoId';
+    final response = await http.delete(Uri.parse(url));
+    return response.statusCode == 200 || response.statusCode == 204;
   }
+
+
+
 }

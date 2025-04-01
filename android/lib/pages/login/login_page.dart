@@ -114,7 +114,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Iniciar Sesión con Correo y Contraseña',
+                  'Iniciar Sesión con Usuario y Contraseña',
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 16,
@@ -129,10 +129,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: TextFormField(
                     decoration: const InputDecoration(
-                      labelText: 'Correo',
-                      hintText: 'correo@correo.com',
+                      labelText: 'Usuario',
+                      hintText: 'Usuario',
                       border: InputBorder.none,
-                      icon: Icon(Icons.email),
+                      icon: Icon(Icons.person),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
