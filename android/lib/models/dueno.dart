@@ -1,7 +1,7 @@
 class Dueno {
   int? id;
   String? name; // Si en Person tienes nombre, lo incluyes aquí
-  String? tokenDueno; // Representa el tokenDueño del backend
+  String? tokenDueno; // Representa el tokenDueno del backend
 
   Dueno({
     this.id,
@@ -14,7 +14,7 @@ class Dueno {
     return Dueno(
       id: json['id'],
       name: json['name'],
-      tokenDueno: json['tokenDueño'] ?? json['tokenDueno'],
+      tokenDueno: json['tokenDueno'] ?? json['tokenDueno'],
     );
   }
 
@@ -23,7 +23,7 @@ class Dueno {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['id'] = id;
     data['name'] = name;
-    data['tokenDueño'] = tokenDueno;
+    data['tokenDueno'] = tokenDueno;
     return data;
   }
 }

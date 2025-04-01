@@ -7,7 +7,7 @@ class NegocioService {
   static const String _baseUrl = 'http://10.0.2.2:8080';
 
   static Future<List<Negocio>> getNegociosByDuenoId(int userId) async {
-    final url = Uri.parse('$_baseUrl/api/negocios/due%C3%B1o/$userId');
+    final url = Uri.parse('$_baseUrl/api/negocios/dueno/$userId');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {

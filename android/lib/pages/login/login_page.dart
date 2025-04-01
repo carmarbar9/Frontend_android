@@ -38,18 +38,18 @@ class _LoginPageState extends State<LoginPage> {
       final rawAuthority = user.authority?.authority?.toLowerCase();
 
       // Solución temporal: corregir error de codificación
-      final authority = (rawAuthority == 'dueã±o') ? 'dueño' : rawAuthority;
+      final authority = (rawAuthority == 'dueno') ? 'dueno' : rawAuthority;
 
       print('Authority corregida: $authority');
 
       SessionManager.clear();
 
-      if (authority == 'dueño') {
+      if (authority == 'dueno') {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(builder: (context) => ElegirNegocioPage(user: user)),
   );
-} else if (authority == 'encargado' || authority == 'camarero') {
+} else if (authority == 'empleado') {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(builder: (context) => HomePageEmpleado(user: user)),

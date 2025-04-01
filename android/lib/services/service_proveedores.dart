@@ -187,7 +187,6 @@ class ApiService {
       body: jsonEncode({
         "diaSemana": diaReparto.diaSemana,
         "descripcion": diaReparto.descripcion,
-        "negocio": {"id": diaReparto.negocioId}, // ajusta esto si lo necesitas dinámico
         "proveedor": {
           "id": diaReparto.proveedorId,
         }, // necesitas añadir esto al modelo
@@ -213,7 +212,6 @@ class ApiService {
         "id": id,
         "diaSemana": diaReparto.diaSemana,
         "descripcion": diaReparto.descripcion,
-        "negocio": {"id": diaReparto.negocioId}, // igual que arriba
         "proveedor": {"id": diaReparto.proveedorId},
       }),
     );
@@ -233,4 +231,19 @@ class ApiService {
       throw Exception("Error al eliminar día de reparto");
     }
   }
+
+  static Future<List<Proveedor>> getProveedoresByNegocio(int negocioId) async {
+  final url = Uri.parse('$_baseUrl/api/proveedores/negocio/$negocioId');
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final List<dynamic> jsonList = jsonDecode(response.body);
+    return jsonList.map((json) => Proveedor.fromJson(json)).toList();
+  } else if (response.statusCode == 404) {
+    return [];
+  } else {
+    throw Exception('Error al obtener proveedores del negocio');
+  }
+}
+
 }

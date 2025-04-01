@@ -7,6 +7,8 @@ import 'package:android/pages/proveedores/provider_form_page.dart';
 import 'package:android/pages/user/user_profile.dart';
 import 'package:android/pages/login/login_page.dart';
 import 'package:android/pages/home_page.dart';
+import 'package:android/models/session_manager.dart';
+
 
 class ProvidersPage extends StatefulWidget {
   const ProvidersPage({Key? key}) : super(key: key);
@@ -26,8 +28,19 @@ class _ProvidersPageState extends State<ProvidersPage> {
   }
 
   void _loadProveedores() {
-    _futureProveedores = ApiService.getProveedores();
+  final negocioIdStr = SessionManager.negocioId;
+  if (negocioIdStr != null) {
+    final negocioId = int.tryParse(negocioIdStr);
+    if (negocioId != null) {
+      _futureProveedores = ApiService.getProveedoresByNegocio(negocioId);
+    } else {
+      _futureProveedores = Future.value([]);
+    }
+  } else {
+    _futureProveedores = Future.value([]);
   }
+}
+
 
   void _navigateToAddProvider() async {
     final result = await Navigator.push(
