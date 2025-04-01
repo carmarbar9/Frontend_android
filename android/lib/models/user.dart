@@ -1,32 +1,72 @@
-// user.dart
-import 'authority.dart';
+// lib/models/user.dart
+
+class Authority {
+  final int id;
+  final String authority;
+
+  Authority({
+    required this.id,
+    required this.authority,
+  });
+
+  factory Authority.fromJson(Map<String, dynamic> json) {
+    return Authority(
+      id: json['id'],
+      authority: json['authority'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'authority': authority,
+    };
+  }
+}
 
 class User {
-  int? id;
-  String? username;
-  String? password;
-  Authority? authority;
+  final int id;
+  final String username;
+  final String password;
+  final Authority authority;
 
-  User({this.id, this.username, this.password, this.authority});
+  User({
+    required this.id,
+    required this.username,
+    required this.password,
+    required this.authority,
+  });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'],
       username: json['username'],
       password: json['password'],
-      authority:
-          json['authority'] != null ? Authority.fromJson(json['authority']) : null,
+      authority: Authority.fromJson(json['authority']),
     );
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
-    data['username'] = username;
-    data['password'] = password;
-    if (authority != null) {
-      data['authority'] = authority!.toJson();
-    }
-    return data;
+    return {
+      'id': id,
+      'username': username,
+      'password': password,
+      'authority': authority.toJson(),
+    };
+  }
+
+  /// Permite crear una copia del objeto actual, reemplazando las propiedades que se indiquen.
+  User copyWith({
+    int? id,
+    String? username,
+    String? password,
+    Authority? authority,
+  }) {
+    return User(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      password: password ?? this.password,
+      authority: authority ?? this.authority,
+    );
   }
 }

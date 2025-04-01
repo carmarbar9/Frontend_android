@@ -1,7 +1,8 @@
-import 'package:android/pages/login/elegirNegocio_page.dart';
+// lib/pages/login/login_page.dart
 import 'package:flutter/material.dart';
 import 'package:android/pages/home_page.dart';
 import 'package:android/pages/home_page_empleado.dart';
+import 'package:android/pages/login/elegirNegocio_page.dart';
 import 'package:android/services/service_login.dart';
 import 'package:android/models/session_manager.dart';
 import 'package:android/models/user.dart';
@@ -21,53 +22,53 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
   void _login() async {
-  if (_formKey.currentState!.validate()) {
-    _formKey.currentState!.save();
-    setState(() => _isLoading = true);
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      setState(() => _isLoading = true);
 
-    try {
-      final user = await ApiService.fetchUser(_username, _password);
-      if (user == null) {
-        throw 'Usuario o contraseña incorrectos';
+      try {
+        final user = await ApiService.fetchUser(_username, _password);
+        if (user == null) {
+          throw 'Usuario o contraseña incorrectos';
+        }
+
+        // Debug
+        print('Usuario logueado: ${user.username}');
+        print('Authority cruda: ${user.authority?.authority}');
+
+        final rawAuthority = user.authority?.authority?.toLowerCase();
+        final authority = (rawAuthority == 'dueno') ? 'dueno' : rawAuthority;
+
+        print('Authority corregida: $authority');
+
+        // Limpiar la sesión actual
+        SessionManager.clear();
+
+        if (authority == 'dueno') {
+          // Guardamos el ID y el username en la sesión
+          SessionManager.duenoId = user.id.toString();
+          SessionManager.username = user.username;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ElegirNegocioPage(user: user)),
+          );
+        } else if (authority == 'empleado') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomePageEmpleado(user: user)),
+          );
+        } else {
+          throw 'Rol no reconocido';
+        }
+      } catch (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $error')),
+        );
+      } finally {
+        setState(() => _isLoading = false);
       }
-
-      // Debug
-      print('Usuario logueado: ${user.username}');
-      print('Authority cruda: ${user.authority?.authority}');
-
-      final rawAuthority = user.authority?.authority?.toLowerCase();
-
-      // Solución temporal: corregir error de codificación
-      final authority = (rawAuthority == 'dueno') ? 'dueno' : rawAuthority;
-
-      print('Authority corregida: $authority');
-
-      SessionManager.clear();
-
-      if (authority == 'dueno') {
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => ElegirNegocioPage(user: user)),
-  );
-} else if (authority == 'empleado') {
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => HomePageEmpleado(user: user)),
-  );
-} else {
-  throw 'Rol no reconocido';
-}
-
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $error')),
-      );
-    } finally {
-      setState(() => _isLoading = false);
     }
   }
-}
-
 
   void _navigateToRegister() {
     // Lógica para registro
