@@ -43,7 +43,7 @@ class UserProfileService {
   }
 
   Future<bool> deleteUserProfile(int duenoId) async {
-    final url = 'http://10.0.2.2:8080/api/duenos/$duenoId';
+    final url = 'http://10.0.2.2:8080/api/users/$duenoId';
     final response = await http.delete(Uri.parse(url));
     return response.statusCode == 200 || response.statusCode == 204;
   }

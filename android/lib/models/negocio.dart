@@ -1,5 +1,5 @@
+// lib/models/negocio.dart
 import 'dueno.dart';
-
 
 class Negocio {
   int? id;
@@ -22,7 +22,6 @@ class Negocio {
     this.dueno,
   });
 
-  // Crea una instancia de Negocio a partir de un JSON
   factory Negocio.fromJson(Map<String, dynamic> json) {
     return Negocio(
       id: json['id'],
@@ -36,7 +35,6 @@ class Negocio {
     );
   }
 
-  // Convierte la instancia a un mapa JSON para enviarlo al backend
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['id'] = id;

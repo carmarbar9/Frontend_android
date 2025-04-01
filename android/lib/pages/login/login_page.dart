@@ -27,27 +27,27 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _isLoading = true);
 
       try {
-        final user = await ApiService.fetchUser(_username, _password);
+        final User? user = await ApiService.fetchUser(_username, _password);
         if (user == null) {
           throw 'Usuario o contraseña incorrectos';
         }
 
         // Debug
         print('Usuario logueado: ${user.username}');
-        print('Authority cruda: ${user.authority?.authority}');
+        print('Authority cruda: ${user.authority.authority}');
 
-        final rawAuthority = user.authority?.authority?.toLowerCase();
-        final authority = (rawAuthority == 'dueno') ? 'dueno' : rawAuthority;
+        final rawAuthority = user.authority.authority.toLowerCase();
+        final String authority = (rawAuthority == 'dueno') ? 'dueno' : rawAuthority;
 
         print('Authority corregida: $authority');
 
-        // Limpiar la sesión actual
+        // Limpiar la sesión actual y asignar el usuario actual
         SessionManager.clear();
+        SessionManager.currentUser = user;
+        SessionManager.duenoId = user.id.toString();
+        SessionManager.username = user.username;
 
         if (authority == 'dueno') {
-          // Guardamos el ID y el username en la sesión
-          SessionManager.duenoId = user.id.toString();
-          SessionManager.username = user.username;
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => ElegirNegocioPage(user: user)),

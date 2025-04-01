@@ -208,7 +208,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                           },
                         );
                         if (confirmed == true) {
-                          bool success = await service.deleteUserProfile(user.id);
+                          bool success = await service.deleteUserProfile(user.user.id);
                           if (success) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Perfil eliminado'))
