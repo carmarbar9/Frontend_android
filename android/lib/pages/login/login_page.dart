@@ -6,6 +6,7 @@ import 'package:android/pages/login/elegirNegocio_page.dart';
 import 'package:android/services/service_login.dart';
 import 'package:android/models/session_manager.dart';
 import 'package:android/models/user.dart';
+import 'package:android/pages/login/registrar_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -71,7 +72,10 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _navigateToRegister() {
-    // Lógica para registro
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const RegisterPage()),
+    );
   }
 
   void _navigateToForgotPassword() {
