@@ -40,7 +40,8 @@ class _LoginPageState extends State<LoginPage> {
         print('Authority cruda: ${user.authority.authority}');
 
         final rawAuthority = user.authority.authority.toLowerCase();
-        final String authority = (rawAuthority == 'dueno') ? 'dueno' : rawAuthority;
+        final String authority =
+            (rawAuthority == 'dueno') ? 'dueno' : rawAuthority;
 
         print('Authority corregida: $authority');
 
@@ -54,31 +55,37 @@ class _LoginPageState extends State<LoginPage> {
           // Para dueños, navegamos a la pantalla para elegir el negocio.
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => ElegirNegocioPage(user: user)),
+            MaterialPageRoute(
+              builder: (context) => ElegirNegocioPage(user: user),
+            ),
           );
         } else if (authority == 'empleado') {
           // Para empleados, se obtiene el empleado para recuperar el negocio asociado.
-          final empleado = await EmpleadoService.fetchEmpleadoByUserId(user.id!);
+          final empleado = await EmpleadoService.fetchEmpleadoByUserId(
+            user.id!,
+          );
           if (empleado == null) {
             throw 'No se encontró un empleado para este usuario';
           }
-          if (empleado.negocio == null || empleado.negocio!.id == null) {
+          if (empleado.negocio == null) {
             throw 'Este empleado no tiene un negocio asignado.';
           }
-          // Asignamos el negocioId obtenido del empleado al SessionManager.
-          SessionManager.negocioId = empleado.negocio!.id.toString();
-          
+
+          SessionManager.negocioId = empleado.negocio.toString();
+
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => HomePageEmpleado(user: user)),
+            MaterialPageRoute(
+              builder: (context) => HomePageEmpleado(user: user),
+            ),
           );
         } else {
           throw 'Rol no reconocido';
         }
       } catch (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $error')));
       } finally {
         setState(() => _isLoading = false);
       }
@@ -114,10 +121,7 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       TextSpan(
                         text: 'Gastro',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 28,
-                        ),
+                        style: TextStyle(color: Colors.black, fontSize: 28),
                       ),
                       TextSpan(
                         text: 'STOCK',
@@ -133,14 +137,14 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 10),
                 const Text(
                   'Iniciar Sesión con Usuario y Contraseña',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.black, fontSize: 16),
                 ),
                 const SizedBox(height: 30),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.black12),
                     borderRadius: BorderRadius.circular(10),
@@ -163,7 +167,10 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 20),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.black12),
                     borderRadius: BorderRadius.circular(10),
@@ -211,11 +218,17 @@ class _LoginPageState extends State<LoginPage> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          )
-                        : const Text('Entrar', style: TextStyle(fontSize: 18)),
+                    child:
+                        _isLoading
+                            ? const CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            )
+                            : const Text(
+                              'Entrar',
+                              style: TextStyle(fontSize: 18),
+                            ),
                   ),
                 ),
                 const SizedBox(height: 30),
