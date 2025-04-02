@@ -66,6 +66,53 @@ class _EditNegocioPageState extends State<EditNegocioPage> {
     }
   }
 
+  Future<void> _confirmDelete() async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmación'),
+        content: const Text('¿Estás seguro de que quieres eliminar este negocio?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('NO'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('SÍ'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      _eliminarNegocio();
+    }
+  }
+
+  Future<void> _eliminarNegocio() async {
+    setState(() => _isLoading = true);
+    try {
+      bool eliminado = await NegocioService.deleteNegocio(widget.negocio.id!);
+      if (eliminado) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Negocio eliminado correctamente")),
+        );
+        Navigator.pop(context, null);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No se pudo eliminar el negocio")),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $error")),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   Widget _buildTextField({
     required IconData icon,
     required String label,
@@ -173,28 +220,56 @@ class _EditNegocioPageState extends State<EditNegocioPage> {
                   const SizedBox(height: 30),
                   _isLoading
                       ? const CircularProgressIndicator()
-                      : SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF9B1D42),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
+                      : Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF9B1D42),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                                onPressed: _guardar,
+                                icon: const Icon(Icons.save),
+                                label: const Text(
+                                  "Guardar Cambios",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'TitanOne',
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
-                            onPressed: _guardar,
-                            icon: const Icon(Icons.save),
-                            label: const Text(
-                              "Guardar Cambios",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'TitanOne',
-                                color: Colors.white,
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                                onPressed: _confirmDelete,
+                                icon: const Icon(Icons.delete),
+                                label: const Text(
+                                  "Eliminar Negocio",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'TitanOne',
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
                 ],
               ),
