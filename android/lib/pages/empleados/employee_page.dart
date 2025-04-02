@@ -33,9 +33,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
     setState(() {
       final negocioId = int.parse(SessionManager.negocioId!);
 
-      _empleadosFuture = EmpleadoService.getAllEmpleados().then(
-        (lista) => lista.where((e) => e.negocio?.id == negocioId).toList(),
-      );
+      _empleadosFuture = EmpleadoService.getEmpleadosByNegocio(negocioId);
     });
   }
 
@@ -144,33 +142,33 @@ class _EmployeesPageState extends State<EmployeesPage> {
   }
 
   Future<void> _buscarEmpleado(String tipo, String query) async {
-  try {
-    _busquedaActiva = query;
-    _tipoBusqueda = tipo;
+    try {
+      _busquedaActiva = query;
+      _tipoBusqueda = tipo;
+      final negocioId = int.parse(SessionManager.negocioId!);
 
-    final negocioId = int.parse(SessionManager.negocioId!);
+      Future<List<Empleado>> future;
 
-    switch (tipo) {
-      case 'Nombre':
-        setState(() {
-          _empleadosFuture = EmpleadoService.getEmpleadosByNombre(query).then(
-            (lista) => lista.where((e) => e.negocio?.id == negocioId).toList(),
-          );
-        });
-        break;
-      case 'Apellido':
-        setState(() {
-          _empleadosFuture = EmpleadoService.getEmpleadosByApellido(query).then(
-            (lista) => lista.where((e) => e.negocio?.id == negocioId).toList(),
-          );
-        });
-        break;
+      switch (tipo) {
+        case 'Nombre':
+          future = EmpleadoService.getEmpleadosByNombre(query);
+          break;
+        case 'Apellido':
+          future = EmpleadoService.getEmpleadosByApellido(query);
+          break;
+        default:
+          future = Future.value([]);
+      }
+
+      setState(() {
+        _empleadosFuture = future.then(
+          (lista) => lista.where((e) => e.negocio == negocioId).toList(),
+        );
+      });
+    } catch (e) {
+      print('Error al buscar: $e');
     }
-  } catch (e) {
-    print('Error al buscar: $e');
   }
-}
-
 
   @override
   Widget build(BuildContext context) {

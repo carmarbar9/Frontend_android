@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:android/models/empleados.dart';
-import 'package:android/models/negocio.dart';
 import 'package:android/services/service_empleados.dart';
+import 'package:android/models/session_manager.dart';
 
 class AddEmployeePage extends StatefulWidget {
   const AddEmployeePage({Key? key}) : super(key: key);
@@ -19,14 +19,16 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
   String? _numTelefono;
   String? _tokenEmpleado;
   String? _descripcion;
-  int? _userId;
-  int? _negocioId;
+  String? _username;
+  String? _password;
 
   bool _isLoading = false;
 
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+
+      final negocioId = int.parse(SessionManager.negocioId!);
 
       Empleado newEmployee = Empleado(
         firstName: _firstName,
@@ -35,12 +37,12 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
         numTelefono: _numTelefono,
         tokenEmpleado: _tokenEmpleado,
         descripcion: _descripcion,
-        negocio: _negocioId != null ? Negocio(id: _negocioId) : null,
+        username: _username,
+        password: _password,
+        negocio: negocioId,
       );
 
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       try {
         Empleado created = await EmpleadoService.createEmpleado(newEmployee);
@@ -53,9 +55,7 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
           SnackBar(content: Text("Error: $error")),
         );
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -65,13 +65,15 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
     required String label,
     TextInputType inputType = TextInputType.text,
     int maxLines = 1,
+    bool obscureText = false,
     required FormFieldSetter<String> onSaved,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
       child: TextFormField(
         keyboardType: inputType,
-        maxLines: maxLines,
+        maxLines: obscureText ? 1 : maxLines,
+        obscureText: obscureText,
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: Color(0xFF9B1D42)),
           labelText: label,
@@ -129,8 +131,8 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                   _buildTextField(icon: Icons.phone, label: "Teléfono", inputType: TextInputType.phone, onSaved: (val) => _numTelefono = val),
                   _buildTextField(icon: Icons.vpn_key, label: "Token Empleado", onSaved: (val) => _tokenEmpleado = val),
                   _buildTextField(icon: Icons.description, label: "Descripción", maxLines: 3, onSaved: (val) => _descripcion = val),
-                  _buildTextField(icon: Icons.person_pin, label: "User ID", inputType: TextInputType.number, onSaved: (val) => _userId = int.tryParse(val!)),
-                  _buildTextField(icon: Icons.business, label: "Negocio ID", inputType: TextInputType.number, onSaved: (val) => _negocioId = int.tryParse(val!)),
+                  _buildTextField(icon: Icons.person_pin, label: "Usuario", onSaved: (val) => _username = val),
+                  _buildTextField(icon: Icons.lock, label: "Contraseña", obscureText: true, onSaved: (val) => _password = val),
                   const SizedBox(height: 30),
                   _isLoading
                       ? const CircularProgressIndicator()
