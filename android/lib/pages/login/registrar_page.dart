@@ -1,3 +1,4 @@
+// lib/pages/login/register_page.dart
 import 'package:flutter/material.dart';
 import 'package:android/services/service_login.dart';
 import 'package:android/models/dueno.dart';
@@ -47,16 +48,51 @@ class _RegisterPageState extends State<RegisterPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('¡Registro exitoso!')),
         );
-        Navigator.pop(context); // Volver a la pantalla anterior (LoginPage)
+        Navigator.pop(context); // Regresar a la pantalla anterior (LoginPage)
       }
     } catch (e) {
-      // Muestra el error recibido
+      // Mostrar error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al registrar: $e')),
       );
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  // Método para construir cada campo de texto con el mismo estilo
+  Widget _buildTextField({
+    required IconData icon,
+    required String label,
+    TextInputType inputType = TextInputType.text,
+    int maxLines = 1,
+    required TextEditingController controller,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: inputType,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, color: const Color(0xFF9B1D42)),
+          labelText: label,
+          labelStyle: const TextStyle(color: Color(0xFF9B1D42), fontSize: 16),
+          filled: true,
+          fillColor: Colors.white,
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFF9B1D42)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        validator: (value) =>
+            (value == null || value.isEmpty) ? 'Campo requerido' : null,
+      ),
+    );
   }
 
   @override
@@ -74,130 +110,95 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Registro de Dueño'),
-        backgroundColor: const Color(0xFF9B1D42),
+        title: const Text(
+          'Registro',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2,
+            fontFamily: 'PermanentMarker',
+            color: Colors.black,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 5,
+        iconTheme: const IconThemeData(color: Colors.black),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              // Campo de usuario
-              TextFormField(
+              const Icon(Icons.person, size: 80, color: Color(0xFF9B1D42)),
+              const SizedBox(height: 20),
+              _buildTextField(
+                icon: Icons.person,
+                label: "Nombre de usuario",
                 controller: _usernameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre de usuario',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa un nombre de usuario';
-                  }
-                  return null;
-                },
               ),
-              const SizedBox(height: 16),
-              // Campo de contraseña
-              TextFormField(
+              _buildTextField(
+                icon: Icons.lock,
+                label: "Contraseña",
                 controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Contraseña',
-                ),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa una contraseña';
-                  }
-                  return null;
-                },
+                inputType: TextInputType.visiblePassword,
               ),
-              const SizedBox(height: 16),
-              // Campo de nombre (firstName)
-              TextFormField(
+              _buildTextField(
+                icon: Icons.account_circle,
+                label: "Nombre",
                 controller: _firstNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa tu nombre';
-                  }
-                  return null;
-                },
               ),
-              const SizedBox(height: 16),
-              // Campo de apellidos (lastName)
-              TextFormField(
+              _buildTextField(
+                icon: Icons.account_circle_outlined,
+                label: "Apellidos",
                 controller: _lastNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Apellidos',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa tus apellidos';
-                  }
-                  return null;
-                },
               ),
-              const SizedBox(height: 16),
-              // Campo de correo electrónico
-              TextFormField(
+              _buildTextField(
+                icon: Icons.email,
+                label: "Correo electrónico",
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Correo electrónico',
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa tu correo electrónico';
-                  }
-                  // Puedes agregar validación adicional para el email
-                  return null;
-                },
+                inputType: TextInputType.emailAddress,
               ),
-              const SizedBox(height: 16),
-              // Campo de número de teléfono
-              TextFormField(
+              _buildTextField(
+                icon: Icons.phone,
+                label: "Número de teléfono",
                 controller: _numTelefonoController,
-                decoration: const InputDecoration(
-                  labelText: 'Número de teléfono',
-                ),
-                keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa tu número de teléfono';
-                  }
-                  // Aquí puedes validar que tenga 9 dígitos si lo deseas
-                  return null;
-                },
+                inputType: TextInputType.phone,
               ),
-              const SizedBox(height: 16),
-              // Campo para tokenDueno
-              TextFormField(
+              _buildTextField(
+                icon: Icons.vpn_key,
+                label: "Token de Dueño",
                 controller: _tokenDuenoController,
-                decoration: const InputDecoration(
-                  labelText: 'Token de Dueño',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa un token';
-                  }
-                  return null;
-                },
               ),
-              const SizedBox(height: 24),
-              // Botón de registro
-              ElevatedButton(
-                onPressed: _isLoading ? null : _register,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF9B1D42),
-                  padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
-                ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Registrar', style: TextStyle(fontSize: 16)),
-              ),
+              const SizedBox(height: 30),
+              _isLoading
+                  ? const CircularProgressIndicator()
+                  : SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF9B1D42),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 16, horizontal: 40),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: const Text(
+                          "Registrar",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'TitanOne',
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
             ],
           ),
         ),
