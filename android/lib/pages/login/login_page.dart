@@ -6,6 +6,7 @@ import 'package:android/pages/login/elegirNegocio_page.dart';
 import 'package:android/services/service_login.dart';
 import 'package:android/models/session_manager.dart';
 import 'package:android/models/user.dart';
+import 'package:android/services/service_empleados.dart'; // Importamos el servicio para obtener el empleado
 import 'package:android/pages/login/registrar_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -28,6 +29,7 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _isLoading = true);
 
       try {
+        // Se intenta obtener el usuario
         final User? user = await ApiService.fetchUser(_username, _password);
         if (user == null) {
           throw 'Usuario o contraseña incorrectos';
@@ -49,11 +51,23 @@ class _LoginPageState extends State<LoginPage> {
         SessionManager.username = user.username;
 
         if (authority == 'dueno') {
+          // Para dueños, navegamos a la pantalla para elegir el negocio.
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => ElegirNegocioPage(user: user)),
           );
         } else if (authority == 'empleado') {
+          // Para empleados, se obtiene el empleado para recuperar el negocio asociado.
+          final empleado = await EmpleadoService.fetchEmpleadoByUserId(user.id!);
+          if (empleado == null) {
+            throw 'No se encontró un empleado para este usuario';
+          }
+          if (empleado.negocio == null || empleado.negocio!.id == null) {
+            throw 'Este empleado no tiene un negocio asignado.';
+          }
+          // Asignamos el negocioId obtenido del empleado al SessionManager.
+          SessionManager.negocioId = empleado.negocio!.id.toString();
+          
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => HomePageEmpleado(user: user)),
