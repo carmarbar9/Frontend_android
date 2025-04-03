@@ -1,3 +1,5 @@
+import 'package:android/models/lote.dart';
+
 import 'categoria.dart';
 
 class ProductoInventario {
@@ -51,5 +53,9 @@ class ProductoInventario {
       'cantidadDeseada': cantidadDeseada,
       'cantidadAviso': cantidadAviso,
     };
+  }
+
+  int calcularCantidad(List<Lote> lotes) {
+    return lotes.fold(0, (sum, lote) => sum + lote.cantidad);
   }
 }

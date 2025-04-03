@@ -467,10 +467,8 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                             }
 
                             final lotes = snapshot.data!;
-                            final cantidadTotal = lotes.fold<int>(
-                              0,
-                              (sum, lote) => sum + lote.cantidad,
-                            );
+                            final cantidadTotal = producto.calcularCantidad(lotes);
+
 
                             // Control de índice por fuera
                             final lote = lotes[_currentLoteIndex];
