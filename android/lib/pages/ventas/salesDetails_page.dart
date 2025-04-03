@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
+import 'package:android/models/lote.dart';
+import 'package:android/services/service_inventory.dart';
+import 'package:android/services/service_lote.dart';
+import 'package:android/services/service_notificacion.dart';
+
 
 class SaleDetailPage extends StatelessWidget {
   final String table;
@@ -39,14 +44,31 @@ class SaleDetailPage extends StatelessWidget {
         actions: [
           IconButton(
             iconSize: 32,
-            icon: const Icon(Icons.notifications,
-                color: Color.fromARGB(255, 10, 10, 10)),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const NotificationsPage()),
-              );
+            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
+            onPressed: () async {
+              try {
+                final productos = await InventoryApiService.getProductosInventario();
+
+                final Map<int, List<Lote>> lotesPorProducto = {};
+                for (var producto in productos) {
+                  final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+                  lotesPorProducto[producto.id] = lotes;
+                }
+
+                final notificaciones = NotificacionService()
+                    .generarNotificacionesInventario(productos, lotesPorProducto);
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => NotificacionPage(notificaciones: notificaciones),
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error al cargar notificaciones: $e')),
+                );
+              }
             },
           ),
           IconButton(

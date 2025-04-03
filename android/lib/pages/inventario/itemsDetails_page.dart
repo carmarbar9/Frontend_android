@@ -9,6 +9,7 @@ import 'package:line_icons/line_icons.dart';
 import 'package:android/models/lote.dart';
 import 'package:android/services/service_lote.dart';
 import 'package:android/pages/inventario/lote_detail_page.dart';
+import 'package:android/services/service_notificacion.dart';
 
 class ItemDetailsPage extends StatefulWidget {
   final String itemName;
@@ -331,14 +332,33 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                         Icons.notifications,
                         color: Colors.black,
                       ),
-                      onPressed:
-                          () => Navigator.push(
+                      onPressed: () async {
+                        try {
+                          List<ProductoInventario> productos = await InventoryApiService.getProductosInventario();
+
+                          Map<int, List<Lote>> lotesPorProducto = {};
+                          for (var producto in productos) {
+                            final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+                            lotesPorProducto[producto.id] = lotes;
+                          }
+
+                          final notificaciones = NotificacionService()
+                              .generarNotificacionesInventario(productos, lotesPorProducto);
+
+                          Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const NotificationsPage(),
+                              builder: (_) => NotificacionPage(notificaciones: notificaciones),
                             ),
-                          ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error cargando notificaciones: $e')),
+                          );
+                        }
+                      },
                     ),
+
                     IconButton(
                       iconSize: 48,
                       icon: const Icon(Icons.person, color: Colors.black),

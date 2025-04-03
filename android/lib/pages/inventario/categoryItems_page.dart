@@ -6,6 +6,9 @@ import 'package:android/pages/inventario/itemsDetails_page.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/pages/user/user_profile.dart';
 import 'package:android/pages/login/login_page.dart';
+import 'package:android/services/service_notificacion.dart';
+import 'package:android/models/lote.dart';
+import 'package:android/services/service_lote.dart';
 
 class CategoryItemsPage extends StatefulWidget {
   final String categoryName;
@@ -317,15 +320,33 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
                         Icons.notifications,
                         color: Colors.black,
                       ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const NotificationsPage(),
-                          ),
-                        );
+                      onPressed: () async {
+                        try {
+                          List<ProductoInventario> productos = await InventoryApiService.getProductosInventario();
+
+                          Map<int, List<Lote>> lotesPorProducto = {};
+                          for (var producto in productos) {
+                            final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+                            lotesPorProducto[producto.id] = lotes;
+                          }
+
+                          final notificaciones = NotificacionService()
+                              .generarNotificacionesInventario(productos, lotesPorProducto);
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => NotificacionPage(notificaciones: notificaciones),
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error cargando notificaciones: $e')),
+                          );
+                        }
                       },
                     ),
+
                     IconButton(
                       iconSize: 48,
                       icon: const Icon(Icons.person, color: Colors.black),
