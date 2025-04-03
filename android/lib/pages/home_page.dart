@@ -12,6 +12,13 @@
   import 'package:android/pages/user/user_profile.dart';
   import 'package:android/pages/carta/carta_page.dart';
   import 'package:android/pages/login/elegirNegocio_page.dart';
+  import 'package:android/services/service_notificacion.dart';
+  import 'package:android/models/notificacion.dart';
+  import 'package:android/models/lote.dart';
+  import 'package:android/models/producto_inventario.dart';
+  import 'package:android/services/service_inventory.dart';
+  import 'package:android/services/service_lote.dart';
+
 
   class HomePage extends StatefulWidget {
     const HomePage({super.key});
@@ -48,10 +55,37 @@
                       IconButton(
                         iconSize: 48,
                         icon: const Icon(Icons.notifications, color: Colors.black),
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsPage()));
+                        onPressed: () async {
+                          try {
+                            // 1. Obtener productos del inventario
+                            List<ProductoInventario> productos = await InventoryApiService.getProductosInventario();
+
+                            // 2. Obtener lotes por producto
+                            Map<int, List<Lote>> lotesPorProducto = {};
+                            for (var producto in productos) {
+                              final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+                              lotesPorProducto[producto.id] = lotes;
+                            }
+
+                            // 3. Generar notificaciones
+                            final notificaciones = NotificacionService()
+                                .generarNotificacionesInventario(productos, lotesPorProducto);
+
+                            // 4. Navegar a la página de notificaciones
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => NotificacionPage(notificaciones: notificaciones),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error cargando notificaciones: $e')),
+                            );
+                          }
                         },
                       ),
+
                       IconButton(
               iconSize: 48,
               icon: const Icon(Icons.business_center, color: Colors.black),

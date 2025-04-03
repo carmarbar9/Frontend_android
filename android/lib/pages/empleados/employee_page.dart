@@ -9,6 +9,11 @@ import 'package:android/pages/user/user_profile.dart';
 import 'package:android/pages/login/login_page.dart';
 import 'package:android/pages/home_page.dart';
 import 'package:android/models/session_manager.dart';
+import 'package:android/services/service_notificacion.dart';
+import 'package:android/models/lote.dart';
+import 'package:android/models/producto_inventario.dart';
+import 'package:android/services/service_inventory.dart';
+import 'package:android/services/service_lote.dart';
 
 class EmployeesPage extends StatefulWidget {
   const EmployeesPage({Key? key}) : super(key: key);
@@ -209,15 +214,37 @@ class _EmployeesPageState extends State<EmployeesPage> {
                         Icons.notifications,
                         color: Colors.black,
                       ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const NotificationsPage(),
-                          ),
-                        );
+                      onPressed: () async {
+                        try {
+                          // 1. Obtener productos del inventario
+                          List<ProductoInventario> productos = await InventoryApiService.getProductosInventario();
+
+                          // 2. Obtener lotes por producto
+                          Map<int, List<Lote>> lotesPorProducto = {};
+                          for (var producto in productos) {
+                            final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+                            lotesPorProducto[producto.id] = lotes;
+                          }
+
+                          // 3. Generar notificaciones
+                          final notificaciones = NotificacionService()
+                              .generarNotificacionesInventario(productos, lotesPorProducto);
+
+                          // 4. Navegar a la página de notificaciones
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => NotificacionPage(notificaciones: notificaciones),
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error al cargar notificaciones: $e')),
+                          );
+                        }
                       },
                     ),
+
                     IconButton(
                       iconSize: 48,
                       icon: const Icon(Icons.person, color: Colors.black),

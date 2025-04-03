@@ -1,9 +1,15 @@
+import 'package:android/models/lote.dart';
+import 'package:android/models/producto_inventario.dart';
 import 'package:android/models/session_manager.dart';
+import 'package:android/services/service_inventory.dart';
+import 'package:android/services/service_lote.dart';
+import 'package:android/services/service_notificacion.dart';
 import 'package:flutter/material.dart';
 import 'package:android/models/categoria.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/pages/carta/productosCategoria_page.dart';
 import 'package:android/services/service_categoria.dart';
+
 
 class CartaPage extends StatefulWidget {
   const CartaPage({super.key});
@@ -171,16 +177,40 @@ class _CartaPageState extends State<CartaPage> {
           },
         ),
         actions: [
-          IconButton(
-            iconSize: 48,
-            icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NotificationsPage()),
-              );
-            },
-          ),
+        IconButton(
+              iconSize: 48,
+              icon: const Icon(Icons.notifications, color: Color.fromARGB(255, 10, 10, 10)),
+              onPressed: () async {
+                try {
+                  // 1. Obtener productos
+                  List<ProductoInventario> productos = await InventoryApiService.getProductosInventario();
+
+                  // 2. Obtener lotes por producto
+                  Map<int, List<Lote>> lotesPorProducto = {};
+                  for (var producto in productos) {
+                    final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+                    lotesPorProducto[producto.id] = lotes;
+                  }
+
+                  // 3. Generar notificaciones
+                  final notificaciones = NotificacionService()
+                      .generarNotificacionesInventario(productos, lotesPorProducto);
+
+                  // 4. Ir a la pantalla con notificaciones generadas
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => NotificacionPage(notificaciones: notificaciones),
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error al cargar notificaciones: $e')),
+                  );
+                }
+              },
+            ),
+
           IconButton(
             iconSize: 48,
             icon: const Icon(Icons.person, color: Colors.black),
