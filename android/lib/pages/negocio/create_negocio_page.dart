@@ -41,7 +41,7 @@ class _CreateNegocioPageState extends State<CreateNegocioPage> {
           pais: _pais,
           dueno: SessionManager.currentUser != null
               ? Dueno(
-                  id: int.tryParse(SessionManager.duenoId ?? '0'),
+                  id: SessionManager.duenoId ?? 0,
                   name: SessionManager.username,
                   tokenDueno: '',
                 )

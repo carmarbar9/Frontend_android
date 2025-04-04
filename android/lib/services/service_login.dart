@@ -1,5 +1,6 @@
 // lib/services/service_login.dart
 import 'dart:convert';
+import 'package:android/models/session_manager.dart';
 import 'package:http/http.dart' as http;
 import 'package:android/models/user.dart';
 import 'package:android/models/dueno.dart'; // Asegúrate de importar tu modelo Dueno
@@ -53,4 +54,15 @@ class ApiService {
       throw Exception('Error al registrar usuario: ${response.statusCode}');
     }
   }
+
+  Future<void> fetchDuenoId(int userId) async {
+  final response = await http.get(Uri.parse('$_baseUrl/api/duenos/user/$userId'));
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    SessionManager.duenoId = data['id'] as int; // suponiendo que `id` es el id del dueño
+  } else {
+    throw Exception('No se pudo obtener el duenoId');
+  }
+}
 }

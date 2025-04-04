@@ -28,11 +28,11 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
   }
 
   void _cargarNegocios() {
-    final int? userId = widget.user.id;
-    if (userId != null) {
-      _negocios = NegocioService.getNegociosByDuenoId(userId);
+    final int? duenoId = SessionManager.duenoId;
+    if (duenoId != null) {
+      _negocios = NegocioService.getNegociosByDuenoId(duenoId);
     } else {
-      _negocios = Future.error('ID de usuario no válido');
+      _negocios = Future.error('ID de dueño no disponible');
     }
   }
 
@@ -49,7 +49,9 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
   void _editarNegocio(Negocio negocio) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => EditNegocioPage(negocio: negocio)),
+      MaterialPageRoute(
+        builder: (context) => EditNegocioPage(negocio: negocio),
+      ),
     ).then((_) {
       // Recargar la lista al volver de editar
       setState(() {
@@ -86,11 +88,7 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           gradient: const LinearGradient(
-            colors: [
-              Color(0xFF9B1D42),
-              Color(0xFFB12A50),
-              Color(0xFFD33E66),
-            ],
+            colors: [Color(0xFF9B1D42), Color(0xFFB12A50), Color(0xFFD33E66)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -174,7 +172,10 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
                 _buildCrearNegocioButton(),
                 ...negocios.map((negocio) {
                   return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       gradient: const LinearGradient(
@@ -201,7 +202,10 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         title: Text(
                           negocio.name ?? 'Sin nombre',
                           style: const TextStyle(
@@ -223,7 +227,10 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
                               icon: const Icon(Icons.edit, color: Colors.white),
                               onPressed: () => _editarNegocio(negocio),
                             ),
-                            const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.white,
+                            ),
                           ],
                         ),
                         onTap: () => _seleccionarNegocio(negocio),

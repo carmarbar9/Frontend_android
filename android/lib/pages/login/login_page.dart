@@ -48,11 +48,13 @@ class _LoginPageState extends State<LoginPage> {
         // Limpiar la sesión actual y asignar el usuario actual
         SessionManager.clear();
         SessionManager.currentUser = user;
-        SessionManager.duenoId = user.id.toString();
+        SessionManager.userId = user.id.toString();
         SessionManager.username = user.username;
+
 
         if (authority == 'dueno') {
           // Para dueños, navegamos a la pantalla para elegir el negocio.
+          await ApiService().fetchDuenoId(user.id);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(

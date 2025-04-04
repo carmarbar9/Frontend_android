@@ -5,16 +5,18 @@ class SessionManager {
   static String? negocioId; 
   static String? negocioNombre;
   static String? ciudad;
-  static String? duenoId;
+  static String? userId;
   static String? username;
   static User? currentUser;
+  static int? duenoId;
 
   static void clear() {
     negocioId = null;
     negocioNombre = null;
     ciudad = null;
-    duenoId = null;
+    userId = null;
     username = null;
     currentUser = null;
+    duenoId = null;
   }
 }
