@@ -5,7 +5,7 @@ import 'package:android/models/proveedor.dart';
 
 class ApiService {
   // Para Android Emulator, utiliza 10.0.2.2. Ajusta según tu entorno.
-  static const String _baseUrl = 'http://10.0.2.2:8080';
+  static const String _baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com';
 
   // Obtiene la lista de todos los proveedores
   static Future<List<Proveedor>> getProveedores() async {

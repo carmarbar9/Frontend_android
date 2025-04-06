@@ -6,11 +6,11 @@ import '../models/lote.dart';
 
 class LoteProductoService {
 
-  static const String baseUrl = 'http://10.0.2.2:8080/api/lotes';
+  static const String baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/lotes';
 
   static Future<List<Lote>> getLotesByProductoId(int productoId) async {
     final url = Uri.parse(
-      'http://10.0.2.2:8080/api/lotes/producto/$productoId',
+      'https://ispp-2425-g2.ew.r.appspot.com/api/lotes/producto/$productoId',
     );
     final response = await http.get(url);
 
@@ -46,7 +46,7 @@ class LoteProductoService {
   }
 
   static Future<Lote> createLote(Lote lote) async {
-  final url = Uri.parse('http://10.0.2.2:8080/api/lotes');
+  final url = Uri.parse('https://ispp-2425-g2.ew.r.appspot.com/api/lotes');
   final response = await http.post(
     url,
     headers: {'Content-Type': 'application/json'},

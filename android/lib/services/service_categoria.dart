@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:android/models/categoria.dart';
 
 class CategoryApiService {
-  static const String _baseUrl = 'http://10.0.2.2:8080/api/categorias';
+  static const String _baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/categorias';
 
   static Future<List<Categoria>> getCategoriesByNegocioId(String negocioId) async {
   final url = Uri.parse('$_baseUrl/negocio/$negocioId');
@@ -54,7 +54,7 @@ class CategoryApiService {
   
   static Future<void> deleteCategory(String id) async {
   final response = await http.delete(
-    Uri.parse('http://10.0.2.2:8080/api/categorias/$id'),
+    Uri.parse('https://ispp-2425-g2.ew.r.appspot.com/api/categorias/$id'),
   );
 
   if (response.statusCode != 204) {

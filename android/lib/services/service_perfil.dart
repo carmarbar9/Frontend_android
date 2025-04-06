@@ -5,11 +5,11 @@ import 'package:android/models/perfil.dart';
 
 class UserProfileService {
   // Endpoint base para Dueno (update y delete)
-  final String duenoApiUrl = 'http://10.0.2.2:8080/api/duenos/';
+  final String duenoApiUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/duenos/';
 
   /// Método existente para obtener perfil a partir del username.
   /// Se obtiene primero el usuario y luego el dueño.
-  final String userApiUrl = 'http://10.0.2.2:8080/api/users/username/';
+  final String userApiUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/users/username/';
   Future<UserProfile> fetchUserProfileByUsername(String username) async {
     // Paso 1: Obtener el usuario por username
     final userResponse = await http.get(Uri.parse('$userApiUrl$username'));
@@ -43,7 +43,7 @@ class UserProfileService {
   }
 
   Future<bool> deleteUserProfile(int duenoId) async {
-    final url = 'http://10.0.2.2:8080/api/users/$duenoId';
+    final url = 'https://ispp-2425-g2.ew.r.appspot.com/api/users/$duenoId';
     final response = await http.delete(Uri.parse(url));
     return response.statusCode == 200 || response.statusCode == 204;
   }

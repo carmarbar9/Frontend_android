@@ -5,7 +5,7 @@ import 'package:android/models/producto_inventario.dart';
 
 class InventoryApiService {
   // Asegúrate de usar la IP adecuada para tu entorno
-  static const String _baseUrl = 'http://10.0.2.2:8080/api/productosInventario';
+  static const String _baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/productosInventario';
 
   /// Obtiene todos los productos de inventario
   static Future<List<ProductoInventario>> getProductosInventario() async {
@@ -102,7 +102,7 @@ class InventoryApiService {
   }
 
   static Future<List<ProductoInventario>> getAllProductosInventario() async {
-  final url = Uri.parse('http://10.0.2.2:8080/api/productosInventario');
+  final url = Uri.parse('https://ispp-2425-g2.ew.r.appspot.com/api/productosInventario');
   final response = await http.get(url);
 
   if (response.statusCode == 200) {

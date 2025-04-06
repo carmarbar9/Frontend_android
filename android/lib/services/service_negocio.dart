@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class NegocioService {
-  static const String _baseUrl = 'http://10.0.2.2:8080';
+  static const String _baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com';
 
   static Future<List<Negocio>> getNegociosByDuenoId(int userId) async {
     final url = Uri.parse('$_baseUrl/api/negocios/dueno/$userId');
