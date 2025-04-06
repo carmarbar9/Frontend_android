@@ -1,3 +1,5 @@
+import 'package:android/models/session_manager.dart';
+
 import 'producto_inventario.dart';
 import 'producto_venta.dart';
 import 'package:android/models/categoria.dart';
@@ -30,6 +32,7 @@ class Ingrediente {
         precioCompra: 0,
         cantidadDeseada: 0,
         cantidadAviso: 0,
+        negocioId: SessionManager.negocioId,
       );
     }
 

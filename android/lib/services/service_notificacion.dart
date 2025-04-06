@@ -1,3 +1,4 @@
+import 'package:android/models/session_manager.dart'; // 👈 Asegúrate de importar esto
 import 'package:uuid/uuid.dart';
 import '../models/notificacion.dart';
 import '../models/producto_inventario.dart';
@@ -12,9 +13,12 @@ class NotificacionService {
   ) {
     List<Notificacion> notificaciones = [];
 
-    for (var producto in productos) {
+    // 🔥 Filtramos solo productos del negocio actual
+    final productosDelNegocio = productos.where((p) => p.categoria.negocioId == SessionManager.negocioId).toList();
+
+    for (var producto in productosDelNegocio) {
       final lotes = lotesPorProducto[producto.id] ?? [];
-      final cantidadActual = producto.calcularCantidad(lotes); // 👈 Usamos la función del modelo
+      final cantidadActual = producto.calcularCantidad(lotes);
 
       if (cantidadActual <= producto.cantidadAviso) {
         notificaciones.add(

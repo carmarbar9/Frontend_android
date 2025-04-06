@@ -66,6 +66,12 @@
                               lotesPorProducto[producto.id] = lotes;
                             }
 
+                            print('🔎 Negocio actual (SessionManager.negocioId): ${SessionManager.negocioId}');
+for (var p in productos) {
+  print('📦 Producto: ${p.name} | negocioId: ${p.negocioId} | cantidadAviso: ${p.cantidadAviso}');
+}
+
+
                             // 3. Generar notificaciones
                             final notificaciones = NotificacionService()
                                 .generarNotificacionesInventario(productos, lotesPorProducto);

@@ -1,5 +1,4 @@
 import 'package:android/models/lote.dart';
-
 import 'categoria.dart';
 
 class ProductoInventario {
@@ -9,6 +8,7 @@ class ProductoInventario {
   final double precioCompra;
   final int cantidadDeseada;
   final int cantidadAviso;
+  final String? negocioId; // 👈 Añadido
 
   ProductoInventario({
     required this.id,
@@ -17,20 +17,19 @@ class ProductoInventario {
     required this.precioCompra,
     required this.cantidadDeseada,
     required this.cantidadAviso,
+    required this.negocioId, // 👈 Añadido
   });
 
   factory ProductoInventario.fromJson(Map<String, dynamic> json) {
-    // Verificamos el tipo de "categoria"
     Categoria categoria;
     if (json['categoria'] is Map<String, dynamic>) {
       categoria = Categoria.fromJson(json['categoria']);
     } else {
-      // Si no es Map, asumimos que es un id (int o String)
       categoria = Categoria(
         id: json['categoria'].toString(),
         name: '',
         pertenece: '',
-        negocioId: ''
+        negocioId: '',
       );
     }
 
@@ -41,6 +40,7 @@ class ProductoInventario {
       precioCompra: (json['precioCompra'] as num).toDouble(),
       cantidadDeseada: json['cantidadDeseada'],
       cantidadAviso: json['cantidadAviso'],
+      negocioId: json['negocioId'].toString(), 
     );
   }
 
@@ -48,10 +48,11 @@ class ProductoInventario {
     return {
       'id': id,
       'name': name,
-      'categoria': categoria.toJson(), // En update se enviará el objeto completo.
+      'categoria': categoria.toJson(),
       'precioCompra': precioCompra,
       'cantidadDeseada': cantidadDeseada,
       'cantidadAviso': cantidadAviso,
+      'negocioId': negocioId, // 👈 Añadido aquí también
     };
   }
 

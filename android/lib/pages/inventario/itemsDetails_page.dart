@@ -228,6 +228,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                     cantidadAviso:
                         int.tryParse(avisoController.text) ??
                         producto.cantidadAviso,
+                    negocioId: producto.negocioId
                   );
 
                   try {
