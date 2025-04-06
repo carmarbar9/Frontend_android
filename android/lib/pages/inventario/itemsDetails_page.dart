@@ -432,7 +432,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Icon(icon, size: 100, color: const Color(0xFF9B1D42)),
+                        Icon(icon, size: 60, color: const Color(0xFF9B1D42)),
                         const SizedBox(height: 20),
                         Text(
                           producto.name.toUpperCase(),

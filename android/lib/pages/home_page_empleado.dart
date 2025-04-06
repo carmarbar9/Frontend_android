@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:android/models/mesa.dart';
 import 'package:android/services/service_mesa.dart';
 import 'package:android/pages/login/login_page.dart';
-import 'package:android/pages/notificaciones/notifications_page.dart';
-import 'package:android/pages/user/user_profile.dart';
-import 'package:android/pages/mesas/mesa_detail_page.dart'; // Asegúrate de que la ruta es correcta
+import 'package:android/pages/mesas/mesa_detail_page.dart';
 
 class HomePageEmpleado extends StatefulWidget {
   const HomePageEmpleado({Key? key, required User user}) : super(key: key);
@@ -54,7 +52,7 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
       backgroundColor: Colors.grey[100],
       body: Column(
         children: [
-          // AppBar personalizado
+          // Cabecera
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
             decoration: const BoxDecoration(
@@ -71,29 +69,15 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Image.asset('assets/logo.png', height: 62),
-                Row(
-                  children: [
-                    IconButton(
-                      iconSize: 48,
-                      icon: const Icon(Icons.person, color: Colors.black),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const UserProfilePage()),
-                        );
-                      },
-                    ),
-                    IconButton(
-                      iconSize: 48,
-                      icon: const Icon(Icons.logout, color: Colors.black),
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LoginPage()),
-                        );
-                      },
-                    ),
-                  ],
+                IconButton(
+                  iconSize: 48,
+                  icon: const Icon(Icons.logout, color: Colors.black),
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginPage()),
+                    );
+                  },
                 ),
               ],
             ),
@@ -101,7 +85,6 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
 
           const SizedBox(height: 20),
 
-          // Título de la página
           const Text(
             "TPV",
             style: TextStyle(
@@ -114,7 +97,6 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
 
           const SizedBox(height: 20),
 
-          // Campo de búsqueda
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: TextField(
@@ -133,7 +115,6 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
 
           const SizedBox(height: 20),
 
-          // Lista de mesas mostradas como círculos
           Expanded(
             child: FutureBuilder<List<Mesa>>(
               future: _mesasFuture,
@@ -163,25 +144,42 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
                     final mesa = _filteredMesas[index];
                     return GestureDetector(
                       onTap: () {
-                        // Navega a la pantalla de detalle de la mesa
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => MesaDetailPage(mesa: mesa),
+                            builder: (_) => MesaDetailPage(mesa: mesa),
                           ),
                         );
                       },
-                      child: CircleAvatar(
-                        radius: 40,
-                        backgroundColor: const Color(0xFF9B1D42),
-                        child: Text(
-                          mesa.name ?? '',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                      child: Container(
+                        height: 100,
+                        width: 100,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF9B1D42), Color(0xFFB12A50), Color(0xFFD33E66)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          textAlign: TextAlign.center,
+                          shape: BoxShape.circle,
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 6,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            mesa.name ?? '',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'TitanOne',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                     );

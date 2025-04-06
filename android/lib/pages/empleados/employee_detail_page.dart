@@ -83,8 +83,9 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
 
     // Necesarios para el EmpleadoDTO
     final usernameController = TextEditingController(text: employee.username);
-    final passwordController =
-        TextEditingController(text: employee.password); // vacía, debe rellenarse para el PUT
+    final passwordController = TextEditingController(
+      text: employee.password,
+    ); // vacía, debe rellenarse para el PUT
 
     showDialog(
       context: context,
@@ -124,9 +125,7 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
                 ),
                 TextField(
                   controller: passwordController,
-                  decoration: const InputDecoration(
-                    labelText: "Contraseña",
-                  ),
+                  decoration: const InputDecoration(labelText: "Contraseña"),
                 ),
               ],
             ),
@@ -282,10 +281,19 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
               child: ListView(
                 shrinkWrap: true,
                 children: [
-                  const CircleAvatar(
-                    radius: 140,
-                    backgroundImage: AssetImage('assets/empleado.png'),
+                  SizedBox(
+                    width: 160, // ajusta este tamaño a tu gusto
+                    height: 160,
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/empleado.png',
+                        fit:
+                            BoxFit
+                                .contain, // Usa 'cover' si quieres rellenar sin bordes blancos
+                      ),
+                    ),
                   ),
+
                   const SizedBox(height: 20),
                   Center(
                     child: Text(
@@ -354,13 +362,14 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
   }) {
     return ElevatedButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon, color: color, size: 30),
+      icon: Icon(icon, color: color, size: 32),
       label: Text(
         label,
         style: TextStyle(
           color: color,
           fontSize: 22,
           fontWeight: FontWeight.bold,
+          fontFamily: 'TitanOne'
         ),
       ),
       style: ElevatedButton.styleFrom(

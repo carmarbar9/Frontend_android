@@ -233,7 +233,7 @@ class _EditNegocioPageState extends State<EditNegocioPage> {
                                   ),
                                 ),
                                 onPressed: _guardar,
-                                icon: const Icon(Icons.save),
+                                icon: const Icon(Icons.save, color: Colors.white, size: 36),
                                 label: const Text(
                                   "Guardar Cambios",
                                   style: TextStyle(
@@ -250,14 +250,14 @@ class _EditNegocioPageState extends State<EditNegocioPage> {
                               width: double.infinity,
                               child: ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
+                                  backgroundColor: Color(0xFF9B1D42),
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                   ),
                                 ),
                                 onPressed: _confirmDelete,
-                                icon: const Icon(Icons.delete),
+                                icon: const Icon(Icons.delete, color: Colors.white, size: 36),
                                 label: const Text(
                                   "Eliminar Negocio",
                                   style: TextStyle(

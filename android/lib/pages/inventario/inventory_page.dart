@@ -94,6 +94,7 @@ class _InventoryPageState extends State<InventoryPage> {
             style: TextStyle(
               color: Color(0xFF9B1D42),
               fontWeight: FontWeight.bold,
+              fontFamily: 'TitanOne'
             ),
           ),
           content: TextField(
@@ -472,7 +473,7 @@ class _InventoryPageState extends State<InventoryPage> {
         margin: const EdgeInsets.symmetric(vertical: 20),
         padding: const EdgeInsets.all(20),
         height: 460,
-        width: 320,
+        width: 380,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFF9B1D42), Color(0xFFB12A50), Color(0xFFD33E66)],
@@ -523,12 +524,12 @@ class _InventoryPageState extends State<InventoryPage> {
               },
               icon: const Icon(
                 Icons.visibility,
-                size: 30,
+                size: 28,
                 color: Color(0xFF9B1D42),
               ),
               label: const Text(
                 "Ver",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'TitanOne'),
               ),
             ),
 
@@ -547,7 +548,7 @@ class _InventoryPageState extends State<InventoryPage> {
                     ),
                     icon: const Icon(
                       Icons.edit,
-                      size: 26,
+                      size: 28,
                       color: Color(0xFF9B1D42),
                     ),
                     label: const Text(
@@ -555,6 +556,7 @@ class _InventoryPageState extends State<InventoryPage> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        fontFamily: 'TitanOne',
                       ),
                     ),
                     onPressed: () {
@@ -572,7 +574,7 @@ class _InventoryPageState extends State<InventoryPage> {
                     ),
                     icon: const Icon(
                       Icons.delete,
-                      size: 26,
+                      size: 28,
                       color: Color(0xFF9B1D42),
                     ),
                     label: const Text(
@@ -580,6 +582,7 @@ class _InventoryPageState extends State<InventoryPage> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        fontFamily: 'TitanOne',
                       ),
                     ),
                     onPressed: () async {

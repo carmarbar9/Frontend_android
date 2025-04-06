@@ -127,6 +127,7 @@ class _ProvidersPageState extends State<ProvidersPage> {
             style: TextStyle(
               color: Color(0xFF9B1D42),
               fontWeight: FontWeight.bold,
+              fontFamily: 'TitanOne',
               fontSize: 18,
             ),
           ),
@@ -587,7 +588,7 @@ class _ProvidersPageState extends State<ProvidersPage> {
                 children: [
                   Expanded(
                     child: _buildFlatWhiteButton(
-                      icon: Icons.edit,
+                      icon: Icon(Icons.edit, size: 32, color: Color(0xFF9B1D42)),
                       label: "Editar",
                       onPressed: () => _navigateToEditProvider(proveedor),
                     ),
@@ -595,7 +596,7 @@ class _ProvidersPageState extends State<ProvidersPage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _buildFlatWhiteButton(
-                      icon: Icons.delete,
+                      icon: Icon(Icons.delete, size: 32, color: Color(0xFF9B1D42)),
                       label: "Eliminar",
                       onPressed: () => _deleteProvider(proveedor),
                     ),
@@ -606,7 +607,8 @@ class _ProvidersPageState extends State<ProvidersPage> {
               SizedBox(
                 width: double.infinity,
                 child: _buildFlatWhiteButton(
-                  icon: Icons.shopping_cart,
+                  icon: Icon(Icons.shopping_cart, size: 32, color: Color(0xFF9B1D42)), // puedes ajustar el tamaño
+
                   label: "Ver Carrito",
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -623,16 +625,16 @@ class _ProvidersPageState extends State<ProvidersPage> {
   }
 
   Widget _buildFlatWhiteButton({
-    required IconData icon,
+    required Widget icon,
     required String label,
     required VoidCallback onPressed,
   }) {
     return ElevatedButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon, color: Color(0xFF9B1D42)),
+      icon: icon,
       label: Text(
         label,
-        style: const TextStyle(color: Color(0xFF9B1D42), fontSize: 18),
+        style: const TextStyle(color: Color(0xFF9B1D42), fontSize: 18, fontFamily: 'TitanOne'),
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,

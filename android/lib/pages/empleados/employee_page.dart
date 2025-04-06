@@ -60,6 +60,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
             style: TextStyle(
               color: Color(0xFF9B1D42),
               fontWeight: FontWeight.bold,
+              fontFamily: 'TitanOne',
               fontSize: 18,
             ),
           ),
@@ -448,7 +449,7 @@ class _EmployeesPageState extends State<EmployeesPage> {
             DefaultTextStyle.merge(
               style: const TextStyle(color: Color(0xFF9B1D42), fontSize: 18),
               child: _buildFlatWhiteButton(
-                icon: Icons.visibility,
+                icon: Icon(Icons.visibility, color: Color(0xFF9B1D42), size: 32),
                 label: "Ver",
                 onPressed: () async {
                   if (employee.id != null) {
@@ -474,16 +475,16 @@ class _EmployeesPageState extends State<EmployeesPage> {
   }
 
   Widget _buildFlatWhiteButton({
-    required IconData icon,
+    required Widget icon,
     required String label,
     required VoidCallback onPressed,
   }) {
     return ElevatedButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon, color: Color(0xFF9B1D42), size: 30),
+      icon: icon,
       label: Text(
         label,
-        style: const TextStyle(color: Color(0xFF9B1D42), fontSize: 24),
+        style: const TextStyle(color: Color(0xFF9B1D42), fontSize: 22, fontFamily: 'TitanOne'),
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,

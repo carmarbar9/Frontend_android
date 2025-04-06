@@ -79,6 +79,23 @@ class CategoryApiService {
   }
 }
 
+static Future<List<Categoria>> getCategoriesByNameCarta(String name) async {
+  final url = Uri.parse('$_baseUrl/nombre/$name');
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final List<dynamic> jsonList = jsonDecode(response.body);
+
+    final filteredList = jsonList.where((json) => json['pertenece'] == "VENTA").toList();
+
+    return filteredList.map((json) => Categoria.fromJson(json)).toList();
+  } else if (response.statusCode == 404) {
+    return [];
+  } else {
+    throw Exception('Error al obtener las categorías de carta por nombre');
+  }
+}
+
 static Future<Categoria> updateCategory(String id, Map<String, dynamic> data) async {
   final url = Uri.parse('$_baseUrl/$id');
   final response = await http.put(

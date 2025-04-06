@@ -1,3 +1,5 @@
+import 'package:android/models/categoria.dart';
+import 'package:android/models/session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:android/models/producto_inventario.dart';
 import 'package:android/services/service_inventory.dart';
@@ -32,21 +34,43 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
   }
 
   void _initData() async {
+    final negocioId = SessionManager.negocioId!;
+
     final categorias = await CategoryApiService.getCategoriesByName(
       widget.categoryName,
     );
-    if (categorias.isNotEmpty) {
-      _categoryId = int.tryParse(categorias.first.id);
-    }
+    final categoriaCorrecta = categorias.firstWhere(
+      (cat) => cat.negocioId == negocioId && cat.pertenece == "INVENTARIO",
+      orElse: () => Categoria(id: "", name: "", pertenece: "", negocioId: ""),
+    );
 
-    final productos =
-        await InventoryApiService.getProductosInventarioByCategoria(
-          widget.categoryName,
-        );
-    setState(() {
-      _allProducts = productos;
-      _applyFilter(); // Mostrar todos al inicio
-    });
+    if (categoriaCorrecta.id.isNotEmpty) {
+      _categoryId = int.tryParse(categoriaCorrecta.id);
+
+      final productos =
+          await InventoryApiService.getProductosInventarioByCategoria(
+            widget.categoryName,
+          );
+
+      setState(() {
+        if (_categoryId != null) {
+          _allProducts =
+              productos
+                  .where((p) => p.categoria.id == _categoryId.toString())
+                  .toList();
+        } else {
+          _allProducts = [];
+        }
+
+        _applyFilter(); // Mostrar filtrados
+      });
+    } else {
+      // No se encontró categoría válida, así que mostramos lista vacía
+      setState(() {
+        _allProducts = [];
+        _applyFilter();
+      });
+    }
   }
 
   void _applyFilter() {
@@ -89,6 +113,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
             style: TextStyle(
               color: Color(0xFF9B1D42),
               fontWeight: FontWeight.bold,
+              fontFamily: 'TitanOne',
               fontSize: 18,
             ),
           ),
@@ -322,26 +347,40 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
                       ),
                       onPressed: () async {
                         try {
-                          List<ProductoInventario> productos = await InventoryApiService.getProductosInventario();
+                          List<ProductoInventario> productos =
+                              await InventoryApiService.getProductosInventario();
 
                           Map<int, List<Lote>> lotesPorProducto = {};
                           for (var producto in productos) {
-                            final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+                            final lotes =
+                                await LoteProductoService.getLotesByProductoId(
+                                  producto.id,
+                                );
                             lotesPorProducto[producto.id] = lotes;
                           }
 
                           final notificaciones = NotificacionService()
-                              .generarNotificacionesInventario(productos, lotesPorProducto);
+                              .generarNotificacionesInventario(
+                                productos,
+                                lotesPorProducto,
+                              );
 
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => NotificacionPage(notificaciones: notificaciones),
+                              builder:
+                                  (_) => NotificacionPage(
+                                    notificaciones: notificaciones,
+                                  ),
                             ),
                           );
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error cargando notificaciones: $e')),
+                            SnackBar(
+                              content: Text(
+                                'Error cargando notificaciones: $e',
+                              ),
+                            ),
                           );
                         }
                       },
@@ -454,12 +493,14 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
                             leading: const Icon(
                               Icons.inventory_2,
                               color: Color(0xFF9B1D42),
-                              size: 30,
+                              size: 32,
                             ),
                             title: Text(
                               producto.name.toUpperCase(),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
+                                fontFamily: 'TitanOne',
+                                fontSize: 24,
                                 color: Color(0xFF9B1D42),
                               ),
                             ),

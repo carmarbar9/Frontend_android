@@ -172,7 +172,7 @@ class _CreateNegocioPageState extends State<CreateNegocioPage> {
                               ),
                             ),
                             onPressed: _crear,
-                            icon: const Icon(Icons.add),
+                            icon: const Icon(Icons.add, color: Colors.white, size: 36),
                             label: const Text(
                               "Crear Negocio",
                               style: TextStyle(

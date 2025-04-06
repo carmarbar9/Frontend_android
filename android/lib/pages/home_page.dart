@@ -13,7 +13,6 @@
   import 'package:android/pages/carta/carta_page.dart';
   import 'package:android/pages/login/elegirNegocio_page.dart';
   import 'package:android/services/service_notificacion.dart';
-  import 'package:android/models/notificacion.dart';
   import 'package:android/models/lote.dart';
   import 'package:android/models/producto_inventario.dart';
   import 'package:android/services/service_inventory.dart';
@@ -164,11 +163,6 @@
                 ],
               ),
             ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: _build3DPlansButton(),
-            ),
           ],
         ),
       );
@@ -247,70 +241,4 @@
       );
     }
 
-    Widget _build3DPlansButton() {
-      return GestureDetector(
-        onTapDown: (_) => setState(() {}), 
-        onTapUp: (_) {
-          setState(() {}); 
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const PlansPage()));
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 100),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black38,
-                blurRadius: 10,
-                offset: Offset(4, 4),
-              ),
-              BoxShadow(
-                color: Colors.white,
-                blurRadius: 5,
-                offset: Offset(-4, -4),
-              ),
-            ],
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xFF9B1D42),
-                Color(0xFFB12A50),
-                Color(0xFFD33E66),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-                side: const BorderSide(color: Colors.white, width: 2),
-              ),
-              elevation: 0,
-            ),
-            onPressed: null,
-            icon: const Icon(Icons.card_membership, size: 30, color: Colors.white),
-            label: const Text(
-              "Planes",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'TitanOne',
-                color: Colors.white,
-                    shadows: [
-                      Shadow(
-                        offset: Offset(1.5, 1.5), 
-                        blurRadius: 3,
-                        color: Colors.black26, 
-                      ),
-                    ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
   }
