@@ -17,4 +17,19 @@ class LineaDePedidoService {
       throw Exception('Error al crear la línea de pedido: ${response.body}');
     }
   }
+  
+  // Se asume que el endpoint para obtener las líneas de pedido por pedido es:
+  // GET /api/lineasDePedido/pedido/{pedidoId}
+  Future<List<LineaDePedido>> getLineasByPedidoId(int pedidoId) async {
+    final url = Uri.parse('$baseUrl/pedido/$pedidoId');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList.map((json) => LineaDePedido.fromJson(json)).toList();
+    } else if (response.statusCode == 204) {
+      return [];
+    } else {
+      throw Exception('Error al obtener líneas de pedido: ${response.body}');
+    }
+  }
 }

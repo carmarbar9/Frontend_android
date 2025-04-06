@@ -17,4 +17,18 @@ class PedidoService {
       throw Exception('Error al crear el pedido: ${response.body}');
     }
   }
+  
+  // Obtiene los pedidos asociados a una mesa
+  Future<List<Pedido>> getPedidosByMesaId(int mesaId) async {
+    final url = Uri.parse('$baseUrl/mesa/$mesaId');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList.map((json) => Pedido.fromJson(json)).toList();
+    } else if (response.statusCode == 204) {
+      return [];
+    } else {
+      throw Exception('Error al obtener pedidos: ${response.body}');
+    }
+  }
 }

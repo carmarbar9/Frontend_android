@@ -17,6 +17,16 @@ class NegocioService {
     }
   }
 
+static Future<Negocio?> fetchNegocioById(int id) async {
+  final url = Uri.parse('http://10.0.2.2:8080/api/negocios/$id');
+  final response = await http.get(url);
+  if (response.statusCode == 200) {
+    return Negocio.fromJson(jsonDecode(response.body));
+  } else {
+    throw Exception('Error al obtener el negocio: ${response.body}');
+  }
+}
+
   static Future<Negocio> createNegocio(Negocio negocio) async {
     final url = Uri.parse('$_baseUrl/api/negocios');
     final response = await http.post(

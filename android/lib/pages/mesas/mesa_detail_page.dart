@@ -10,6 +10,7 @@ import 'package:android/services/service_categoria.dart';
 import 'package:android/services/service_carta.dart';
 import 'package:android/services/service_pedido.dart';
 import 'package:android/services/service_lineaPedido.dart';
+import 'package:android/services/service_empleados.dart'; 
 
 class MesaDetailPage extends StatefulWidget {
   final Mesa mesa;
@@ -85,9 +86,8 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
   /// Finaliza el pedido:
   /// 1. Recorre la orden (_order) para obtener cada producto y calcular el precio total.
   /// 2. Crea las líneas de pedido.
-  /// 3. Crea el objeto Pedido usando la fecha actual, el id de la mesa,
-  ///    el empleado (de SessionManager.userId) y el negocio (SessionManager.negocioId).
-  /// 4. Actualiza cada línea con el id del pedido recién creado y las envía al backend.
+  /// 3. Crea el objeto Pedido usando la fecha actual, el id de la mesa, el empleado (de SessionManager) y el negocio.
+  /// 4. Asocia cada línea al pedido creado y las envía al backend.
   Future<void> finalizeOrder() async {
     try {
       double precioTotal = 0;
@@ -96,7 +96,6 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
       // Por cada entrada en la orden, se busca el producto correspondiente.
       _order.forEach((nombreProducto, cantidad) {
         ProductoVenta? productoEncontrado;
-        // Busca en cada categoría.
         for (var cat in _categories) {
           List<ProductoVenta> productos = cat['products'];
           try {
@@ -106,7 +105,6 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
           }
           if (productoEncontrado != null) break;
         }
-
         if (productoEncontrado != null) {
           double precioUnitario = productoEncontrado.precioVenta;
           precioTotal += precioUnitario * cantidad;
@@ -121,11 +119,19 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
 
       final String fechaIso = DateTime.now().toIso8601String();
       final int negocioId = int.parse(SessionManager.negocioId!);
-      final int empleadoId = int.parse(SessionManager.userId!);
+
+      // Utiliza EmpleadoService para obtener el empleado por userId.
+      final int userId = int.parse(SessionManager.userId!);
+      final empleado = await EmpleadoService.fetchEmpleadoByUserId(userId);
+      if (empleado == null) {
+        throw Exception("Empleado no encontrado para el userId: $userId");
+      }
+      final int empleadoId = empleado.id!;
+
       Pedido pedido = Pedido(
         fecha: fechaIso,
         precioTotal: precioTotal,
-        mesaId: widget.mesa.id!, // Se asume que la mesa tiene un id asignado.
+        mesaId: widget.mesa.id!,
         empleadoId: empleadoId,
         negocioId: negocioId,
       );
@@ -133,7 +139,7 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
       // Crea el pedido en el backend.
       Pedido pedidoCreado = await PedidoService().createPedido(pedido);
 
-      // Asigna el id del pedido a cada línea y créalas en el backend.
+      // Asocia el id del pedido a cada línea y créalas en el backend.
       for (var linea in lineas) {
         linea.pedidoId = pedidoCreado.id!;
         await LineaDePedidoService().createLineaDePedido(linea);
@@ -400,9 +406,7 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
                 backgroundColor: Color.fromARGB(255, 211, 67, 110),
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
-              onPressed: () {
-                finalizeOrder();
-              },
+              onPressed: finalizeOrder,
               child: const Text(
                 "Finalizar Cuenta",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
