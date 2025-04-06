@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:android/models/producto_venta.dart';
+import 'package:android/models/pedido.dart';
+import 'package:android/models/linea_de_pedido.dart';
+import 'package:android/models/session_manager.dart';
+import 'package:android/services/service_pedido.dart';
+import 'package:android/services/service_lineaPedido.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final Map<String, int> order;
+  // Mapa de productos disponibles, con nombre como clave y el objeto ProductoVenta como valor.
+  final Map<String, ProductoVenta> products;
+  // Id de la mesa para asociarlo al pedido.
+  final int mesaId;
   final Function(Map<String, int>)? onOrderChanged; // Callback opcional
 
   const OrderDetailPage({
     Key? key,
     required this.order,
+    required this.products,
+    required this.mesaId,
     this.onOrderChanged,
   }) : super(key: key);
 
@@ -34,6 +46,65 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
   }
 
+  /// Finaliza la orden:
+  /// 1. Recorre cada entrada en _order, utilizando widget.products para obtener el objeto ProductoVenta.
+  /// 2. Calcula el precio total y crea las líneas de pedido.
+  /// 3. Crea el objeto Pedido utilizando el id de la mesa, empleado (desde SessionManager.userId) y negocio (SessionManager.negocioId).
+  /// 4. Asocia cada línea al pedido creado y las envía al backend.
+  Future<void> finalizeOrder() async {
+    try {
+      double precioTotal = 0;
+      List<LineaDePedido> lineas = [];
+
+      // Recorre cada producto en la orden.
+      _order.forEach((nombreProducto, cantidad) {
+        final producto = widget.products[nombreProducto];
+        if (producto != null) {
+          double precioUnitario = producto.precioVenta;
+          precioTotal += precioUnitario * cantidad;
+          lineas.add(LineaDePedido(
+            cantidad: cantidad,
+            precioLinea: precioUnitario * cantidad,
+            pedidoId: 0, // Se actualizará tras crear el Pedido.
+            productoId: producto.id,
+          ));
+        }
+      });
+
+      final String fechaIso = DateTime.now().toIso8601String();
+      final int negocioId = int.parse(SessionManager.negocioId!);
+      final int empleadoId = 2; // poner el id del empleado logueado.
+
+      Pedido pedido = Pedido(
+        fecha: fechaIso,
+        precioTotal: precioTotal,
+        mesaId: widget.mesaId,
+        empleadoId: empleadoId,
+        negocioId: negocioId,
+      );
+
+      // Crea el pedido en el backend.
+      Pedido pedidoCreado = await PedidoService().createPedido(pedido);
+
+      // Asocia el id del pedido a cada línea y créalas en el backend.
+      for (var linea in lineas) {
+        linea.pedidoId = pedidoCreado.id!;
+        await LineaDePedidoService().createLineaDePedido(linea);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Pedido finalizado correctamente. Total: \$${precioTotal.toStringAsFixed(2)}"),
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al finalizar el pedido: $e")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,25 +120,17 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           ..._order.entries.map((entry) {
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 3,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Nombre del producto o ítem.
                     Text(
                       entry.key,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                     ),
-                    // Controles para disminuir o aumentar la cantidad.
                     Row(
                       children: [
                         IconButton(
@@ -80,10 +143,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                         ),
                         Text(
                           '${entry.value}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.black87,
-                          ),
+                          style: const TextStyle(fontSize: 16, color: Colors.black87),
                         ),
                         IconButton(
                           onPressed: () {
@@ -99,27 +159,19 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             );
           }).toList(),
           const SizedBox(height: 20),
-          // Botón para finalizar la orden y regresar la orden actualizada.
+          // Botón para finalizar la orden y crear el pedido.
           Container(
             alignment: Alignment.center,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF9B1D42),
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               ),
-              onPressed: () {
-                Navigator.pop(context, _order);
-              },
+              onPressed: finalizeOrder,
               child: const Text(
                 "Finalizar Orden",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ),

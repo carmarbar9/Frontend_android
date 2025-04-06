@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:android/models/mesa.dart';
 import 'package:android/models/categoria.dart';
 import 'package:android/models/producto_venta.dart';
+import 'package:android/models/pedido.dart';
+import 'package:android/models/linea_de_pedido.dart';
 import 'package:android/models/session_manager.dart';
 import 'package:android/pages/pedidos/order_detail_page.dart';
 import 'package:android/services/service_categoria.dart';
 import 'package:android/services/service_carta.dart';
+import 'package:android/services/service_pedido.dart';
+import 'package:android/services/service_lineaPedido.dart';
 
 class MesaDetailPage extends StatefulWidget {
   final Mesa mesa;
@@ -16,11 +20,10 @@ class MesaDetailPage extends StatefulWidget {
 }
 
 class _MesaDetailPageState extends State<MesaDetailPage> {
-  // Orden: clave es el nombre del producto y valor es la cantidad
+  // La orden: clave = nombre del producto, valor = cantidad.
   Map<String, int> _order = {};
 
-  // Lista de categorías cargadas desde el backend.
-  // Cada elemento es un Map con las llaves 'category' y 'products'.
+  // Categorías obtenidas (cada Map contiene 'category' y 'products').
   List<Map<String, dynamic>> _categories = [];
   bool _isLoading = true;
   String _error = '';
@@ -31,47 +34,130 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
     loadCategoriesAndProducts();
   }
 
-  /// Carga las categorías (de tipo VENTA) y sus productos asociados.
+  /// Carga las categorías de tipo VENTA y sus productos asociados.
   Future<void> loadCategoriesAndProducts() async {
-  try {
-    // Se obtiene el negocioId desde el SessionManager.
-    final String? negocioId = SessionManager.negocioId;
-    if (negocioId == null) {
-      throw Exception('No se encontró el negocioId en la sesión.');
-    }
+    try {
+      final String? negocioIdStr = SessionManager.negocioId;
+      if (negocioIdStr == null) {
+        throw Exception('No se encontró el negocioId en la sesión.');
+      }
+      final int negocioId = int.parse(negocioIdStr);
 
-    // Se consultan las categorías de tipo VENTA del negocio.
-    List<Categoria> categorias = await CategoryApiService.getCategoriesByNegocioIdVenta(negocioId);
+      // Obtén las categorías de tipo VENTA.
+      List<Categoria> categorias =
+          await CategoryApiService.getCategoriesByNegocioIdVenta(negocioIdStr);
 
-    // Para cada categoría, se consultan los productos asociados.
-    List<Map<String, dynamic>> loadedCategories = [];
-    for (var cat in categorias) {
-      final productoVentaService = ProductoVentaService();
-      List<ProductoVenta> productos =
-          await productoVentaService.getProductosByCategoriaNombre(cat.name);
-      // Filtramos los productos cuyo negocioId coincida con el de la sesión.
-      productos = productos.where((prod) => prod.categoria.negocioId == negocioId).toList();
-      loadedCategories.add({
-        'category': cat.name,
-        'products': productos,
+      List<Map<String, dynamic>> loadedCategories = [];
+      for (var cat in categorias) {
+        final productoVentaService = ProductoVentaService();
+        List<ProductoVenta> productos =
+            await productoVentaService.getProductosByCategoriaNombre(cat.name);
+        // Filtra por negocioId (suponiendo que cada producto tiene la propiedad categoria.negocioId).
+        productos = productos.where((prod) => prod.categoria.negocioId == negocioIdStr).toList();
+        loadedCategories.add({
+          'category': cat.name,
+          'products': productos,
+        });
+      }
+      setState(() {
+        _categories = loadedCategories;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
       });
     }
-    setState(() {
-      _categories = loadedCategories;
-      _isLoading = false;
-    });
-  } catch (e) {
-    setState(() {
-      _error = e.toString();
-      _isLoading = false;
-    });
   }
-}
+
+  /// Retorna un mapa con todos los productos, usando el nombre como clave.
+  Map<String, ProductoVenta> _getProductMap() {
+    Map<String, ProductoVenta> productMap = {};
+    for (var cat in _categories) {
+      for (ProductoVenta producto in cat['products']) {
+        productMap[producto.name] = producto;
+      }
+    }
+    return productMap;
+  }
+
+  /// Finaliza el pedido:
+  /// 1. Recorre la orden (_order) para obtener cada producto y calcular el precio total.
+  /// 2. Crea las líneas de pedido.
+  /// 3. Crea el objeto Pedido usando la fecha actual, el id de la mesa,
+  ///    el empleado (de SessionManager.userId) y el negocio (SessionManager.negocioId).
+  /// 4. Actualiza cada línea con el id del pedido recién creado y las envía al backend.
+  Future<void> finalizeOrder() async {
+    try {
+      double precioTotal = 0;
+      List<LineaDePedido> lineas = [];
+
+      // Por cada entrada en la orden, se busca el producto correspondiente.
+      _order.forEach((nombreProducto, cantidad) {
+        ProductoVenta? productoEncontrado;
+        // Busca en cada categoría.
+        for (var cat in _categories) {
+          List<ProductoVenta> productos = cat['products'];
+          try {
+            productoEncontrado = productos.firstWhere((p) => p.name == nombreProducto);
+          } catch (_) {
+            productoEncontrado = null;
+          }
+          if (productoEncontrado != null) break;
+        }
+
+        if (productoEncontrado != null) {
+          double precioUnitario = productoEncontrado.precioVenta;
+          precioTotal += precioUnitario * cantidad;
+          lineas.add(LineaDePedido(
+            cantidad: cantidad,
+            precioLinea: precioUnitario * cantidad,
+            pedidoId: 0, // Se actualizará tras crear el Pedido.
+            productoId: productoEncontrado.id,
+          ));
+        }
+      });
+
+      final String fechaIso = DateTime.now().toIso8601String();
+      final int negocioId = int.parse(SessionManager.negocioId!);
+      final int empleadoId = int.parse(SessionManager.userId!);
+      Pedido pedido = Pedido(
+        fecha: fechaIso,
+        precioTotal: precioTotal,
+        mesaId: widget.mesa.id!, // Se asume que la mesa tiene un id asignado.
+        empleadoId: empleadoId,
+        negocioId: negocioId,
+      );
+
+      // Crea el pedido en el backend.
+      Pedido pedidoCreado = await PedidoService().createPedido(pedido);
+
+      // Asigna el id del pedido a cada línea y créalas en el backend.
+      for (var linea in lineas) {
+        linea.pedidoId = pedidoCreado.id!;
+        await LineaDePedidoService().createLineaDePedido(linea);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Pedido finalizado correctamente. Total: \$${precioTotal.toStringAsFixed(2)}"),
+        ),
+      );
+      setState(() {
+        _order.clear();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al finalizar el pedido: $e")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3, // Pedidos, Acciones, Cuenta
+      length: 3, // Pedidos, Acciones, Cuenta.
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.mesa.name ?? "Mesa"),
@@ -100,34 +186,33 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
   }
 
   Widget _buildPedidosTab() {
-    // Muestra un indicador de carga o un mensaje de error si es necesario.
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_error.isNotEmpty) {
       return Center(child: Text('Error: $_error'));
     }
-
     return Container(
       color: const Color(0xFF9B1D42),
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Botón "Comanda" para ver la orden actual y actualizarla al regresar.
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFF9B1D42),
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () async {
               final updatedOrder = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => OrderDetailPage(order: _order),
+                  builder: (context) => OrderDetailPage(
+                    order: _order,
+                    products: _getProductMap(),
+                    mesaId: widget.mesa.id!,
+                  ),
                 ),
               );
               if (updatedOrder != null && updatedOrder is Map<String, int>) {
@@ -140,18 +225,14 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             label: const Text("Comanda"),
           ),
           const SizedBox(height: 20),
-          // Listado de categorías y productos obtenidos del backend.
+          // Listado de categorías y productos.
           ..._categories.map((cat) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   cat['category'],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
@@ -204,28 +285,18 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
       },
       child: Container(
         width: 120,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
         padding: const EdgeInsets.all(8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               product,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF9B1D42),
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF9B1D42)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
-            Text(
-              "Cantidad: $quantity",
-              style: const TextStyle(fontSize: 14, color: Colors.black),
-            ),
+            Text("Cantidad: $quantity", style: const TextStyle(fontSize: 14, color: Colors.black)),
           ],
         ),
       ),
@@ -244,19 +315,13 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black54,
               padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             icon: const Icon(Icons.people, color: Colors.white),
-            label: const Text(
-              "Asignar Comensales",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
+            label: const Text("Asignar Comensales", style: TextStyle(color: Colors.white, fontSize: 16)),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Asignar número de comensales")),
-              );
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text("Asignar número de comensales")));
             },
           ),
           const SizedBox(height: 10),
@@ -264,19 +329,13 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black54,
               padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             icon: const Icon(Icons.table_bar, color: Colors.white),
-            label: const Text(
-              "Unir Mesas",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
+            label: const Text("Unir Mesas", style: TextStyle(color: Colors.white, fontSize: 16)),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Unir mesas")),
-              );
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text("Unir mesas")));
             },
           ),
           const SizedBox(height: 10),
@@ -284,19 +343,13 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black54,
               padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             icon: const Icon(Icons.swap_horiz, color: Colors.white),
-            label: const Text(
-              "Transferir Datos",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
+            label: const Text("Transferir Datos", style: TextStyle(color: Colors.white, fontSize: 16)),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Transferir datos de una mesa a otra")),
-              );
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text("Transferir datos de una mesa a otra")));
             },
           ),
           const SizedBox(height: 10),
@@ -304,19 +357,13 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black54,
               padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             icon: const Icon(Icons.cleaning_services, color: Colors.white),
-            label: const Text(
-              "Limpiar Datos",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
+            label: const Text("Limpiar Datos", style: TextStyle(color: Colors.white, fontSize: 16)),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Limpiar datos de la mesa")),
-              );
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text("Limpiar datos de la mesa")));
             },
           ),
         ],
@@ -331,14 +378,8 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Resumen de Cuenta",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
+          const Text("Resumen de Cuenta",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
           const Divider(color: Colors.white70),
           const ListTile(
             title: Text("Total pedidos:", style: TextStyle(color: Colors.white)),
@@ -356,11 +397,11 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
           Center(
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 211, 67, 110),
+                backgroundColor: Color.fromARGB(255, 211, 67, 110),
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
               onPressed: () {
-                // Lógica para finalizar la cuenta y cerrar la mesa.
+                finalizeOrder();
               },
               child: const Text(
                 "Finalizar Cuenta",
