@@ -10,6 +10,7 @@ import 'package:android/services/service_categoria.dart';
 import 'package:android/services/service_carta.dart';
 import 'package:android/services/service_pedido.dart';
 import 'package:android/services/service_lineaPedido.dart';
+import 'package:android/services/service_empleados.dart';
 
 class MesaDetailPage extends StatefulWidget {
   final Mesa mesa;
@@ -20,7 +21,7 @@ class MesaDetailPage extends StatefulWidget {
 }
 
 class _MesaDetailPageState extends State<MesaDetailPage> {
-  // La orden: clave = nombre del producto, valor = cantidad.
+  // La orden actual: clave = nombre del producto, valor = cantidad.
   Map<String, int> _order = {};
 
   // Categorías obtenidas (cada Map contiene 'category' y 'products').
@@ -41,8 +42,6 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
       if (negocioIdStr == null) {
         throw Exception('No se encontró el negocioId en la sesión.');
       }
-      final int negocioId = int.parse(negocioIdStr);
-
       // Obtén las categorías de tipo VENTA.
       List<Categoria> categorias =
           await CategoryApiService.getCategoriesByNegocioIdVenta(negocioIdStr);
@@ -52,7 +51,7 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
         final productoVentaService = ProductoVentaService();
         List<ProductoVenta> productos =
             await productoVentaService.getProductosByCategoriaNombre(cat.name);
-        // Filtra por negocioId (suponiendo que cada producto tiene la propiedad categoria.negocioId).
+        // Filtra por negocioId (se asume que cada producto tiene la propiedad categoria.negocioId).
         productos = productos.where((prod) => prod.categoria.negocioId == negocioIdStr).toList();
         loadedCategories.add({
           'category': cat.name,
@@ -82,21 +81,37 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
     return productMap;
   }
 
-  /// Finaliza el pedido:
-  /// 1. Recorre la orden (_order) para obtener cada producto y calcular el precio total.
-  /// 2. Crea las líneas de pedido.
-  /// 3. Crea el objeto Pedido usando la fecha actual, el id de la mesa,
-  ///    el empleado (de SessionManager.userId) y el negocio (SessionManager.negocioId).
-  /// 4. Actualiza cada línea con el id del pedido recién creado y las envía al backend.
+  /// Carga un resumen de todas las líneas de pedido de todos los pedidos de esta mesa,
+  /// acumulando un listado y el total a pagar.
+  Future<Map<String, dynamic>> _loadOrderLinesSummary() async {
+    List<Pedido> pedidos = await PedidoService().getPedidosByMesaId(widget.mesa.id!);
+    List<LineaDePedido> allLineas = [];
+    double total = 0.0;
+    for (Pedido pedido in pedidos) {
+      total += pedido.precioTotal;
+      List<LineaDePedido> lineas = await LineaDePedidoService().getLineasByPedidoId(pedido.id!);
+      allLineas.addAll(lineas);
+    }
+    return {
+      "lineas": allLineas,
+      "total": total,
+    };
+  }
+
+  /// Finaliza el pedido actual:
+  /// 1. Recorre la orden (_order) para obtener cada producto y calcular el precio total,
+  ///    creando las líneas de pedido correspondientes.
+  /// 2. Obtiene el empleado real mediante EmpleadoService.
+  /// 3. Crea el objeto Pedido usando la fecha actual, el id de la mesa, el id del empleado y el negocio.
+  /// 4. Asocia cada línea al pedido creado y las envía al backend.
   Future<void> finalizeOrder() async {
     try {
       double precioTotal = 0;
       List<LineaDePedido> lineas = [];
 
-      // Por cada entrada en la orden, se busca el producto correspondiente.
+      // Recorre cada entrada en la orden y busca el producto correspondiente.
       _order.forEach((nombreProducto, cantidad) {
         ProductoVenta? productoEncontrado;
-        // Busca en cada categoría.
         for (var cat in _categories) {
           List<ProductoVenta> productos = cat['products'];
           try {
@@ -106,7 +121,6 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
           }
           if (productoEncontrado != null) break;
         }
-
         if (productoEncontrado != null) {
           double precioUnitario = productoEncontrado.precioVenta;
           precioTotal += precioUnitario * cantidad;
@@ -119,13 +133,29 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
         }
       });
 
+      // Si no hay productos en la orden, muestra un mensaje amigable.
+      if (lineas.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No hay productos en la orden.")),
+        );
+        return;
+      }
+
       final String fechaIso = DateTime.now().toIso8601String();
       final int negocioId = int.parse(SessionManager.negocioId!);
-      final int empleadoId = int.parse(SessionManager.userId!);
+
+      // Obtén el empleado asociado usando su userId.
+      final int userId = int.parse(SessionManager.userId!);
+      final empleado = await EmpleadoService.fetchEmpleadoByUserId(userId);
+      if (empleado == null) {
+        throw Exception("Empleado no encontrado para el userId: $userId");
+      }
+      final int empleadoId = empleado.id!;
+
       Pedido pedido = Pedido(
         fecha: fechaIso,
         precioTotal: precioTotal,
-        mesaId: widget.mesa.id!, // Se asume que la mesa tiene un id asignado.
+        mesaId: widget.mesa.id!,
         empleadoId: empleadoId,
         negocioId: negocioId,
       );
@@ -133,7 +163,7 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
       // Crea el pedido en el backend.
       Pedido pedidoCreado = await PedidoService().createPedido(pedido);
 
-      // Asigna el id del pedido a cada línea y créalas en el backend.
+      // Asocia el id del pedido a cada línea y créalas en el backend.
       for (var linea in lineas) {
         linea.pedidoId = pedidoCreado.id!;
         await LineaDePedidoService().createLineaDePedido(linea);
@@ -320,8 +350,9 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             icon: const Icon(Icons.people, color: Colors.white),
             label: const Text("Asignar Comensales", style: TextStyle(color: Colors.white, fontSize: 16)),
             onPressed: () {
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(const SnackBar(content: Text("Asignar número de comensales")));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Asignar número de comensales"))
+              );
             },
           ),
           const SizedBox(height: 10),
@@ -334,8 +365,9 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             icon: const Icon(Icons.table_bar, color: Colors.white),
             label: const Text("Unir Mesas", style: TextStyle(color: Colors.white, fontSize: 16)),
             onPressed: () {
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(const SnackBar(content: Text("Unir mesas")));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Unir mesas"))
+              );
             },
           ),
           const SizedBox(height: 10),
@@ -348,8 +380,9 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             icon: const Icon(Icons.swap_horiz, color: Colors.white),
             label: const Text("Transferir Datos", style: TextStyle(color: Colors.white, fontSize: 16)),
             onPressed: () {
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(const SnackBar(content: Text("Transferir datos de una mesa a otra")));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Transferir datos de una mesa a otra"))
+              );
             },
           ),
           const SizedBox(height: 10),
@@ -362,8 +395,9 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             icon: const Icon(Icons.cleaning_services, color: Colors.white),
             label: const Text("Limpiar Datos", style: TextStyle(color: Colors.white, fontSize: 16)),
             onPressed: () {
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(const SnackBar(content: Text("Limpiar datos de la mesa")));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Limpiar datos de la mesa"))
+              );
             },
           ),
         ],
@@ -371,46 +405,96 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
     );
   }
 
+  /// Pestaña "Cuenta": muestra un resumen agrupado de todos los pedidos de la mesa.
+  /// Se agrupan las líneas de pedido por producto (sumando cantidades y precio) y se muestra el total acumulado.
   Widget _buildCuentaTab() {
-    return Container(
-      color: const Color(0xFF9B1D42),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Resumen de Cuenta",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-          const Divider(color: Colors.white70),
-          const ListTile(
-            title: Text("Total pedidos:", style: TextStyle(color: Colors.white)),
-            trailing: Text("\$45.00", style: TextStyle(color: Colors.white)),
-          ),
-          const ListTile(
-            title: Text("Descuento:", style: TextStyle(color: Colors.white)),
-            trailing: Text("\$5.00", style: TextStyle(color: Colors.white)),
-          ),
-          const ListTile(
-            title: Text("Total a pagar:", style: TextStyle(color: Colors.white)),
-            trailing: Text("\$40.00", style: TextStyle(color: Colors.white)),
-          ),
-          const SizedBox(height: 20),
-          Center(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(255, 211, 67, 110),
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _loadOrderLinesSummary(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData) {
+          return const Center(child: Text("No hay datos disponibles."));
+        }
+        final Map<String, dynamic> data = snapshot.data!;
+        final List<LineaDePedido> lineas = data["lineas"];
+        final double total = data["total"];
+
+        // Agrupa las líneas por producto (usando productoId) y suma cantidades y precios.
+        Map<int, Map<String, dynamic>> agrupado = {};
+        for (var linea in lineas) {
+          String productoName = "Producto ${linea.productoId}";
+          final productoJson = linea.toJson()['producto'] as Map<String, dynamic>?;
+          if (productoJson != null && productoJson['name'] != null) {
+            productoName = productoJson['name'] as String;
+          }
+          if (agrupado.containsKey(linea.productoId)) {
+            agrupado[linea.productoId]!['cantidad'] += linea.cantidad;
+            agrupado[linea.productoId]!['precioLinea'] += linea.precioLinea;
+          } else {
+            agrupado[linea.productoId] = {
+              'productoName': productoName,
+              'cantidad': linea.cantidad,
+              'precioLinea': linea.precioLinea,
+            };
+          }
+        }
+        List<Map<String, dynamic>> listaAgrupada = agrupado.values.toList();
+
+        return Container(
+          color: const Color(0xFF9B1D42),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Resumen de Cuenta",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
               ),
-              onPressed: () {
-                finalizeOrder();
-              },
-              child: const Text(
-                "Finalizar Cuenta",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              const Divider(color: Colors.white70),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: listaAgrupada.length,
+                  itemBuilder: (context, index) {
+                    final item = listaAgrupada[index];
+                    return ListTile(
+                      title: Text(item['productoName'], style: const TextStyle(color: Colors.white)),
+                      subtitle: Text("Cantidad: ${item['cantidad']}", style: const TextStyle(color: Colors.white70)),
+                      trailing: Text("\$${(item['precioLinea'] as double).toStringAsFixed(2)}", style: const TextStyle(color: Colors.white)),
+                    );
+                  },
+                ),
               ),
-            ),
-          )
-        ],
-      ),
+              const SizedBox(height: 10),
+              Center(
+                child: Text(
+                  "Total a pagar: \$${total.toStringAsFixed(2)}",
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Botón de Finalizar Venta que no hace nada.
+              Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  ),
+                  onPressed: () {
+                    // Botón sin funcionalidad
+                  },
+                  child: const Text(
+                    "Finalizar Venta",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
