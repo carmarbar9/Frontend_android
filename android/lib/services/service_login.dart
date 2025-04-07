@@ -9,19 +9,39 @@ class ApiService {
   static const String _baseUrl = 'http://10.0.2.2:8080';
 
   static Future<String?> login(String username, String password) async {
-    final url = Uri.parse('$_baseUrl/api/login');
+    final url = Uri.parse('$_baseUrl/api/auth/login');
     final response = await http.post(
       url,
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: {
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
         'username': username,
         'password': password,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      return data['token'];
+    } else {
+      print("Error login: ${response.statusCode} - ${response.body}");
+      return null;
+    }
+  }
+
+  static Future<User?> fetchCurrentUser(String token) async {
+    final url = Uri.parse('$_baseUrl/api/users/me');
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
       },
     );
 
     if (response.statusCode == 200) {
-      return response.body;
+      return User.fromJson(json.decode(response.body));
     } else {
+      print("Error al obtener el usuario: ${response.statusCode} - ${response.body}");
       return null;
     }
   }
@@ -60,9 +80,32 @@ class ApiService {
 
   if (response.statusCode == 200) {
     final data = json.decode(response.body);
-    SessionManager.duenoId = data['id'] as int; // suponiendo que `id` es el id del dueño
+    SessionManager.duenoId = data['id'] as int; // suponiendo que id es el id del dueño
   } else {
     throw Exception('No se pudo obtener el duenoId');
   }
 }
+
+
+static Future<User?> fetchCurrentUserWithBasicAuth(String username, String password) async {
+  final url = Uri.parse('$_baseUrl/api/users/me');
+  // Codificar las credenciales: "username:password"
+  final credentials = base64Encode(utf8.encode('$username:$password'));
+
+  final response = await http.get(
+    url,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Basic $credentials',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    return User.fromJson(json.decode(response.body));
+  } else {
+    print("Error al obtener el usuario: ${response.statusCode} - ${response.body}");
+    return null;
+  }
+}
+
 }

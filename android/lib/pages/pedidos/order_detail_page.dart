@@ -88,7 +88,7 @@ Future<void> finalizeOrder() async {
 
     // Obtén el empleado asociado usando su userId.
     final int userId = int.parse(SessionManager.userId!);
-    Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId);
+    Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId, SessionManager.token!);
     if (empleado == null) {
       throw Exception("Empleado no encontrado para el userId: $userId");
     }

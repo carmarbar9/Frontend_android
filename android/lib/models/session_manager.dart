@@ -2,6 +2,7 @@
 import 'package:android/models/user.dart';
 
 class SessionManager {
+  static String? token;
   static String? negocioId; 
   static String? negocioNombre;
   static String? ciudad;
@@ -9,8 +10,9 @@ class SessionManager {
   static String? username;
   static User? currentUser;
   static int? duenoId;
-
+  
   static void clear() {
+    token = null;
     negocioId = null;
     negocioNombre = null;
     ciudad = null;

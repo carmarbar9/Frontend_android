@@ -134,15 +134,23 @@ class EmpleadoService {
     }
   }
   
-  static Future<Empleado?> fetchEmpleadoByUserId(int userId) async {
-    final url = Uri.parse('$_baseUrl/user/$userId');
-    final response = await http.get(url);
+  static Future<Empleado?> fetchEmpleadoByUserId(int userId, String token) async {
+    final url = Uri.parse('$_baseUrl/api/empleados/user/$userId');
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
     if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonData = jsonDecode(response.body);
-      return Empleado.fromJson(jsonData);
+      final data = jsonDecode(response.body);
+      return Empleado.fromJson(data);
     } else {
-      throw Exception('Error al obtener el empleado: ${response.body}');
+      print('Error en fetchEmpleado: ${response.statusCode} - ${response.body}');
+      return null;
     }
   }
+
 }
 

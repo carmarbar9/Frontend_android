@@ -28,31 +28,21 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _isLoading = true);
 
       try {
-        // Se intenta obtener el usuario
-        final User? user = await ApiService.fetchUser(_username, _password);
-        if (user == null) {
-          throw 'Usuario o contraseña incorrectos';
-        }
+        // En lugar de llamar a un endpoint de login que no existe,
+        // llamamos directamente al endpoint /me usando Basic Auth
+        final user = await ApiService.fetchCurrentUserWithBasicAuth(_username, _password);
+        if (user == null) throw 'Usuario o contraseña incorrectos';
 
-        // Debug
-        print('Usuario logueado: ${user.username}');
-        print('Authority cruda: ${user.authority.authority}');
-
-        final rawAuthority = user.authority.authority.toLowerCase();
-        final String authority =
-            (rawAuthority == 'dueno') ? 'dueno' : rawAuthority;
-
-        print('Authority corregida: $authority');
-
-        // Limpiar la sesión actual y asignar el usuario actual
+        // Guardar datos en la sesión
         SessionManager.clear();
+        // No se recibe token, pero puedes almacenar las credenciales si es necesario
         SessionManager.currentUser = user;
         SessionManager.userId = user.id.toString();
         SessionManager.username = user.username;
 
+        final authority = user.authority.authority.toLowerCase();
 
         if (authority == 'dueno') {
-          // Para dueños, navegamos a la pantalla para elegir el negocio.
           await ApiService().fetchDuenoId(user.id);
           Navigator.pushReplacement(
             context,
@@ -61,19 +51,11 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
         } else if (authority == 'empleado') {
-          // Para empleados, se obtiene el empleado para recuperar el negocio asociado.
-          final empleado = await EmpleadoService.fetchEmpleadoByUserId(
-            user.id!,
-          );
-          if (empleado == null) {
-            throw 'No se encontró un empleado para este usuario';
-          }
-          if (empleado.negocio == null) {
-            throw 'Este empleado no tiene un negocio asignado.';
-          }
+          final empleado = await EmpleadoService.fetchEmpleadoByUserId(user.id!, _password);
+          if (empleado == null) throw 'No se encontró el empleado';
+          if (empleado.negocio == null) throw 'Empleado sin negocio asignado';
 
           SessionManager.negocioId = empleado.negocio.toString();
-
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -83,15 +65,18 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           throw 'Rol no reconocido';
         }
-      } catch (error) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $error')));
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
       } finally {
         setState(() => _isLoading = false);
       }
     }
   }
+
+
+
 
   void _navigateToRegister() {
     Navigator.push(
@@ -179,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: TextFormField(
                     decoration: const InputDecoration(
                       labelText: 'Contraseña',
-                      hintText: '********',
+                      hintText: '****',
                       border: InputBorder.none,
                       icon: Icon(Icons.lock),
                     ),
