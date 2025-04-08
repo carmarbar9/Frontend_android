@@ -11,11 +11,9 @@ import 'order_info_page.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final Map<String, int> order;
-  // Mapa de productos disponibles, con nombre como clave y el objeto ProductoVenta como valor.
   final Map<String, ProductoVenta> products;
-  // Id de la mesa para asociarlo al pedido.
   final int mesaId;
-  final Function(Map<String, int>)? onOrderChanged; // Callback opcional
+  final Function(Map<String, int>)? onOrderChanged;
 
   const OrderDetailPage({
     Key? key,
@@ -35,11 +33,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   @override
   void initState() {
     super.initState();
-    // Clonamos la orden para editarla localmente.
     _order = Map.from(widget.order);
   }
 
-  // Función auxiliar para actualizar la orden y notificar el cambio.
   void _updateOrder(String key, int newValue) {
     setState(() {
       _order[key] = newValue;
@@ -49,87 +45,109 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
   }
 
-  /// Finaliza la orden:
-  /// 1. Recorre cada entrada en _order para obtener el objeto ProductoVenta y calcular el precio total.
-  /// 2. Crea las líneas de pedido.
-  /// 3. Obtiene el empleado usando fetchEmpleadoByUserId (con el userId de SessionManager).
-  /// 4. Crea el objeto Pedido utilizando la fecha actual, el id de la mesa, el id del empleado y el negocio.
-  /// 5. Asocia cada línea al pedido creado y las envía al backend.
-Future<void> finalizeOrder() async {
-  try {
-    double precioTotal = 0;
-    List<LineaDePedido> lineas = [];
+  Future<void> finalizeOrder() async {
+    try {
+      double precioTotal = 0;
+      List<LineaDePedido> nuevasLineas = [];
 
-    // Recorre cada producto en la orden.
-    _order.forEach((nombreProducto, cantidad) {
-      final producto = widget.products[nombreProducto];
-      if (producto != null) {
-        double precioUnitario = producto.precioVenta;
-        precioTotal += precioUnitario * cantidad;
-        lineas.add(LineaDePedido(
-          cantidad: cantidad,
-          precioLinea: precioUnitario * cantidad,
-          pedidoId: 0, // Se actualizará tras crear el Pedido.
-          productoId: producto.id,
-        ));
+      _order.forEach((nombreProducto, cantidad) {
+        final producto = widget.products[nombreProducto];
+        if (producto != null) {
+          double precioUnitario = producto.precioVenta;
+          precioTotal += precioUnitario * cantidad;
+          nuevasLineas.add(LineaDePedido(
+            cantidad: cantidad,
+            precioLinea: precioUnitario * cantidad,
+            pedidoId: 0,
+            productoId: producto.id,
+          ));
+        }
+      });
+
+      if (nuevasLineas.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No hay productos en la orden.")),
+        );
+        return;
       }
-    });
 
-    // Si no hay productos en la orden, muestra un mensaje amigable y termina.
-    if (lineas.isEmpty) {
+      final int userId = int.parse(SessionManager.userId!);
+      final int negocioId = int.parse(SessionManager.negocioId!);
+      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId);
+
+      if (empleado == null) {
+        throw Exception("Empleado no encontrado.");
+      }
+
+      final int empleadoId = empleado.id!;
+      final pedidos = await PedidoService().getPedidosByMesaId(widget.mesaId);
+
+      if (pedidos.isEmpty) {
+        // Crear pedido nuevo
+        final String fechaIso = DateTime.now().toIso8601String();
+
+        Pedido nuevoPedido = Pedido(
+          fecha: fechaIso,
+          precioTotal: precioTotal,
+          mesaId: widget.mesaId,
+          empleadoId: empleadoId,
+          negocioId: negocioId,
+        );
+
+        Pedido pedidoCreado = await PedidoService().createPedido(nuevoPedido);
+
+        for (var linea in nuevasLineas) {
+          linea.pedidoId = pedidoCreado.id!;
+          await LineaDePedidoService().createLineaDePedido(linea);
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Pedido creado correctamente. Total: \$${precioTotal.toStringAsFixed(2)}"),
+          ),
+        );
+      } else {
+        // Actualizar pedido existente
+        final pedidoExistente = pedidos.first;
+        final int pedidoId = pedidoExistente.id!;
+        final double nuevoTotal = pedidoExistente.precioTotal + precioTotal;
+
+        for (var linea in nuevasLineas) {
+          linea.pedidoId = pedidoId;
+          await LineaDePedidoService().createLineaDePedido(linea);
+        }
+
+        Pedido pedidoActualizado = Pedido(
+          id: pedidoId,
+          fecha: pedidoExistente.fecha,
+          mesaId: pedidoExistente.mesaId,
+          empleadoId: pedidoExistente.empleadoId,
+          negocioId: pedidoExistente.negocioId,
+          precioTotal: nuevoTotal,
+        );
+
+        await PedidoService().updatePedido(pedidoId, pedidoActualizado);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Pedido actualizado. Nuevo total: \$${nuevoTotal.toStringAsFixed(2)}"),
+          ),
+        );
+      }
+
+      setState(() {
+        _order.clear();
+
+      });
+Navigator.pop(context, <String, int>{});
+
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No hay productos en la orden.")),
+        SnackBar(content: Text("Error al finalizar el pedido: $e")),
       );
-      return;
     }
-
-    final String fechaIso = DateTime.now().toIso8601String();
-    final int negocioId = int.parse(SessionManager.negocioId!);
-
-    // Obtén el empleado asociado usando su userId.
-    final int userId = int.parse(SessionManager.userId!);
-    Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId);
-    if (empleado == null) {
-      throw Exception("Empleado no encontrado para el userId: $userId");
-    }
-    final int empleadoId = empleado.id!;
-
-    Pedido pedido = Pedido(
-      fecha: fechaIso,
-      precioTotal: precioTotal,
-      mesaId: widget.mesaId,
-      empleadoId: empleadoId,
-      negocioId: negocioId,
-    );
-
-    // Crea el pedido en el backend.
-    Pedido pedidoCreado = await PedidoService().createPedido(pedido);
-
-    // Asocia el id del pedido a cada línea y créalas en el backend.
-    for (var linea in lineas) {
-      linea.pedidoId = pedidoCreado.id!;
-      await LineaDePedidoService().createLineaDePedido(linea);
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Pedido finalizado correctamente. Total: \$${precioTotal.toStringAsFixed(2)}"),
-      ),
-    );
-    setState(() {
-      _order.clear();
-    });
-    // Actualiza la lista de pedidos completados.
-    setState(() {});
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Error al finalizar el pedido: $e")),
-    );
   }
-}
 
-
-  // Carga los pedidos realizados para la mesa actual.
   Future<List<Pedido>> _loadCompletedOrders() async {
     return await PedidoService().getPedidosByMesaId(widget.mesaId);
   }
@@ -137,7 +155,6 @@ Future<void> finalizeOrder() async {
   Widget _buildCompletedOrderBox(Pedido pedido, int index) {
     return GestureDetector(
       onTap: () {
-        // Navega a la página de detalles del pedido.
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -166,7 +183,6 @@ Future<void> finalizeOrder() async {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Sección para la orden actual.
           ..._order.entries.map((entry) {
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8),
@@ -209,7 +225,6 @@ Future<void> finalizeOrder() async {
             );
           }).toList(),
           const SizedBox(height: 20),
-          // Botón para finalizar la orden.
           Container(
             alignment: Alignment.center,
             child: ElevatedButton(

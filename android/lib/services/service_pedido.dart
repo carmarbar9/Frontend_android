@@ -31,4 +31,22 @@ class PedidoService {
       throw Exception('Error al obtener pedidos: ${response.body}');
     }
   }
+
+
+  Future<Pedido> updatePedido(int id, Pedido pedido) async {
+  final url = Uri.parse('$baseUrl/$id');
+  final response = await http.put(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode(pedido.toJson()),
+  );
+
+  if (response.statusCode == 200) {
+    return Pedido.fromJson(jsonDecode(response.body));
+  } else if (response.statusCode == 404) {
+    throw Exception('Pedido no encontrado con id $id');
+  } else {
+    throw Exception('Error al actualizar el pedido: ${response.body}');
+  }
+}
 }

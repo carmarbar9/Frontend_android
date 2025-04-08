@@ -17,9 +17,7 @@ class LineaDePedidoService {
       throw Exception('Error al crear la línea de pedido: ${response.body}');
     }
   }
-  
-  // Se asume que el endpoint para obtener las líneas de pedido por pedido es:
-  // GET /api/lineasDePedido/pedido/{pedidoId}
+
   Future<List<LineaDePedido>> getLineasByPedidoId(int pedidoId) async {
     final url = Uri.parse('$baseUrl/pedido/$pedidoId');
     final response = await http.get(url);
@@ -30,6 +28,28 @@ class LineaDePedidoService {
       return [];
     } else {
       throw Exception('Error al obtener líneas de pedido: ${response.body}');
+    }
+  }
+
+  Future<void> updateLineaDePedido(LineaDePedido linea) async {
+    final url = Uri.parse('$baseUrl/${linea.id}');
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(linea.toJson()),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Error al actualizar la línea: ${response.body}');
+    }
+  }
+
+  Future<void> deleteLineaDePedido(int id) async {
+    final url = Uri.parse('$baseUrl/$id');
+    final response = await http.delete(url);
+
+    if (response.statusCode != 204) {
+      throw Exception('Error al eliminar la línea: ${response.body}');
     }
   }
 }

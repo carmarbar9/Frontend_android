@@ -23,33 +23,72 @@ class _OrderInfoPageState extends State<OrderInfoPage> {
     loadLineas();
   }
 
-  Future<void> loadLineas() async {
-    try {
-      List<LineaDePedido> lineas = await LineaDePedidoService().getLineasByPedidoId(widget.pedido.id!);
-      setState(() {
-        _lineas = lineas;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
+Future<void> loadLineas() async {
+  try {
+    List<LineaDePedido> lineas = await LineaDePedidoService().getLineasByPedidoId(widget.pedido.id!);
+    lineas = lineas.reversed.toList(); // Invertimos el orden
+    setState(() {
+      _lineas = lineas;
+      _isLoading = false;
+    });
+  } catch (e) {
+    setState(() {
+      _error = e.toString();
+      _isLoading = false;
+    });
   }
-
-  // Para mostrar cada línea de pedido. Se asume que la respuesta incluye el nombre del producto
-  // dentro del objeto "producto". Si no es el caso, se mostrará "Producto {id}".
-Widget _buildLineaItem(LineaDePedido linea) {
-  // Si el campo productoName está definido, se muestra; en caso contrario, se muestra un fallback.
-  String productoName = linea.productoName ?? "Producto ${linea.productoId}";
-  return ListTile(
-    title: Text(productoName),
-    subtitle: Text('Cantidad: ${linea.cantidad}'),
-    trailing: Text('\$${linea.precioLinea.toStringAsFixed(2)}'),
-  );
 }
 
+
+  Future<void> _actualizarCantidad(LineaDePedido linea, int cambio) async {
+    final nuevaCantidad = linea.cantidad + cambio;
+
+    if (nuevaCantidad <= 0) {
+      // Eliminar línea si la cantidad va a ser 0 o menor
+      await LineaDePedidoService().deleteLineaDePedido(linea.id!);
+    } else {
+      // Actualizar línea con nueva cantidad y precio recalculado
+      final nuevoPrecio = (linea.precioLinea / linea.cantidad) * nuevaCantidad;
+
+      LineaDePedido actualizada = LineaDePedido(
+        id: linea.id,
+        cantidad: nuevaCantidad,
+        precioLinea: nuevoPrecio,
+        pedidoId: linea.pedidoId,
+        productoId: linea.productoId,
+        productoName: linea.productoName,
+      );
+
+      await LineaDePedidoService().updateLineaDePedido(actualizada);
+    }
+
+    await loadLineas();
+  }
+
+  Widget _buildLineaItem(LineaDePedido linea) {
+    String productoName = linea.productoName ?? "Producto ${linea.productoId}";
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListTile(
+        title: Text(productoName),
+        subtitle: Row(
+          children: [
+            IconButton(
+              onPressed: () => _actualizarCantidad(linea, -1),
+              icon: const Icon(Icons.remove, color: Colors.red),
+            ),
+            Text('${linea.cantidad}', style: const TextStyle(fontSize: 16)),
+            IconButton(
+              onPressed: () => _actualizarCantidad(linea, 1),
+              icon: const Icon(Icons.add, color: Colors.green),
+            ),
+          ],
+        ),
+        trailing: Text('\$${linea.precioLinea.toStringAsFixed(2)}'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +109,7 @@ Widget _buildLineaItem(LineaDePedido linea) {
                     const SizedBox(height: 20),
                     const Text('Productos:', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     const Divider(),
-                    ..._lineas.map((linea) => _buildLineaItem(linea)).toList(),
+                    ..._lineas.map(_buildLineaItem).toList(),
                   ],
                 ),
     );

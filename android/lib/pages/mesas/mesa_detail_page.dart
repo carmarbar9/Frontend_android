@@ -49,14 +49,14 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
       List<Map<String, dynamic>> loadedCategories = [];
       for (var cat in categorias) {
         final productoVentaService = ProductoVentaService();
-        List<ProductoVenta> productos =
-            await productoVentaService.getProductosByCategoriaNombre(cat.name);
+        List<ProductoVenta> productos = await productoVentaService
+            .getProductosByCategoriaNombre(cat.name);
         // Filtra por negocioId (se asume que cada producto tiene la propiedad categoria.negocioId).
-        productos = productos.where((prod) => prod.categoria.negocioId == negocioIdStr).toList();
-        loadedCategories.add({
-          'category': cat.name,
-          'products': productos,
-        });
+        productos =
+            productos
+                .where((prod) => prod.categoria.negocioId == negocioIdStr)
+                .toList();
+        loadedCategories.add({'category': cat.name, 'products': productos});
       }
       setState(() {
         _categories = loadedCategories;
@@ -84,18 +84,18 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
   /// Carga un resumen de todas las líneas de pedido de todos los pedidos de esta mesa,
   /// acumulando un listado y el total a pagar.
   Future<Map<String, dynamic>> _loadOrderLinesSummary() async {
-    List<Pedido> pedidos = await PedidoService().getPedidosByMesaId(widget.mesa.id!);
+    List<Pedido> pedidos = await PedidoService().getPedidosByMesaId(
+      widget.mesa.id!,
+    );
     List<LineaDePedido> allLineas = [];
     double total = 0.0;
     for (Pedido pedido in pedidos) {
       total += pedido.precioTotal;
-      List<LineaDePedido> lineas = await LineaDePedidoService().getLineasByPedidoId(pedido.id!);
+      List<LineaDePedido> lineas = await LineaDePedidoService()
+          .getLineasByPedidoId(pedido.id!);
       allLineas.addAll(lineas);
     }
-    return {
-      "lineas": allLineas,
-      "total": total,
-    };
+    return {"lineas": allLineas, "total": total};
   }
 
   /// Finaliza el pedido actual:
@@ -115,7 +115,9 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
         for (var cat in _categories) {
           List<ProductoVenta> productos = cat['products'];
           try {
-            productoEncontrado = productos.firstWhere((p) => p.name == nombreProducto);
+            productoEncontrado = productos.firstWhere(
+              (p) => p.name == nombreProducto,
+            );
           } catch (_) {
             productoEncontrado = null;
           }
@@ -124,12 +126,14 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
         if (productoEncontrado != null) {
           double precioUnitario = productoEncontrado.precioVenta;
           precioTotal += precioUnitario * cantidad;
-          lineas.add(LineaDePedido(
-            cantidad: cantidad,
-            precioLinea: precioUnitario * cantidad,
-            pedidoId: 0, // Se actualizará tras crear el Pedido.
-            productoId: productoEncontrado.id,
-          ));
+          lineas.add(
+            LineaDePedido(
+              cantidad: cantidad,
+              precioLinea: precioUnitario * cantidad,
+              pedidoId: 0, // Se actualizará tras crear el Pedido.
+              productoId: productoEncontrado.id,
+            ),
+          );
         }
       });
 
@@ -171,7 +175,9 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Pedido finalizado correctamente. Total: \$${precioTotal.toStringAsFixed(2)}"),
+          content: Text(
+            "Pedido finalizado correctamente. Total: \$${precioTotal.toStringAsFixed(2)}",
+          ),
         ),
       );
       setState(() {
@@ -232,20 +238,26 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFF9B1D42),
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () async {
-              final updatedOrder = await Navigator.push(
+              final updatedOrder = await Navigator.push<Map<String, int>>(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => OrderDetailPage(
-                    order: _order,
-                    products: _getProductMap(),
-                    mesaId: widget.mesa.id!,
-                  ),
+                  builder:
+                      (context) => OrderDetailPage(
+                        order: Map<String, int>.from(
+                          _order,
+                        ), // <<< IMPORTANTE: clonar para evitar referencias
+                        products: _getProductMap(),
+                        mesaId: widget.mesa.id!,
+                      ),
                 ),
               );
-              if (updatedOrder != null && updatedOrder is Map<String, int>) {
+
+              if (updatedOrder != null) {
                 setState(() {
                   _order = updatedOrder;
                 });
@@ -262,7 +274,11 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
               children: [
                 Text(
                   cat['category'],
-                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
@@ -270,7 +286,8 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: (cat['products'] as List).length,
-                    separatorBuilder: (context, index) => const SizedBox(width: 10),
+                    separatorBuilder:
+                        (context, index) => const SizedBox(width: 10),
                     itemBuilder: (context, index) {
                       ProductoVenta product = (cat['products'] as List)[index];
                       int quantity = _order[product.name] ?? 0;
@@ -287,6 +304,45 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
     );
   }
 
+  Future<void> _finalizarVentaYCrearNuevoPedido() async {
+    try {
+      final String fechaIso = DateTime.now().toIso8601String();
+      final int negocioId = int.parse(SessionManager.negocioId!);
+      final int userId = int.parse(SessionManager.userId!);
+
+      final empleado = await EmpleadoService.fetchEmpleadoByUserId(userId);
+      if (empleado == null) {
+        throw Exception("Empleado no encontrado.");
+      }
+
+      final int empleadoId = empleado.id!;
+
+      Pedido nuevoPedido = Pedido(
+        fecha: fechaIso,
+        precioTotal: 0,
+        mesaId: widget.mesa.id!,
+        empleadoId: empleadoId,
+        negocioId: negocioId,
+      );
+
+      await PedidoService().createPedido(nuevoPedido);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Venta finalizada. Mesa lista para nuevos clientes."),
+        ),
+      );
+
+      setState(() {
+        // fuerza recarga de pestaña cuenta
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error al finalizar venta: $e")));
+    }
+  }
+
   Widget _buildProductCard(String product, int quantity) {
     return InkWell(
       onTap: () {
@@ -297,7 +353,7 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("$product añadido. ¿Deseas deshacer?"),
-            duration: const Duration(seconds: 3),
+            duration: const Duration(milliseconds: 500),
             action: SnackBarAction(
               label: "Deshacer",
               textColor: Colors.white,
@@ -315,18 +371,23 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
       },
       child: Container(
         width: 120,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+        ),
         padding: const EdgeInsets.all(8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               product,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF9B1D42)),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF9B1D42),
+              ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 10),
-            Text("Cantidad: $quantity", style: const TextStyle(fontSize: 14, color: Colors.black)),
           ],
         ),
       ),
@@ -345,13 +406,18 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black54,
               padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             icon: const Icon(Icons.people, color: Colors.white),
-            label: const Text("Asignar Comensales", style: TextStyle(color: Colors.white, fontSize: 16)),
+            label: const Text(
+              "Asignar Comensales",
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Asignar número de comensales"))
+                const SnackBar(content: Text("Asignar número de comensales")),
               );
             },
           ),
@@ -360,14 +426,19 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black54,
               padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             icon: const Icon(Icons.table_bar, color: Colors.white),
-            label: const Text("Unir Mesas", style: TextStyle(color: Colors.white, fontSize: 16)),
+            label: const Text(
+              "Unir Mesas",
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Unir mesas"))
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text("Unir mesas")));
             },
           ),
           const SizedBox(height: 10),
@@ -375,13 +446,20 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black54,
               padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             icon: const Icon(Icons.swap_horiz, color: Colors.white),
-            label: const Text("Transferir Datos", style: TextStyle(color: Colors.white, fontSize: 16)),
+            label: const Text(
+              "Transferir Datos",
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Transferir datos de una mesa a otra"))
+                const SnackBar(
+                  content: Text("Transferir datos de una mesa a otra"),
+                ),
               );
             },
           ),
@@ -390,13 +468,18 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black54,
               padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             icon: const Icon(Icons.cleaning_services, color: Colors.white),
-            label: const Text("Limpiar Datos", style: TextStyle(color: Colors.white, fontSize: 16)),
+            label: const Text(
+              "Limpiar Datos",
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Limpiar datos de la mesa"))
+                const SnackBar(content: Text("Limpiar datos de la mesa")),
               );
             },
           ),
@@ -418,30 +501,13 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
         } else if (!snapshot.hasData) {
           return const Center(child: Text("No hay datos disponibles."));
         }
+
         final Map<String, dynamic> data = snapshot.data!;
-        final List<LineaDePedido> lineas = data["lineas"];
+        List<LineaDePedido> lineas = data["lineas"];
         final double total = data["total"];
 
-        // Agrupa las líneas por producto (usando productoId) y suma cantidades y precios.
-        Map<int, Map<String, dynamic>> agrupado = {};
-        for (var linea in lineas) {
-          String productoName = "Producto ${linea.productoId}";
-          final productoJson = linea.toJson()['producto'] as Map<String, dynamic>?;
-          if (productoJson != null && productoJson['name'] != null) {
-            productoName = productoJson['name'] as String;
-          }
-          if (agrupado.containsKey(linea.productoId)) {
-            agrupado[linea.productoId]!['cantidad'] += linea.cantidad;
-            agrupado[linea.productoId]!['precioLinea'] += linea.precioLinea;
-          } else {
-            agrupado[linea.productoId] = {
-              'productoName': productoName,
-              'cantidad': linea.cantidad,
-              'precioLinea': linea.precioLinea,
-            };
-          }
-        }
-        List<Map<String, dynamic>> listaAgrupada = agrupado.values.toList();
+        // Ordenar al revés: lo más reciente primero
+        lineas = lineas.reversed.toList();
 
         return Container(
           color: const Color(0xFF9B1D42),
@@ -450,19 +516,35 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                "Resumen de Cuenta",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                "Cuenta completa",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
               const Divider(color: Colors.white70),
               Expanded(
                 child: ListView.builder(
-                  itemCount: listaAgrupada.length,
+                  itemCount: lineas.length,
                   itemBuilder: (context, index) {
-                    final item = listaAgrupada[index];
-                    return ListTile(
-                      title: Text(item['productoName'], style: const TextStyle(color: Colors.white)),
-                      subtitle: Text("Cantidad: ${item['cantidad']}", style: const TextStyle(color: Colors.white70)),
-                      trailing: Text("\$${(item['precioLinea'] as double).toStringAsFixed(2)}", style: const TextStyle(color: Colors.white)),
+                    final linea = lineas[index];
+                    final productoName =
+                        linea.productoName ?? "Producto ${linea.productoId}";
+                    return Card(
+                      color: Colors.white,
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: ListTile(
+                        title: Text(
+                          productoName,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text("Cantidad: ${linea.cantidad}"),
+                        trailing: Text(
+                          "\$${linea.precioLinea.toStringAsFixed(2)}",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -471,23 +553,52 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
               Center(
                 child: Text(
                   "Total a pagar: \$${total.toStringAsFixed(2)}",
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
-              // Botón de Finalizar Venta que no hace nada.
               Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 15,
+                    ),
                   ),
-                  onPressed: () {
-                    // Botón sin funcionalidad
+                  onPressed: () async {
+                    // 1. Limpiar _order
+                    _order.clear();
+
+                    // 2. Volver a cargar las categorías (los productos)
+                    await loadCategoriesAndProducts();
+
+                    // 3. Forzar rebuild completo
+                    if (mounted) {
+                      setState(() {});
+                    }
+
+                    // 4. Mostrar mensaje
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          "La mesa ha sido reiniciada para nuevos comensales.",
+                        ),
+                      ),
+                    );
                   },
+
                   child: const Text(
                     "Finalizar Venta",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
