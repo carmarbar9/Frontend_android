@@ -7,6 +7,7 @@ import 'package:android/models/session_manager.dart';
 import 'package:android/models/user.dart';
 import 'package:android/services/service_empleados.dart'; // Importamos el servicio para obtener el empleado
 import 'package:android/pages/login/registrar_page.dart';
+import 'package:android/models/auth_response.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -28,22 +29,23 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _isLoading = true);
 
       try {
-        // En lugar de llamar a un endpoint de login que no existe,
-        // llamamos directamente al endpoint /me usando Basic Auth
-        final user = await ApiService.fetchCurrentUserWithBasicAuth(_username, _password);
-        if (user == null) throw 'Usuario o contraseña incorrectos';
+        // 1. Llamamos al endpoint de login para autenticarnos.
+        final authResponse = await ApiService.login(_username, _password);
 
-        // Guardar datos en la sesión
+        // 2. A partir del username recibido en la respuesta, consultamos el objeto completo de User.
+        final user = await ApiService.findUserByUsername(_username);
+
+        // 3. Guardamos los datos en el SessionManager. Asegúrate de que currentUser sea de tipo User.
         SessionManager.clear();
-        // No se recibe token, pero puedes almacenar las credenciales si es necesario
         SessionManager.currentUser = user;
         SessionManager.userId = user.id.toString();
         SessionManager.username = user.username;
+        // Si tienes un token o algún otro dato, también lo puedes almacenar.
 
-        final authority = user.authority.authority.toLowerCase();
-
+        // 4. Redirigir según el rol/authority del usuario
+        final authority = user.authority;
         if (authority == 'dueno') {
-          await ApiService().fetchDuenoId(user.id);
+          // Lógica para dueno; puedes obtener información adicional si es necesario.
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -51,10 +53,10 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
         } else if (authority == 'empleado') {
-          final empleado = await EmpleadoService.fetchEmpleadoByUserId(user.id!, _password);
+          final empleado = await EmpleadoService.fetchEmpleadoByUserId(user.id, _password);
           if (empleado == null) throw 'No se encontró el empleado';
           if (empleado.negocio == null) throw 'Empleado sin negocio asignado';
-
+          
           SessionManager.negocioId = empleado.negocio.toString();
           Navigator.pushReplacement(
             context,
@@ -74,7 +76,6 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
   }
-
 
 
 
