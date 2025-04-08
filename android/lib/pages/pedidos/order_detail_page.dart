@@ -29,11 +29,24 @@ class OrderDetailPage extends StatefulWidget {
 
 class _OrderDetailPageState extends State<OrderDetailPage> {
   late Map<String, int> _order;
+  int? _pedidoActualId;
+  List<Pedido> _pedidos = [];
 
   @override
   void initState() {
     super.initState();
     _order = Map.from(widget.order);
+    _cargarPedidosYSetearActual();
+  }
+
+  Future<void> _cargarPedidosYSetearActual() async {
+    final pedidos = await PedidoService().getPedidosByMesaId(widget.mesaId);
+    if (pedidos.isNotEmpty) {
+      setState(() {
+        _pedidos = pedidos.reversed.toList();
+        _pedidoActualId = _pedidos.first.id;
+      });
+    }
   }
 
   void _updateOrder(String key, int newValue) {
@@ -45,114 +58,132 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
   }
 
-  Future<void> finalizeOrder() async {
+  Future<void> crearNuevoPedido() async {
     try {
-      double precioTotal = 0;
-      List<LineaDePedido> nuevasLineas = [];
-
-      _order.forEach((nombreProducto, cantidad) {
-        final producto = widget.products[nombreProducto];
-        if (producto != null) {
-          double precioUnitario = producto.precioVenta;
-          precioTotal += precioUnitario * cantidad;
-          nuevasLineas.add(LineaDePedido(
-            cantidad: cantidad,
-            precioLinea: precioUnitario * cantidad,
-            pedidoId: 0,
-            productoId: producto.id,
-          ));
-        }
-      });
-
-      if (nuevasLineas.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No hay productos en la orden.")),
-        );
-        return;
-      }
-
-      final int userId = int.parse(SessionManager.userId!);
+      final String fechaIso = DateTime.now().toIso8601String();
       final int negocioId = int.parse(SessionManager.negocioId!);
+      final int userId = int.parse(SessionManager.userId!);
       Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId);
 
       if (empleado == null) {
         throw Exception("Empleado no encontrado.");
       }
 
-      final int empleadoId = empleado.id!;
-      final pedidos = await PedidoService().getPedidosByMesaId(widget.mesaId);
+      Pedido nuevoPedido = Pedido(
+        fecha: fechaIso,
+        precioTotal: 0.01,
+        mesaId: widget.mesaId,
+        empleadoId: empleado.id!,
+        negocioId: negocioId,
+      );
 
-      if (pedidos.isEmpty) {
-        // Crear pedido nuevo
-        final String fechaIso = DateTime.now().toIso8601String();
-
-        Pedido nuevoPedido = Pedido(
-          fecha: fechaIso,
-          precioTotal: precioTotal,
-          mesaId: widget.mesaId,
-          empleadoId: empleadoId,
-          negocioId: negocioId,
-        );
-
-        Pedido pedidoCreado = await PedidoService().createPedido(nuevoPedido);
-
-        for (var linea in nuevasLineas) {
-          linea.pedidoId = pedidoCreado.id!;
-          await LineaDePedidoService().createLineaDePedido(linea);
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Pedido creado correctamente. Total: \$${precioTotal.toStringAsFixed(2)}"),
-          ),
-        );
-      } else {
-        // Actualizar pedido existente
-        final pedidoExistente = pedidos.first;
-        final int pedidoId = pedidoExistente.id!;
-        final double nuevoTotal = pedidoExistente.precioTotal + precioTotal;
-
-        for (var linea in nuevasLineas) {
-          linea.pedidoId = pedidoId;
-          await LineaDePedidoService().createLineaDePedido(linea);
-        }
-
-        Pedido pedidoActualizado = Pedido(
-          id: pedidoId,
-          fecha: pedidoExistente.fecha,
-          mesaId: pedidoExistente.mesaId,
-          empleadoId: pedidoExistente.empleadoId,
-          negocioId: pedidoExistente.negocioId,
-          precioTotal: nuevoTotal,
-        );
-
-        await PedidoService().updatePedido(pedidoId, pedidoActualizado);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Pedido actualizado. Nuevo total: \$${nuevoTotal.toStringAsFixed(2)}"),
-          ),
-        );
-      }
-
+      Pedido creado = await PedidoService().createPedido(nuevoPedido);
       setState(() {
+        _pedidoActualId = creado.id!;
+        _pedidos.insert(0, creado);
         _order.clear();
-
       });
-Navigator.pop(context, <String, int>{});
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Nuevo pedido creado.")),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al finalizar el pedido: $e")),
+        SnackBar(content: Text("Error al crear nuevo pedido: $e")),
       );
     }
   }
 
-  Future<List<Pedido>> _loadCompletedOrders() async {
-    return await PedidoService().getPedidosByMesaId(widget.mesaId);
+Future<void> finalizeOrder() async {
+  try {
+    double precioTotal = 0;
+    List<LineaDePedido> nuevasLineas = [];
+
+    // Si no hay pedido actual, créalo primero
+    if (_pedidoActualId == null) {
+      final String fechaIso = DateTime.now().toIso8601String();
+      final int negocioId = int.parse(SessionManager.negocioId!);
+      final int userId = int.parse(SessionManager.userId!);
+      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId);
+
+      if (empleado == null) {
+        throw Exception("Empleado no encontrado.");
+      }
+
+      Pedido nuevoPedido = Pedido(
+        fecha: fechaIso,
+        precioTotal: 0.01,
+        mesaId: widget.mesaId,
+        empleadoId: empleado.id!,
+        negocioId: negocioId,
+      );
+
+      Pedido creado = await PedidoService().createPedido(nuevoPedido);
+      _pedidoActualId = creado.id!;
+      _pedidos.insert(0, creado);
+    }
+
+    // Generar líneas de pedido
+    _order.forEach((nombreProducto, cantidad) {
+      final producto = widget.products[nombreProducto];
+      if (producto != null) {
+        double precioUnitario = producto.precioVenta;
+        precioTotal += precioUnitario * cantidad;
+        nuevasLineas.add(LineaDePedido(
+          cantidad: cantidad,
+          precioLinea: precioUnitario * cantidad,
+          pedidoId: _pedidoActualId!,
+          productoId: producto.id,
+        ));
+      }
+    });
+
+    if (nuevasLineas.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No hay productos en la orden.")),
+      );
+      return;
+    }
+
+    // Añadir líneas al pedido
+    for (var linea in nuevasLineas) {
+      await LineaDePedidoService().createLineaDePedido(linea);
+    }
+
+    // Actualizar precio total del pedido
+    Pedido pedidoExistente = await PedidoService().getPedidoById(_pedidoActualId!);
+    final double nuevoTotal = pedidoExistente.precioTotal + precioTotal;
+
+    Pedido pedidoActualizado = Pedido(
+      id: pedidoExistente.id,
+      fecha: pedidoExistente.fecha,
+      mesaId: pedidoExistente.mesaId,
+      empleadoId: pedidoExistente.empleadoId,
+      negocioId: pedidoExistente.negocioId,
+      precioTotal: nuevoTotal,
+    );
+
+    await PedidoService().updatePedido(_pedidoActualId!, pedidoActualizado);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Pedido actualizado. Total: \$${nuevoTotal.toStringAsFixed(2)}")),
+    );
+
+    setState(() {
+      _order.clear();
+    });
+
+    Navigator.pop(context, <String, int>{});
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error al finalizar el pedido: $e")),
+    );
   }
+}
+
 
   Widget _buildCompletedOrderBox(Pedido pedido, int index) {
+    final isActual = pedido.id == _pedidoActualId;
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -163,9 +194,10 @@ Navigator.pop(context, <String, int>{});
         );
       },
       child: Card(
+        color: isActual ? Colors.amber[100] : null,
         margin: const EdgeInsets.symmetric(vertical: 5),
         child: ListTile(
-          title: Text("Pedido ${index + 1}"),
+          title: Text("Pedido ${index + 1}" + (isActual ? " (actual)" : "")),
           subtitle: Text("Fecha: ${pedido.fecha}\nTotal: \$${pedido.precioTotal.toStringAsFixed(2)}"),
         ),
       ),
@@ -183,6 +215,18 @@ Navigator.pop(context, <String, int>{});
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          ElevatedButton.icon(
+            onPressed: crearNuevoPedido,
+            icon: const Icon(Icons.add),
+            label: const Text("Nuevo pedido"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF9B1D42),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(height: 20),
           ..._order.entries.map((entry) {
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8),
@@ -247,25 +291,11 @@ Navigator.pop(context, <String, int>{});
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          FutureBuilder<List<Pedido>>(
-            future: _loadCompletedOrders(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}');
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Text("No hay pedidos realizados.");
-              } else {
-                final pedidos = snapshot.data!;
-                return Column(
-                  children: List.generate(
-                    pedidos.length,
-                    (index) => _buildCompletedOrderBox(pedidos[index], index),
-                  ),
-                );
-              }
-            },
+          Column(
+            children: List.generate(
+              _pedidos.length,
+              (index) => _buildCompletedOrderBox(_pedidos[index], index),
+            ),
           ),
         ],
       ),

@@ -81,22 +81,6 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
     return productMap;
   }
 
-  /// Carga un resumen de todas las líneas de pedido de todos los pedidos de esta mesa,
-  /// acumulando un listado y el total a pagar.
-  Future<Map<String, dynamic>> _loadOrderLinesSummary() async {
-    List<Pedido> pedidos = await PedidoService().getPedidosByMesaId(
-      widget.mesa.id!,
-    );
-    List<LineaDePedido> allLineas = [];
-    double total = 0.0;
-    for (Pedido pedido in pedidos) {
-      total += pedido.precioTotal;
-      List<LineaDePedido> lineas = await LineaDePedidoService()
-          .getLineasByPedidoId(pedido.id!);
-      allLineas.addAll(lineas);
-    }
-    return {"lineas": allLineas, "total": total};
-  }
 
   /// Finaliza el pedido actual:
   /// 1. Recorre la orden (_order) para obtener cada producto y calcular el precio total,
@@ -204,17 +188,13 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             labelColor: Colors.white,
             indicatorColor: Colors.white,
             tabs: [
-              Tab(text: "Pedidos"),
-              Tab(text: "Acciones"),
-              Tab(text: "Cuenta"),
+              Tab(text: "Pedidos")
             ],
           ),
         ),
         body: TabBarView(
           children: [
             _buildPedidosTab(),
-            _buildAccionesTab(),
-            _buildCuentaTab(),
           ],
         ),
       ),
@@ -304,45 +284,6 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
     );
   }
 
-  Future<void> _finalizarVentaYCrearNuevoPedido() async {
-    try {
-      final String fechaIso = DateTime.now().toIso8601String();
-      final int negocioId = int.parse(SessionManager.negocioId!);
-      final int userId = int.parse(SessionManager.userId!);
-
-      final empleado = await EmpleadoService.fetchEmpleadoByUserId(userId);
-      if (empleado == null) {
-        throw Exception("Empleado no encontrado.");
-      }
-
-      final int empleadoId = empleado.id!;
-
-      Pedido nuevoPedido = Pedido(
-        fecha: fechaIso,
-        precioTotal: 0,
-        mesaId: widget.mesa.id!,
-        empleadoId: empleadoId,
-        negocioId: negocioId,
-      );
-
-      await PedidoService().createPedido(nuevoPedido);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Venta finalizada. Mesa lista para nuevos clientes."),
-        ),
-      );
-
-      setState(() {
-        // fuerza recarga de pestaña cuenta
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error al finalizar venta: $e")));
-    }
-  }
-
   Widget _buildProductCard(String product, int quantity) {
     return InkWell(
       onTap: () {
@@ -391,221 +332,6 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildAccionesTab() {
-    return Container(
-      color: const Color(0xFF9B1D42),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black54,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            icon: const Icon(Icons.people, color: Colors.white),
-            label: const Text(
-              "Asignar Comensales",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Asignar número de comensales")),
-              );
-            },
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black54,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            icon: const Icon(Icons.table_bar, color: Colors.white),
-            label: const Text(
-              "Unir Mesas",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text("Unir mesas")));
-            },
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black54,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            icon: const Icon(Icons.swap_horiz, color: Colors.white),
-            label: const Text(
-              "Transferir Datos",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Transferir datos de una mesa a otra"),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black54,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            icon: const Icon(Icons.cleaning_services, color: Colors.white),
-            label: const Text(
-              "Limpiar Datos",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Limpiar datos de la mesa")),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Pestaña "Cuenta": muestra un resumen agrupado de todos los pedidos de la mesa.
-  /// Se agrupan las líneas de pedido por producto (sumando cantidades y precio) y se muestra el total acumulado.
-  Widget _buildCuentaTab() {
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _loadOrderLinesSummary(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData) {
-          return const Center(child: Text("No hay datos disponibles."));
-        }
-
-        final Map<String, dynamic> data = snapshot.data!;
-        List<LineaDePedido> lineas = data["lineas"];
-        final double total = data["total"];
-
-        // Ordenar al revés: lo más reciente primero
-        lineas = lineas.reversed.toList();
-
-        return Container(
-          color: const Color(0xFF9B1D42),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Cuenta completa",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const Divider(color: Colors.white70),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: lineas.length,
-                  itemBuilder: (context, index) {
-                    final linea = lineas[index];
-                    final productoName =
-                        linea.productoName ?? "Producto ${linea.productoId}";
-                    return Card(
-                      color: Colors.white,
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      child: ListTile(
-                        title: Text(
-                          productoName,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text("Cantidad: ${linea.cantidad}"),
-                        trailing: Text(
-                          "\$${linea.precioLinea.toStringAsFixed(2)}",
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 10),
-              Center(
-                child: Text(
-                  "Total a pagar: \$${total.toStringAsFixed(2)}",
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 15,
-                    ),
-                  ),
-                  onPressed: () async {
-                    // 1. Limpiar _order
-                    _order.clear();
-
-                    // 2. Volver a cargar las categorías (los productos)
-                    await loadCategoriesAndProducts();
-
-                    // 3. Forzar rebuild completo
-                    if (mounted) {
-                      setState(() {});
-                    }
-
-                    // 4. Mostrar mensaje
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          "La mesa ha sido reiniciada para nuevos comensales.",
-                        ),
-                      ),
-                    );
-                  },
-
-                  child: const Text(
-                    "Finalizar Venta",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
