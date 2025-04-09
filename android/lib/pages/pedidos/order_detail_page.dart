@@ -63,7 +63,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       final String fechaIso = DateTime.now().toIso8601String();
       final int negocioId = int.parse(SessionManager.negocioId!);
       final int userId = int.parse(SessionManager.userId!);
-      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId);
+      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId, SessionManager.token!);
 
       if (empleado == null) {
         throw Exception("Empleado no encontrado.");
@@ -104,7 +104,7 @@ Future<void> finalizeOrder() async {
       final String fechaIso = DateTime.now().toIso8601String();
       final int negocioId = int.parse(SessionManager.negocioId!);
       final int userId = int.parse(SessionManager.userId!);
-      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId);
+      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId, SessionManager.token!);
 
       if (empleado == null) {
         throw Exception("Empleado no encontrado.");

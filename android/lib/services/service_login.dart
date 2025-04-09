@@ -1,45 +1,65 @@
 // lib/services/service_login.dart
+
 import 'dart:convert';
-import 'package:android/models/session_manager.dart';
 import 'package:http/http.dart' as http;
+import 'package:android/models/login_dto.dart';
+import 'package:android/models/auth_response.dart';
 import 'package:android/models/user.dart';
-import 'package:android/models/dueno.dart'; // Asegúrate de importar tu modelo Dueno
+import 'package:android/models/dueno.dart';
+import 'package:android/models/session_manager.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://10.0.2.2:8080';
+  // Cambia esta URL por la de tu backend
+  static const String baseUrl = 'http://10.0.2.2:8080/api';
 
-  static Future<String?> login(String username, String password) async {
-    final url = Uri.parse('$_baseUrl/api/login');
+  Future<AuthResponse> login(String username, String password) async {
+    final url = Uri.parse('$baseUrl/auth/login');
     final response = await http.post(
       url,
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: {
-        'username': username,
-        'password': password,
-      },
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': username, 'password': password}),
     );
 
     if (response.statusCode == 200) {
-      return response.body;
+      final jsonBody = json.decode(response.body);
+      return AuthResponse.fromMap(jsonBody);
     } else {
-      return null;
+      throw Exception('Login fallido: ${response.body}');
     }
   }
 
-  static Future<User?> fetchUser(String username, String password) async {
-    final url = Uri.parse('$_baseUrl/api/users/usernameAndPassword/$username/$password');
-    final response = await http.get(url);
+
+  Future<User> fetchCurrentUser() async {
+    final token = SessionManager.token;
+
+    if (token == null) {
+      throw Exception('Token no disponible');
+    }
+
+    print('📡 GET /users/me con token: $token');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/me'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    print('🔁 Status: ${response.statusCode}');
+    print('📦 Body: ${response.body}');
 
     if (response.statusCode == 200) {
-      return User.fromJson(json.decode(response.body));
+      final jsonBody = json.decode(response.body);
+      return User.fromJson(jsonBody);
     } else {
-      return null;
+      throw Exception('Error al obtener usuario actual: ${response.statusCode}');
     }
   }
 
-  // Método para registrar un nuevo Dueno
-  static Future<Dueno?> registerDueno(Map<String, dynamic> data) async {
-    final url = Uri.parse('$_baseUrl/api/duenos');
+
+   static Future<Dueno?> registerDueno(Map<String, dynamic> data) async {
+    final url = Uri.parse('$baseUrl/duenos');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json; charset=UTF-8'},
@@ -55,14 +75,4 @@ class ApiService {
     }
   }
 
-  Future<void> fetchDuenoId(int userId) async {
-  final response = await http.get(Uri.parse('$_baseUrl/api/duenos/user/$userId'));
-
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    SessionManager.duenoId = data['id'] as int; // suponiendo que `id` es el id del dueño
-  } else {
-    throw Exception('No se pudo obtener el duenoId');
-  }
-}
 }

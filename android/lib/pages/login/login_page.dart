@@ -7,6 +7,7 @@ import 'package:android/models/session_manager.dart';
 import 'package:android/models/user.dart';
 import 'package:android/services/service_empleados.dart'; // Importamos el servicio para obtener el empleado
 import 'package:android/pages/login/registrar_page.dart';
+import 'package:android/models/auth_response.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -28,32 +29,24 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _isLoading = true);
 
       try {
-        // Se intenta obtener el usuario
-        final User? user = await ApiService.fetchUser(_username, _password);
-        if (user == null) {
-          throw 'Usuario o contraseña incorrectos';
-        }
-
-        // Debug
-        print('Usuario logueado: ${user.username}');
-        print('Authority cruda: ${user.authority.authority}');
-
-        final rawAuthority = user.authority.authority.toLowerCase();
-        final String authority =
-            (rawAuthority == 'dueno') ? 'dueno' : rawAuthority;
-
-        print('Authority corregida: $authority');
-
-        // Limpiar la sesión actual y asignar el usuario actual
+        // 1. Llamamos al endpoint de login para autenticarnos.
+        final apiservice =ApiService();
+        final authResponse = await apiservice.login(_username, _password);
         SessionManager.clear();
+        SessionManager.token = authResponse.token;
+        // 2. A partir del username recibido en la respuesta, consultamos el objeto completo de User.
+        final user = await ApiService().fetchCurrentUser();
+
+        // 3. Guardamos los datos en el SessionManager. Asegúrate de que currentUser sea de tipo User.
         SessionManager.currentUser = user;
         SessionManager.userId = user.id.toString();
         SessionManager.username = user.username;
+        // Si tienes un token o algún otro dato, también lo puedes almacenar.
 
-
+        // 4. Redirigir según el rol/authority del usuario
+        final authority = user.authority.authority.toLowerCase();
         if (authority == 'dueno') {
-          // Para dueños, navegamos a la pantalla para elegir el negocio.
-          await ApiService().fetchDuenoId(user.id);
+          // Lógica para dueno; puedes obtener información adicional si es necesario.
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -61,16 +54,13 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
         } else if (authority == 'empleado') {
-          // Para empleados, se obtiene el empleado para recuperar el negocio asociado.
           final empleado = await EmpleadoService.fetchEmpleadoByUserId(
-            user.id!,
+            user.id,
+            SessionManager.token!,
           );
-          if (empleado == null) {
-            throw 'No se encontró un empleado para este usuario';
-          }
-          if (empleado.negocio == null) {
-            throw 'Este empleado no tiene un negocio asignado.';
-          }
+
+          if (empleado == null) throw 'No se encontró el empleado';
+          if (empleado.negocio == null) throw 'Empleado sin negocio asignado';
 
           SessionManager.negocioId = empleado.negocio.toString();
 
@@ -83,15 +73,30 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           throw 'Rol no reconocido';
         }
-      } catch (error) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $error')));
+      } catch (e) {
+        final errorMessage = '''
+          Error: $e
+          Username: $_username
+          token: ${SessionManager.token}
+          User: ${SessionManager.currentUser}
+          User ID: ${SessionManager.userId}
+          Username: ${SessionManager.username}
+          Authority: ${SessionManager.currentUser?.authority.authority}
+          ''';
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errorMessage),
+                duration: const Duration(seconds: 4),
+              ),
+            );
       } finally {
         setState(() => _isLoading = false);
       }
     }
   }
+
+
 
   void _navigateToRegister() {
     Navigator.push(
@@ -179,7 +184,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: TextFormField(
                     decoration: const InputDecoration(
                       labelText: 'Contraseña',
-                      hintText: '********',
+                      hintText: '****',
                       border: InputBorder.none,
                       icon: Icon(Icons.lock),
                     ),
