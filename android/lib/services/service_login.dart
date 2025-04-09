@@ -6,48 +6,57 @@ import 'package:android/models/login_dto.dart';
 import 'package:android/models/auth_response.dart';
 import 'package:android/models/user.dart';
 import 'package:android/models/dueno.dart';
+import 'package:android/models/session_manager.dart';
 
 class ApiService {
   // Cambia esta URL por la de tu backend
   static const String baseUrl = 'http://10.0.2.2:8080/api';
 
-  /// Realiza una petición POST al endpoint de login del backend,
-  /// enviando las credenciales en JSON y retornando una [AuthResponse].
-  static Future<AuthResponse> login(String username, String password) async {
+  Future<AuthResponse> login(String username, String password) async {
     final url = Uri.parse('$baseUrl/auth/login');
-    final loginDto = LoginDto(username: username, password: password);
-
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: loginDto.toJson(),
+      body: jsonEncode({'username': username, 'password': password}),
     );
 
     if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
-      return AuthResponse.fromMap(jsonResponse);
+      final jsonBody = json.decode(response.body);
+      return AuthResponse.fromMap(jsonBody);
     } else {
-      // Muestra el username y la password incorrectos
-      throw Exception('Error en el login: ${response.statusCode} - ${response.body}');
+      throw Exception('Login fallido: ${response.body}');
     }
   }
 
-  static Future<User> findUserByUsername(String username) async {
-    final url = Uri.parse('$baseUrl/users/username/$username');
-    final response = await http.get(url, headers: {
-      'Content-Type': 'application/json',
-      // Si necesitas enviar autenticación, agrega el token u otros headers necesarios
-    });
+
+  Future<User> fetchCurrentUser() async {
+    final token = SessionManager.token;
+
+    if (token == null) {
+      throw Exception('Token no disponible');
+    }
+
+    print('📡 GET /users/me con token: $token');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/me'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    print('🔁 Status: ${response.statusCode}');
+    print('📦 Body: ${response.body}');
 
     if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
-      return User.fromJson(jsonResponse as Map<String, dynamic>);
-    } else if (response.statusCode == 404) {
-      throw Exception('Usuario no encontrado');
+      final jsonBody = json.decode(response.body);
+      return User.fromJson(jsonBody);
     } else {
-      throw Exception('Error en la petición: ${response.statusCode}');
+      throw Exception('Error al obtener usuario actual: ${response.statusCode}');
     }
   }
+
 
    static Future<Dueno?> registerDueno(Map<String, dynamic> data) async {
     final url = Uri.parse('$baseUrl/duenos');

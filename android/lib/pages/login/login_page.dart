@@ -30,20 +30,21 @@ class _LoginPageState extends State<LoginPage> {
 
       try {
         // 1. Llamamos al endpoint de login para autenticarnos.
-        final authResponse = await ApiService.login(_username, _password);
-
+        final apiservice =ApiService();
+        final authResponse = await apiservice.login(_username, _password);
+        SessionManager.clear();
+        SessionManager.token = authResponse.token;
         // 2. A partir del username recibido en la respuesta, consultamos el objeto completo de User.
-        final user = await ApiService.findUserByUsername(_username);
+        final user = await ApiService().fetchCurrentUser();
 
         // 3. Guardamos los datos en el SessionManager. Asegúrate de que currentUser sea de tipo User.
-        SessionManager.clear();
         SessionManager.currentUser = user;
         SessionManager.userId = user.id.toString();
         SessionManager.username = user.username;
         // Si tienes un token o algún otro dato, también lo puedes almacenar.
 
         // 4. Redirigir según el rol/authority del usuario
-        final authority = user.authority;
+        final authority = user.authority.authority.toLowerCase();
         if (authority == 'dueno') {
           // Lógica para dueno; puedes obtener información adicional si es necesario.
           Navigator.pushReplacement(
@@ -53,11 +54,16 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
         } else if (authority == 'empleado') {
-          final empleado = await EmpleadoService.fetchEmpleadoByUserId(user.id, _password);
+          final empleado = await EmpleadoService.fetchEmpleadoByUserId(
+            user.id,
+            SessionManager.token!,
+          );
+
           if (empleado == null) throw 'No se encontró el empleado';
           if (empleado.negocio == null) throw 'Empleado sin negocio asignado';
-          
+
           SessionManager.negocioId = empleado.negocio.toString();
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -68,9 +74,22 @@ class _LoginPageState extends State<LoginPage> {
           throw 'Rol no reconocido';
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        final errorMessage = '''
+          Error: $e
+          Username: $_username
+          token: ${SessionManager.token}
+          User: ${SessionManager.currentUser}
+          User ID: ${SessionManager.userId}
+          Username: ${SessionManager.username}
+          Authority: ${SessionManager.currentUser?.authority.authority}
+          ''';
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errorMessage),
+                duration: const Duration(seconds: 4),
+              ),
+            );
       } finally {
         setState(() => _isLoading = false);
       }
