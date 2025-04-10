@@ -17,7 +17,7 @@ class PedidoService {
       throw Exception('Error al crear el pedido: ${response.body}');
     }
   }
-  
+
   // Obtiene los pedidos asociados a una mesa
   Future<List<Pedido>> getPedidosByMesaId(int mesaId) async {
     final url = Uri.parse('$baseUrl/mesa/$mesaId');
@@ -29,6 +29,36 @@ class PedidoService {
       return [];
     } else {
       throw Exception('Error al obtener pedidos: ${response.body}');
+    }
+  }
+
+  Future<Pedido> updatePedido(int id, Pedido pedido) async {
+    final url = Uri.parse('$baseUrl/$id');
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(pedido.toJson()),
+    );
+
+    if (response.statusCode == 200) {
+      return Pedido.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
+      throw Exception('Pedido no encontrado con id $id');
+    } else {
+      throw Exception('Error al actualizar el pedido: ${response.body}');
+    }
+  }
+
+  Future<Pedido> getPedidoById(int id) async {
+    final url = Uri.parse('$baseUrl/$id');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      return Pedido.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
+      throw Exception('Pedido no encontrado con id $id');
+    } else {
+      throw Exception('Error al obtener el pedido: ${response.body}');
     }
   }
 }

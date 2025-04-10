@@ -11,11 +11,9 @@ import 'order_info_page.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final Map<String, int> order;
-  // Mapa de productos disponibles, con nombre como clave y el objeto ProductoVenta como valor.
   final Map<String, ProductoVenta> products;
-  // Id de la mesa para asociarlo al pedido.
   final int mesaId;
-  final Function(Map<String, int>)? onOrderChanged; // Callback opcional
+  final Function(Map<String, int>)? onOrderChanged;
 
   const OrderDetailPage({
     Key? key,
@@ -31,15 +29,26 @@ class OrderDetailPage extends StatefulWidget {
 
 class _OrderDetailPageState extends State<OrderDetailPage> {
   late Map<String, int> _order;
+  int? _pedidoActualId;
+  List<Pedido> _pedidos = [];
 
   @override
   void initState() {
     super.initState();
-    // Clonamos la orden para editarla localmente.
     _order = Map.from(widget.order);
+    _cargarPedidosYSetearActual();
   }
 
-  // Función auxiliar para actualizar la orden y notificar el cambio.
+  Future<void> _cargarPedidosYSetearActual() async {
+    final pedidos = await PedidoService().getPedidosByMesaId(widget.mesaId);
+    if (pedidos.isNotEmpty) {
+      setState(() {
+        _pedidos = pedidos.reversed.toList();
+        _pedidoActualId = _pedidos.first.id;
+      });
+    }
+  }
+
   void _updateOrder(String key, int newValue) {
     setState(() {
       _order[key] = newValue;
@@ -49,78 +58,122 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
   }
 
-  /// Finaliza la orden:
-  /// 1. Recorre cada entrada en _order para obtener el objeto ProductoVenta y calcular el precio total.
-  /// 2. Crea las líneas de pedido.
-  /// 3. Obtiene el empleado usando fetchEmpleadoByUserId (con el userId de SessionManager).
-  /// 4. Crea el objeto Pedido utilizando la fecha actual, el id de la mesa, el id del empleado y el negocio.
-  /// 5. Asocia cada línea al pedido creado y las envía al backend.
+  Future<void> crearNuevoPedido() async {
+    try {
+      final String fechaIso = DateTime.now().toIso8601String();
+      final int negocioId = int.parse(SessionManager.negocioId!);
+      final int userId = int.parse(SessionManager.userId!);
+      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId, SessionManager.token!);
+
+      if (empleado == null) {
+        throw Exception("Empleado no encontrado.");
+      }
+
+      Pedido nuevoPedido = Pedido(
+        fecha: fechaIso,
+        precioTotal: 0.01,
+        mesaId: widget.mesaId,
+        empleadoId: empleado.id!,
+        negocioId: negocioId,
+      );
+
+      Pedido creado = await PedidoService().createPedido(nuevoPedido);
+      setState(() {
+        _pedidoActualId = creado.id!;
+        _pedidos.insert(0, creado);
+        _order.clear();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Nuevo pedido creado.")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al crear nuevo pedido: $e")),
+      );
+    }
+  }
+
 Future<void> finalizeOrder() async {
   try {
     double precioTotal = 0;
-    List<LineaDePedido> lineas = [];
+    List<LineaDePedido> nuevasLineas = [];
 
-    // Recorre cada producto en la orden.
+    // Si no hay pedido actual, créalo primero
+    if (_pedidoActualId == null) {
+      final String fechaIso = DateTime.now().toIso8601String();
+      final int negocioId = int.parse(SessionManager.negocioId!);
+      final int userId = int.parse(SessionManager.userId!);
+      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId, SessionManager.token!);
+
+      if (empleado == null) {
+        throw Exception("Empleado no encontrado.");
+      }
+
+      Pedido nuevoPedido = Pedido(
+        fecha: fechaIso,
+        precioTotal: 0.01,
+        mesaId: widget.mesaId,
+        empleadoId: empleado.id!,
+        negocioId: negocioId,
+      );
+
+      Pedido creado = await PedidoService().createPedido(nuevoPedido);
+      _pedidoActualId = creado.id!;
+      _pedidos.insert(0, creado);
+    }
+
+    // Generar líneas de pedido
     _order.forEach((nombreProducto, cantidad) {
       final producto = widget.products[nombreProducto];
       if (producto != null) {
         double precioUnitario = producto.precioVenta;
         precioTotal += precioUnitario * cantidad;
-        lineas.add(LineaDePedido(
+        nuevasLineas.add(LineaDePedido(
           cantidad: cantidad,
           precioLinea: precioUnitario * cantidad,
-          pedidoId: 0, // Se actualizará tras crear el Pedido.
+          pedidoId: _pedidoActualId!,
           productoId: producto.id,
         ));
       }
     });
 
-    // Si no hay productos en la orden, muestra un mensaje amigable y termina.
-    if (lineas.isEmpty) {
+    if (nuevasLineas.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No hay productos en la orden.")),
       );
       return;
     }
 
-    final String fechaIso = DateTime.now().toIso8601String();
-    final int negocioId = int.parse(SessionManager.negocioId!);
-
-    // Obtén el empleado asociado usando su userId.
-    final int userId = int.parse(SessionManager.userId!);
-    Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId);
-    if (empleado == null) {
-      throw Exception("Empleado no encontrado para el userId: $userId");
-    }
-    final int empleadoId = empleado.id!;
-
-    Pedido pedido = Pedido(
-      fecha: fechaIso,
-      precioTotal: precioTotal,
-      mesaId: widget.mesaId,
-      empleadoId: empleadoId,
-      negocioId: negocioId,
-    );
-
-    // Crea el pedido en el backend.
-    Pedido pedidoCreado = await PedidoService().createPedido(pedido);
-
-    // Asocia el id del pedido a cada línea y créalas en el backend.
-    for (var linea in lineas) {
-      linea.pedidoId = pedidoCreado.id!;
+    // Añadir líneas al pedido
+    for (var linea in nuevasLineas) {
       await LineaDePedidoService().createLineaDePedido(linea);
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Pedido finalizado correctamente. Total: \$${precioTotal.toStringAsFixed(2)}"),
-      ),
+    // Actualizar precio total del pedido
+    Pedido pedidoExistente = await PedidoService().getPedidoById(_pedidoActualId!);
+    final double nuevoTotal = pedidoExistente.precioTotal + precioTotal;
+
+    Pedido pedidoActualizado = Pedido(
+      id: pedidoExistente.id,
+      fecha: pedidoExistente.fecha,
+      mesaId: pedidoExistente.mesaId,
+      empleadoId: pedidoExistente.empleadoId,
+      negocioId: pedidoExistente.negocioId,
+      precioTotal: nuevoTotal,
     );
+
+    await PedidoService().updatePedido(_pedidoActualId!, pedidoActualizado);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Pedido actualizado. Total: \$${nuevoTotal.toStringAsFixed(2)}")),
+    );
+
     setState(() {
       _order.clear();
     });
-    // Actualiza la lista de pedidos completados.
-    setState(() {});
+
+    Navigator.pop(context, <String, int>{});
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Error al finalizar el pedido: $e")),
@@ -129,15 +182,10 @@ Future<void> finalizeOrder() async {
 }
 
 
-  // Carga los pedidos realizados para la mesa actual.
-  Future<List<Pedido>> _loadCompletedOrders() async {
-    return await PedidoService().getPedidosByMesaId(widget.mesaId);
-  }
-
   Widget _buildCompletedOrderBox(Pedido pedido, int index) {
+    final isActual = pedido.id == _pedidoActualId;
     return GestureDetector(
       onTap: () {
-        // Navega a la página de detalles del pedido.
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -146,9 +194,10 @@ Future<void> finalizeOrder() async {
         );
       },
       child: Card(
+        color: isActual ? Colors.amber[100] : null,
         margin: const EdgeInsets.symmetric(vertical: 5),
         child: ListTile(
-          title: Text("Pedido ${index + 1}"),
+          title: Text("Pedido ${index + 1}" + (isActual ? " (actual)" : "")),
           subtitle: Text("Fecha: ${pedido.fecha}\nTotal: \$${pedido.precioTotal.toStringAsFixed(2)}"),
         ),
       ),
@@ -166,7 +215,18 @@ Future<void> finalizeOrder() async {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Sección para la orden actual.
+          ElevatedButton.icon(
+            onPressed: crearNuevoPedido,
+            icon: const Icon(Icons.add),
+            label: const Text("Nuevo pedido"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF9B1D42),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(height: 20),
           ..._order.entries.map((entry) {
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8),
@@ -209,7 +269,6 @@ Future<void> finalizeOrder() async {
             );
           }).toList(),
           const SizedBox(height: 20),
-          // Botón para finalizar la orden.
           Container(
             alignment: Alignment.center,
             child: ElevatedButton(
@@ -232,25 +291,11 @@ Future<void> finalizeOrder() async {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          FutureBuilder<List<Pedido>>(
-            future: _loadCompletedOrders(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}');
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Text("No hay pedidos realizados.");
-              } else {
-                final pedidos = snapshot.data!;
-                return Column(
-                  children: List.generate(
-                    pedidos.length,
-                    (index) => _buildCompletedOrderBox(pedidos[index], index),
-                  ),
-                );
-              }
-            },
+          Column(
+            children: List.generate(
+              _pedidos.length,
+              (index) => _buildCompletedOrderBox(_pedidos[index], index),
+            ),
           ),
         ],
       ),
