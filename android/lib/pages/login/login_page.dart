@@ -1,4 +1,5 @@
 // lib/pages/login/login_page.dart
+import 'package:android/services/service_dueno.dart';
 import 'package:flutter/material.dart';
 import 'package:android/pages/home_page_empleado.dart';
 import 'package:android/pages/login/elegirNegocio_page.dart';
@@ -24,77 +25,88 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
   void _login() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      setState(() => _isLoading = true);
+  if (_formKey.currentState!.validate()) {
+    _formKey.currentState!.save();
+    setState(() => _isLoading = true);
 
-      try {
-        // 1. Llamamos al endpoint de login para autenticarnos.
-        final apiservice =ApiService();
-        final authResponse = await apiservice.login(_username, _password);
-        SessionManager.clear();
-        SessionManager.token = authResponse.token;
-        // 2. A partir del username recibido en la respuesta, consultamos el objeto completo de User.
-        final user = await ApiService().fetchCurrentUser();
+    try {
+      final apiService = ApiService();
 
-        // 3. Guardamos los datos en el SessionManager. Asegúrate de que currentUser sea de tipo User.
-        SessionManager.currentUser = user;
-        SessionManager.userId = user.id.toString();
-        SessionManager.username = user.username;
-        // Si tienes un token o algún otro dato, también lo puedes almacenar.
+      // 1. Login: obtenemos el token
+      final authResponse = await apiService.login(_username, _password);
 
-        // 4. Redirigir según el rol/authority del usuario
-        final authority = user.authority.authority.toLowerCase();
-        if (authority == 'dueno') {
-          // Lógica para dueno; puedes obtener información adicional si es necesario.
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ElegirNegocioPage(user: user),
-            ),
-          );
-        } else if (authority == 'empleado') {
-          final empleado = await EmpleadoService.fetchEmpleadoByUserId(
-            user.id,
-            SessionManager.token!,
-          );
+      // Limpiamos sesión previa y guardamos el token
+      SessionManager.clear();
+      SessionManager.token = authResponse.token;
 
-          if (empleado == null) throw 'No se encontró el empleado';
-          if (empleado.negocio == null) throw 'Empleado sin negocio asignado';
+      // 2. Obtenemos el usuario actual (/me)
+      final user = await apiService.fetchCurrentUser();
 
-          SessionManager.negocioId = empleado.negocio.toString();
+      // 3. Guardamos datos del usuario en SessionManager
+      SessionManager.saveUserSession(user, authResponse.token);
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HomePageEmpleado(user: user),
-            ),
-          );
-        } else {
-          throw 'Rol no reconocido';
-        }
-      } catch (e) {
-        final errorMessage = '''
-          Error: $e
-          Username: $_username
-          token: ${SessionManager.token}
-          User: ${SessionManager.currentUser}
-          User ID: ${SessionManager.userId}
-          Username: ${SessionManager.username}
-          Authority: ${SessionManager.currentUser?.authority.authority}
-          ''';
+      // 4. Comprobamos authority
+      if (SessionManager.authority == 'dueno') {
+        final dueno = await DuenoService.fetchDuenoByUserId(
+          user.id,
+          SessionManager.token!,
+        );
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(errorMessage),
-                duration: const Duration(seconds: 4),
-              ),
-            );
-      } finally {
-        setState(() => _isLoading = false);
+        if (dueno == null) throw 'No se encontró el dueño';
+
+        SessionManager.duenoId = dueno.id;
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ElegirNegocioPage(user: user),
+          ),
+        );
+
+      } else if (SessionManager.authority == 'empleado') {
+        final empleado = await EmpleadoService.fetchEmpleadoByUserId(
+          user.id,
+          SessionManager.token!,
+        );
+
+        if (empleado == null) throw 'No se encontró el empleado';
+        if (empleado.negocio == null) throw 'Empleado sin negocio asignado';
+
+        SessionManager.negocioId = empleado.negocio.toString();
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePageEmpleado(user: user),
+          ),
+        );
+
+      } else {
+        throw 'Rol no reconocido';
       }
+
+    } catch (e) {
+      final errorMessage = '''
+        Error: $e
+        Username: $_username
+        Token: ${SessionManager.token}
+        User ID: ${SessionManager.userId}
+        Username: ${SessionManager.username}
+        Authority: ${SessionManager.authority}
+      ''';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
+}
 
 
 

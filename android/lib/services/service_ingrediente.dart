@@ -1,19 +1,26 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:android/models/ingrediente.dart';
+import 'package:android/models/session_manager.dart';
 
 class IngredienteService {
   static const String _baseUrl = 'http://10.0.2.2:8080/api/ingredientes';
 
   /// Obtener ingredientes por productoVenta.id
   static Future<List<Ingrediente>> getIngredientesByProductoVenta(int productoVentaId) async {
-    final response = await http.get(Uri.parse('$_baseUrl/productoVenta/$productoVentaId'));
+    final response = await http.get(
+      Uri.parse('$_baseUrl/productoVenta/$productoVentaId'),
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body);
       return jsonList.map((json) => Ingrediente.fromJson(json)).toList();
     } else {
-      throw Exception('Error al cargar ingredientes del producto de venta');
+      throw Exception('Error al cargar ingredientes del producto de venta: ${response.body}');
     }
   }
 
@@ -31,45 +38,57 @@ class IngredienteService {
 
     final response = await http.post(
       Uri.parse(_baseUrl),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
       body: jsonEncode(body),
     );
 
     if (response.statusCode != 201) {
-      throw Exception('Error al añadir ingrediente');
+      throw Exception('Error al añadir ingrediente: ${response.body}');
     }
   }
 
   /// Eliminar ingrediente por su ID
   static Future<void> deleteIngrediente(int ingredienteId) async {
-    final response = await http.delete(Uri.parse('$_baseUrl/$ingredienteId'));
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/$ingredienteId'),
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
     if (response.statusCode != 204) {
-      throw Exception('Error al eliminar ingrediente');
+      throw Exception('Error al eliminar ingrediente: ${response.body}');
     }
   }
 
+  /// Actualizar ingrediente existente
   static Future<void> updateIngrediente({
-  required int id,
-  required int cantidad,
-  required int productoInventarioId,
-  required int productoVentaId,
-}) async {
-  final Map<String, dynamic> body = {
-    'cantidad': cantidad,
-    'productoInventario': {'id': productoInventarioId},
-    'productoVenta': {'id': productoVentaId},
-  };
+    required int id,
+    required int cantidad,
+    required int productoInventarioId,
+    required int productoVentaId,
+  }) async {
+    final Map<String, dynamic> body = {
+      'cantidad': cantidad,
+      'productoInventario': {'id': productoInventarioId},
+      'productoVenta': {'id': productoVentaId},
+    };
 
-  final response = await http.put(
-    Uri.parse('$_baseUrl/$id'),
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode(body),
-  );
+    final response = await http.put(
+      Uri.parse('$_baseUrl/$id'),
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
 
-  if (response.statusCode != 200) {
-    throw Exception('Error al actualizar ingrediente');
+    if (response.statusCode != 200) {
+      throw Exception('Error al actualizar ingrediente: ${response.body}');
+    }
   }
-}
-
 }

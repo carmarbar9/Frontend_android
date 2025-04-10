@@ -36,4 +36,14 @@ class Proveedor {
     }
     return data;
   }
+
+  Map<String, dynamic> toJsonDTO() {
+    return {
+      'name': name,
+      'email': email,
+      'telefono': telefono,
+      'direccion': direccion,
+      'negocioId': negocioId, // clave correcta para el DTO
+    };
+  }
 }
