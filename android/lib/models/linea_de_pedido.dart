@@ -4,6 +4,7 @@ class LineaDePedido {
   double precioLinea;
   int pedidoId;
   int productoId;
+  String? productoName; // Nuevo campo opcional
 
   LineaDePedido({
     this.id,
@@ -11,6 +12,7 @@ class LineaDePedido {
     required this.precioLinea,
     required this.pedidoId,
     required this.productoId,
+    this.productoName,
   });
 
   factory LineaDePedido.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class LineaDePedido {
       precioLinea: (json['precioLinea'] as num).toDouble(),
       pedidoId: json['pedido']['id'],
       productoId: json['producto']['id'],
+      productoName: json['producto']['name'], // Se obtiene el nombre
     );
   }
 
@@ -28,7 +31,10 @@ class LineaDePedido {
       'cantidad': cantidad,
       'precioLinea': precioLinea,
       'pedido': {'id': pedidoId},
-      'producto': {'id': productoId},
+      'producto': {
+        'id': productoId,
+        'name': productoName, // Se incluye el nombre en el JSON
+      },
     };
   }
 }

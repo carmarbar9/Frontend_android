@@ -59,4 +59,5 @@ class Empleado {
     if (negocio != null) data['negocio'] = negocio;
     return data;
   }
+
 }

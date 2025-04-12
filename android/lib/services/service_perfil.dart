@@ -2,39 +2,59 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:android/models/perfil.dart';
+import 'package:android/models/session_manager.dart';
 
 class UserProfileService {
-  // Endpoint base para Dueno (update y delete)
-  final String duenoApiUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/duenos/';
+  final String duenoApiUrl = 'http://10.0.2.2:8080/api/duenos/';
+  final String userApiUrl = 'http://10.0.2.2:8080/api/users/username/';
 
-  /// Método existente para obtener perfil a partir del username.
-  /// Se obtiene primero el usuario y luego el dueño.
-  final String userApiUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/users/username/';
+  /// Obtener perfil a partir del username
   Future<UserProfile> fetchUserProfileByUsername(String username) async {
-    // Paso 1: Obtener el usuario por username
-    final userResponse = await http.get(Uri.parse('$userApiUrl$username'));
+    // Paso 1: Obtener usuario por username
+    final userResponse = await http.get(
+      Uri.parse('$userApiUrl$username'),
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
+
     if (userResponse.statusCode != 200) {
       throw Exception('Error al cargar datos del usuario: ${userResponse.statusCode}');
     }
+
     final userJson = json.decode(userResponse.body);
     final int userId = userJson['id'];
-    
-    // Paso 2: Obtener el dueño usando el id del usuario
-    final duenoResponse = await http.get(Uri.parse('${duenoApiUrl}user/$userId'));
+
+    // Paso 2: Obtener dueño por userId
+    final duenoResponse = await http.get(
+      Uri.parse('${duenoApiUrl}user/$userId'),
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
+
     if (duenoResponse.statusCode != 200) {
       throw Exception('Error al cargar datos del dueño: ${duenoResponse.statusCode}');
     }
+
     return UserProfile.fromJson(json.decode(duenoResponse.body));
   }
 
-  /// Actualiza el perfil (PUT /api/duenos/{id})
+  /// Actualizar perfil
   Future<UserProfile> updateUserProfile(int id, UserProfile updatedProfile) async {
     final url = Uri.parse('$duenoApiUrl$id');
+
     final response = await http.put(
       url,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
       body: json.encode(updatedProfile.toJson()),
     );
+
     if (response.statusCode == 200) {
       return UserProfile.fromJson(json.decode(response.body));
     } else {
@@ -42,12 +62,18 @@ class UserProfileService {
     }
   }
 
+  /// Eliminar perfil
   Future<bool> deleteUserProfile(int duenoId) async {
-    final url = 'https://ispp-2425-g2.ew.r.appspot.com/api/users/$duenoId';
-    final response = await http.delete(Uri.parse(url));
+    final url = Uri.parse('http://10.0.2.2:8080/api/users/$duenoId');
+
+    final response = await http.delete(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
+
     return response.statusCode == 200 || response.statusCode == 204;
   }
-
-
-
 }

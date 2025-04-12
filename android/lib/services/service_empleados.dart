@@ -1,13 +1,21 @@
 import 'dart:convert';
 import 'package:android/models/empleados.dart';
 import 'package:http/http.dart' as http;
+import 'package:android/models/session_manager.dart';
 
 class EmpleadoService {
   static const String _baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/empleados';
 
   static Future<List<Empleado>> getAllEmpleados() async {
     final url = Uri.parse(_baseUrl);
-    final response = await http.get(url);
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
+
     if (response.statusCode == 200) {
       final decodedBody = utf8.decode(response.bodyBytes);
       final List<dynamic> jsonList = jsonDecode(decodedBody);
@@ -21,7 +29,14 @@ class EmpleadoService {
 
   static Future<Empleado?> getEmpleadoById(int id) async {
     final url = Uri.parse('$_baseUrl/$id');
-    final response = await http.get(url);
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
+
     if (response.statusCode == 200) {
       final decodedBody = utf8.decode(response.bodyBytes);
       return Empleado.fromJson(jsonDecode(decodedBody));
@@ -36,9 +51,13 @@ class EmpleadoService {
     final url = Uri.parse(_baseUrl);
     final response = await http.post(
       url,
-      headers: {'Content-Type': 'application/json; charset=UTF-8'},
-      body: jsonEncode(empleado.toJson()), // ya actualizado al nuevo formato
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(empleado.toJson()),
     );
+
     if (response.statusCode == 201 || response.statusCode == 200) {
       final decodedBody = utf8.decode(response.bodyBytes);
       return Empleado.fromJson(jsonDecode(decodedBody));
@@ -56,7 +75,10 @@ class EmpleadoService {
     final url = Uri.parse('$_baseUrl/${empleado.id}');
     final response = await http.put(
       url,
-      headers: {'Content-Type': 'application/json; charset=UTF-8'},
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
       body: jsonEncode(empleado.toJson()),
     );
 
@@ -72,7 +94,14 @@ class EmpleadoService {
 
   static Future<void> deleteEmpleado(int id) async {
     final url = Uri.parse('$_baseUrl/$id');
-    final response = await http.delete(url);
+    final response = await http.delete(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
+
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Error al eliminar el empleado');
     }
@@ -90,24 +119,62 @@ class EmpleadoService {
   }
 
   static Future<List<Empleado>> getEmpleadosByNombre(String nombre) async {
-    final url = Uri.parse('$_baseUrl/nombre/$nombre');
-    final response = await http.get(url);
+    final url = Uri.parse('$_baseUrl/dto/nombre/$nombre');
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
+
     if (response.statusCode == 200) {
-      final decodedBody = utf8.decode(response.bodyBytes);
-      final List<dynamic> jsonList = jsonDecode(decodedBody);
-      return jsonList.map((json) => Empleado.fromJson(json)).toList();
+      final List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList
+          .map(
+            (json) => Empleado(
+              username: json['username'],
+              firstName: json['firstName'],
+              lastName: json['lastName'],
+              email: json['email'],
+              numTelefono: json['numTelefono'],
+              tokenEmpleado: json['tokenEmpleado'],
+              descripcion: json['descripcion'],
+              negocio: json['negocio'],
+            ),
+          )
+          .toList();
     } else {
       return [];
     }
   }
 
   static Future<List<Empleado>> getEmpleadosByApellido(String apellido) async {
-    final url = Uri.parse('$_baseUrl/apellido/$apellido');
-    final response = await http.get(url);
+    final url = Uri.parse('$_baseUrl/dto/apellido/$apellido');
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
+
     if (response.statusCode == 200) {
-      final decodedBody = utf8.decode(response.bodyBytes);
-      final List<dynamic> jsonList = jsonDecode(decodedBody);
-      return jsonList.map((json) => Empleado.fromJson(json)).toList();
+      final List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList
+          .map(
+            (json) => Empleado(
+              username: json['username'],
+              firstName: json['firstName'],
+              lastName: json['lastName'],
+              email: json['email'],
+              numTelefono: json['numTelefono'],
+              tokenEmpleado: json['tokenEmpleado'],
+              descripcion: json['descripcion'],
+              negocio: json['negocio'],
+            ),
+          )
+          .toList();
     } else {
       return [];
     }
@@ -121,28 +188,46 @@ class EmpleadoService {
 
   static Future<List<Empleado>> getEmpleadosByNegocio(int negocioId) async {
     final url = Uri.parse('$_baseUrl/negocio/$negocioId');
-    final response = await http.get(url);
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
     if (response.statusCode == 200) {
       final decodedBody = utf8.decode(response.bodyBytes);
       final List<dynamic> jsonList = jsonDecode(decodedBody);
       return jsonList.map((json) => Empleado.fromJson(json)).toList();
     } else if (response.statusCode == 404) {
-      return []; // Si el negocio no tiene empleados
+      return [];
     } else {
       throw Exception('Error al obtener empleados por negocio');
     }
   }
-  
-  static Future<Empleado?> fetchEmpleadoByUserId(int userId) async {
+
+  static Future<Empleado?> fetchEmpleadoByUserId(
+    int userId,
+    String token,
+  ) async {
     final url = Uri.parse('$_baseUrl/user/$userId');
-    final response = await http.get(url);
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
     if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonData = jsonDecode(response.body);
-      return Empleado.fromJson(jsonData);
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return Empleado.fromJson(data);
     } else {
-      throw Exception('Error al obtener el empleado: ${response.body}');
+      print(
+        '❌ Error en fetchEmpleadoByUserId: ${response.statusCode} - ${response.body}',
+      );
+      return null;
     }
   }
 }
-

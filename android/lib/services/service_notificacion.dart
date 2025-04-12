@@ -6,6 +6,7 @@ import '../models/lote.dart';
 class NotificacionService {
   final _uuid = const Uuid();
 
+  /// Genera notificaciones de inventario con stock bajo
   List<Notificacion> generarNotificacionesInventario(
     List<ProductoInventario> productos,
     Map<int, List<Lote>> lotesPorProducto,
@@ -14,7 +15,7 @@ class NotificacionService {
 
     for (var producto in productos) {
       final lotes = lotesPorProducto[producto.id] ?? [];
-      final cantidadActual = producto.calcularCantidad(lotes); // 👈 Usamos la función del modelo
+      final cantidadActual = producto.calcularCantidad(lotes);
 
       if (cantidadActual <= producto.cantidadAviso) {
         notificaciones.add(

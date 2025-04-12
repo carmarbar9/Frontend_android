@@ -27,19 +27,21 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
     _cargarNegocios();
   }
 
+  // Cargar negocios del dueño logueado
   void _cargarNegocios() {
-    final int? duenoId = SessionManager.duenoId;
-    if (duenoId != null) {
-      _negocios = NegocioService.getNegociosByDuenoId(duenoId);
-    } else {
-      _negocios = Future.error('ID de dueño no disponible');
-    }
+    print('DEBUG --- Token: ${SessionManager.token}');
+    print('DEBUG --- UserID: ${SessionManager.userId}');
+    print('DEBUG --- Username: ${SessionManager.username}');
+    print('DEBUG --- Authority: ${SessionManager.authority}');
+
+    _negocios = NegocioService.getMisNegocios();
   }
 
   void _seleccionarNegocio(Negocio negocio) {
     SessionManager.negocioId = negocio.id.toString();
-    SessionManager.negocioNombre = negocio.name ?? '';
-    SessionManager.ciudad = negocio.ciudad ?? '';
+    SessionManager.negocioNombre = negocio.name ?? 'Sin nombre';
+    SessionManager.ciudad = negocio.ciudad ?? 'Sin ciudad';
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const HomePage()),

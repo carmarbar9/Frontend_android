@@ -1,9 +1,11 @@
-// authority.dart
 class Authority {
-  int? id;
-  String? authority;
+  final int id;
+  final String authority;
 
-  Authority({this.id, this.authority});
+  Authority({
+    required this.id,
+    required this.authority,
+  });
 
   factory Authority.fromJson(Map<String, dynamic> json) {
     return Authority(
@@ -13,9 +15,9 @@ class Authority {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
-    data['authority'] = authority;
-    return data;
+    return {
+      'id': id,
+      'authority': authority,
+    };
   }
 }
