@@ -2,6 +2,8 @@ import 'package:android/models/session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:android/models/empleados.dart';
 import 'package:android/services/service_empleados.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 class EmployeeDetailPage extends StatefulWidget {
   final int employeeId;
@@ -83,9 +85,7 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
 
     // Necesarios para el EmpleadoDTO
     final usernameController = TextEditingController(text: employee.username);
-    final passwordController = TextEditingController(
-      text: employee.password,
-    ); // vacía, debe rellenarse para el PUT
+    final passwordController = TextEditingController(); // Campo vacío siempre
 
     showDialog(
       context: context,
@@ -137,46 +137,40 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
               child: const Text("Cancelar"),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF9B1D42),
-                foregroundColor: Colors.white,
-              ),
               onPressed: () async {
-                final password = passwordController.text.trim();
-                if (password.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        "La contraseña es obligatoria para actualizar.",
-                      ),
-                    ),
-                  );
-                  return;
+                final passwordInput = passwordController.text.trim();
+
+                if (passwordInput.isEmpty) {
+                  employee.password =
+                      employee.password; // Mantienes la que ya tenía
+                } else {
+                  // Encriptar con SHA-256
+                  final bytes = utf8.encode(passwordInput);
+                  final hash = sha256.convert(bytes);
+                  employee.password = hash.toString();
                 }
 
-                // Actualizamos el objeto con los nuevos valores
                 employee.firstName = firstNameController.text;
                 employee.lastName = lastNameController.text;
                 employee.email = emailController.text;
                 employee.numTelefono = telefonoController.text;
                 employee.descripcion = descripcionController.text;
                 employee.username = usernameController.text;
-                employee.password = password;
                 employee.negocio =
                     employee.negocio ?? int.parse(SessionManager.negocioId!);
 
                 try {
-                  await EmpleadoService.updateEmpleado(employee);
+                  await EmpleadoService.updateEmpleado(employee.id!, employee);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text("Empleado actualizado correctamente"),
                     ),
                   );
-                  Navigator.pop(dialogContext); // cerrar diálogo
+                  Navigator.pop(dialogContext); // Cierra solo el AlertDialog
                   Navigator.pop(
                     context,
                     true,
-                  ); // cerrar página de detalle y refrescar lista
+                  ); // Cierra la pantalla detalle y avisa que se ha actualizado
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text("Error al actualizar: $e")),
@@ -369,7 +363,7 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
           color: color,
           fontSize: 22,
           fontWeight: FontWeight.bold,
-          fontFamily: 'TitanOne'
+          fontFamily: 'TitanOne',
         ),
       ),
       style: ElevatedButton.styleFrom(

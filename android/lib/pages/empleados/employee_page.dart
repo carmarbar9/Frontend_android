@@ -23,7 +23,9 @@ class EmployeesPage extends StatefulWidget {
 }
 
 class _EmployeesPageState extends State<EmployeesPage> {
-  late Future<List<Empleado>> _empleadosFuture;
+  Future<List<Empleado>>? _empleadosFuture;
+  late List<Empleado> _empleadosOriginales = [];
+  late List<Empleado> _empleadosFiltrados = [];
 
   String? _busquedaActiva;
   String? _tipoBusqueda;
@@ -34,11 +36,15 @@ class _EmployeesPageState extends State<EmployeesPage> {
     _refreshEmployees();
   }
 
-  void _refreshEmployees() {
-    setState(() {
-      final negocioId = int.parse(SessionManager.negocioId!);
+  Future<void> _refreshEmployees() async {
+    final negocioId = int.parse(SessionManager.negocioId!);
 
-      _empleadosFuture = EmpleadoService.getEmpleadosByNegocio(negocioId);
+    final empleados = await EmpleadoService.getEmpleadosByNegocio(negocioId);
+
+    setState(() {
+      _empleadosOriginales = empleados;
+      _empleadosFiltrados = empleados;
+      _empleadosFuture = Future.value(empleados); // <-- IMPORTANTE
     });
   }
 
@@ -148,32 +154,30 @@ class _EmployeesPageState extends State<EmployeesPage> {
   }
 
   Future<void> _buscarEmpleado(String tipo, String query) async {
-    try {
+    setState(() {
       _busquedaActiva = query;
       _tipoBusqueda = tipo;
-      final negocioId = int.parse(SessionManager.negocioId!);
 
-      Future<List<Empleado>> future;
-
-      switch (tipo) {
-        case 'Nombre':
-          future = EmpleadoService.getEmpleadosByNombre(query);
-          break;
-        case 'Apellido':
-          future = EmpleadoService.getEmpleadosByApellido(query);
-          break;
-        default:
-          future = Future.value([]);
+      if (tipo == 'Nombre') {
+        _empleadosFiltrados =
+            _empleadosOriginales
+                .where(
+                  (empleado) => empleado.firstName!.toLowerCase().contains(
+                    query.toLowerCase(),
+                  ),
+                )
+                .toList();
+      } else if (tipo == 'Apellido') {
+        _empleadosFiltrados =
+            _empleadosOriginales
+                .where(
+                  (empleado) => empleado.lastName!.toLowerCase().contains(
+                    query.toLowerCase(),
+                  ),
+                )
+                .toList();
       }
-
-      setState(() {
-        _empleadosFuture = future.then(
-          (lista) => lista.where((e) => e.negocio == negocioId).toList(),
-        );
-      });
-    } catch (e) {
-      print('Error al buscar: $e');
-    }
+    });
   }
 
   @override
@@ -218,29 +222,43 @@ class _EmployeesPageState extends State<EmployeesPage> {
                       onPressed: () async {
                         try {
                           // 1. Obtener productos del inventario
-                          List<ProductoInventario> productos = await InventoryApiService.getProductosInventario();
+                          List<ProductoInventario> productos =
+                              await InventoryApiService.getProductosInventario();
 
                           // 2. Obtener lotes por producto
                           Map<int, List<Lote>> lotesPorProducto = {};
                           for (var producto in productos) {
-                            final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+                            final lotes =
+                                await LoteProductoService.getLotesByProductoId(
+                                  producto.id,
+                                );
                             lotesPorProducto[producto.id] = lotes;
                           }
 
                           // 3. Generar notificaciones
                           final notificaciones = NotificacionService()
-                              .generarNotificacionesInventario(productos, lotesPorProducto);
+                              .generarNotificacionesInventario(
+                                productos,
+                                lotesPorProducto,
+                              );
 
                           // 4. Navegar a la página de notificaciones
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => NotificacionPage(notificaciones: notificaciones),
+                              builder:
+                                  (_) => NotificacionPage(
+                                    notificaciones: notificaciones,
+                                  ),
                             ),
                           );
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error al cargar notificaciones: $e')),
+                            SnackBar(
+                              content: Text(
+                                'Error al cargar notificaciones: $e',
+                              ),
+                            ),
                           );
                         }
                       },
@@ -337,40 +355,56 @@ class _EmployeesPageState extends State<EmployeesPage> {
                   ),
 
                 Expanded(
-                  child: FutureBuilder<List<Empleado>>(
-                    future: _empleadosFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                      }
+                  child:
+                      _empleadosFuture == null
+                          ? const Center(child: CircularProgressIndicator())
+                          : FutureBuilder<List<Empleado>>(
+                            future: _empleadosFuture,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              if (snapshot.hasError) {
+                                return Center(
+                                  child: Text('Error: ${snapshot.error}'),
+                                );
+                              }
 
-                      final empleados = snapshot.data ?? [];
-                      if (empleados.isEmpty) {
-                        return const Center(
-                          child: Text(
-                            "No hay empleados",
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        );
-                      }
+                              final empleados =
+                                  _busquedaActiva == null
+                                      ? _empleadosOriginales
+                                      : _empleadosFiltrados;
 
-                      return empleados.length == 1
-                          ? Center(child: _buildEmployeeCard(empleados.first))
-                          : CardSwiper(
-                            cardsCount: empleados.length,
-                            onSwipe: (prev, curr, dir) => true,
-                            cardBuilder: (context, index, _, __) {
-                              return _buildEmployeeCard(empleados[index]);
+                              if (empleados.isEmpty) {
+                                return const Center(
+                                  child: Text(
+                                    "No hay empleados",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              return empleados.length == 1
+                                  ? Center(
+                                    child: _buildEmployeeCard(empleados.first),
+                                  )
+                                  : CardSwiper(
+                                    cardsCount: empleados.length,
+                                    onSwipe: (prev, curr, dir) => true,
+                                    cardBuilder: (context, index, _, __) {
+                                      return _buildEmployeeCard(
+                                        empleados[index],
+                                      );
+                                    },
+                                  );
                             },
-                          );
-                    },
-                  ),
+                          ),
                 ),
               ],
             ),
@@ -391,8 +425,13 @@ class _EmployeesPageState extends State<EmployeesPage> {
                       builder: (context) => const AddEmployeePage(),
                     ),
                   );
+
                   if (result != null) {
-                    _refreshEmployees();
+                    await _refreshEmployees(); // <-- OBLIGATORIO el await
+                    setState(() {
+                      _busquedaActiva = null;
+                      _tipoBusqueda = null;
+                    });
                   }
                 },
               ),
@@ -449,7 +488,11 @@ class _EmployeesPageState extends State<EmployeesPage> {
             DefaultTextStyle.merge(
               style: const TextStyle(color: Color(0xFF9B1D42), fontSize: 18),
               child: _buildFlatWhiteButton(
-                icon: Icon(Icons.visibility, color: Color(0xFF9B1D42), size: 32),
+                icon: Icon(
+                  Icons.visibility,
+                  color: Color(0xFF9B1D42),
+                  size: 32,
+                ),
                 label: "Ver",
                 onPressed: () async {
                   if (employee.id != null) {
@@ -484,7 +527,11 @@ class _EmployeesPageState extends State<EmployeesPage> {
       icon: icon,
       label: Text(
         label,
-        style: const TextStyle(color: Color(0xFF9B1D42), fontSize: 22, fontFamily: 'TitanOne'),
+        style: const TextStyle(
+          color: Color(0xFF9B1D42),
+          fontSize: 22,
+          fontFamily: 'TitanOne',
+        ),
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,

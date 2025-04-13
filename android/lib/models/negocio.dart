@@ -9,7 +9,9 @@ class Negocio {
   String? codigoPostal;
   String? ciudad;
   String? pais;
+  int? idDueno;
   Dueno? dueno;
+
 
   Negocio({
     this.id,
@@ -19,7 +21,8 @@ class Negocio {
     this.codigoPostal,
     this.ciudad,
     this.pais,
-    this.dueno,
+    this.idDueno,
+    this.dueno
   });
 
   factory Negocio.fromJson(Map<String, dynamic> json) {
@@ -44,9 +47,7 @@ class Negocio {
     data['codigoPostal'] = codigoPostal;
     data['ciudad'] = ciudad;
     data['pais'] = pais;
-    if (dueno != null) {
-      data['dueno'] = dueno!.toJson();
-    }
+    data['idDueno'] = idDueno;
     return data;
   }
 }

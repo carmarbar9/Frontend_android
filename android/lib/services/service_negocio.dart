@@ -3,6 +3,7 @@ import 'package:android/models/negocio.dart';
 import 'package:android/models/session_manager.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:math'; // Importa esto arriba
 
 class NegocioService {
   static const String _baseUrl = 'http://10.0.2.2:8080';
@@ -48,7 +49,7 @@ class NegocioService {
       final List<dynamic> data = json.decode(response.body);
       return data.map((json) => Negocio.fromJson(json)).toList();
     } else if (response.statusCode == 204) {
-      return []; 
+      return [];
     } else {
       throw Exception('Error al cargar negocios: ${response.body}');
     }
@@ -75,6 +76,11 @@ class NegocioService {
   /// Crear un negocio
   static Future<Negocio> createNegocio(Negocio negocio) async {
     final url = Uri.parse('$_baseUrl/api/negocios');
+
+    // Mandar un número aleatorio solo para que pase la validación del DTO
+    negocio.tokenNegocio =
+        Random().nextInt(900000000) + 100000000; // 9 dígitos random
+
     final response = await http.post(
       url,
       headers: {

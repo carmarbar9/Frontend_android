@@ -128,6 +128,15 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
         title: const Text('Selecciona tu negocio'),
         foregroundColor: Colors.white,
         backgroundColor: const Color.fromARGB(255, 156, 28, 66),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomePage()),
+            );
+          },
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
@@ -136,6 +145,7 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
           ),
         ],
       ),
+
       body: FutureBuilder<List<Negocio>>(
         future: _negocios,
         builder: (context, snapshot) {

@@ -68,11 +68,14 @@ class EmpleadoService {
     }
   }
 
-  static Future<Empleado> updateEmpleado(Empleado empleado) async {
-    if (empleado.id == null) {
-      throw Exception('El ID del empleado no puede ser nulo para actualizar');
+  static Future<Empleado> updateEmpleado(int id, Empleado empleado) async {
+    final url = Uri.parse('$_baseUrl/$id');
+
+    // No enviar password si está vacío
+    if (empleado.password == null || empleado.password!.isEmpty) {
+      empleado.password = null;
     }
-    final url = Uri.parse('$_baseUrl/${empleado.id}');
+
     final response = await http.put(
       url,
       headers: {
@@ -118,66 +121,28 @@ class EmpleadoService {
     }
   }
 
-  static Future<List<Empleado>> getEmpleadosByNombre(String nombre) async {
-    final url = Uri.parse('$_baseUrl/dto/nombre/$nombre');
-    final response = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer ${SessionManager.token}',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
-      return jsonList
-          .map(
-            (json) => Empleado(
-              username: json['username'],
-              firstName: json['firstName'],
-              lastName: json['lastName'],
-              email: json['email'],
-              numTelefono: json['numTelefono'],
-              tokenEmpleado: json['tokenEmpleado'],
-              descripcion: json['descripcion'],
-              negocio: json['negocio'],
-            ),
-          )
-          .toList();
-    } else {
-      return [];
-    }
+  List<Empleado> empleadosFiltradosPorNombre(
+    String nombre,
+    List<Empleado> listaEmpleados,
+  ) {
+    return listaEmpleados
+        .where(
+          (empleado) =>
+              empleado.firstName!.toLowerCase().contains(nombre.toLowerCase()),
+        )
+        .toList();
   }
 
-  static Future<List<Empleado>> getEmpleadosByApellido(String apellido) async {
-    final url = Uri.parse('$_baseUrl/dto/apellido/$apellido');
-    final response = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer ${SessionManager.token}',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
-      return jsonList
-          .map(
-            (json) => Empleado(
-              username: json['username'],
-              firstName: json['firstName'],
-              lastName: json['lastName'],
-              email: json['email'],
-              numTelefono: json['numTelefono'],
-              tokenEmpleado: json['tokenEmpleado'],
-              descripcion: json['descripcion'],
-              negocio: json['negocio'],
-            ),
-          )
-          .toList();
-    } else {
-      return [];
-    }
+  List<Empleado> empleadosFiltradosPorApellido(
+    String apellido,
+    List<Empleado> listaEmpleados,
+  ) {
+    return listaEmpleados
+        .where(
+          (empleado) =>
+              empleado.lastName!.toLowerCase().contains(apellido.toLowerCase()),
+        )
+        .toList();
   }
 
   static Future<bool> validateToken(String token) async {
