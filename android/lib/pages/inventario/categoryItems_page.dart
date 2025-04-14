@@ -1,5 +1,7 @@
 import 'package:android/models/categoria.dart';
+import 'package:android/models/proveedor.dart';
 import 'package:android/models/session_manager.dart';
+import 'package:android/services/service_proveedores.dart';
 import 'package:flutter/material.dart';
 import 'package:android/models/producto_inventario.dart';
 import 'package:android/services/service_inventory.dart';
@@ -173,11 +175,18 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
     });
   }
 
-  void _showAddProductDialog() {
+  void _showAddProductDialog() async {
     final nameController = TextEditingController();
     final precioController = TextEditingController();
     final cantidadDeseadaController = TextEditingController();
     final cantidadAvisoController = TextEditingController();
+
+    final negocioId = int.parse(SessionManager.negocioId!);
+
+    List<Proveedor> proveedores = await ApiService.getProveedoresByNegocio(
+      negocioId,
+    );
+    Proveedor? selectedProveedor;
 
     showDialog(
       context: context,
@@ -212,6 +221,19 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
                       labelText: "Cantidad aviso",
                     ),
                   ),
+                  DropdownButtonFormField<Proveedor>(
+                    decoration: const InputDecoration(labelText: "Proveedor"),
+                    items:
+                        proveedores.map((proveedor) {
+                          return DropdownMenuItem(
+                            value: proveedor,
+                            child: Text(proveedor.name!),
+                          );
+                        }).toList(),
+                    onChanged: (value) {
+                      selectedProveedor = value;
+                    },
+                  ),
                 ],
               ),
             ),
@@ -235,7 +257,8 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
                       precio == null ||
                       deseada == null ||
                       aviso == null ||
-                      _categoryId == null) {
+                      _categoryId == null ||
+                      selectedProveedor == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
@@ -246,13 +269,24 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
                     return;
                   }
 
-                  await InventoryApiService.createProductoInventario({
-                    "name": name,
-                    "precioCompra": precio,
-                    "cantidadDeseada": deseada,
-                    "cantidadAviso": aviso,
-                    "categoria": {"id": _categoryId},
-                  });
+                  try {
+                    await InventoryApiService.createProductoInventario({
+                      "name": name,
+                      "precioCompra": precio,
+                      "cantidadDeseada": deseada,
+                      "cantidadAviso": aviso,
+                      "categoriaId": _categoryId,
+                      "proveedorId": selectedProveedor!.id,
+                    });
+
+                    Navigator.pop(context);
+                    _initData();
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error al crear producto: $e')),
+                    );
+                  }
 
                   Navigator.pop(context);
                   _initData();

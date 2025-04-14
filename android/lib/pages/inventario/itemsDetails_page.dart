@@ -1,3 +1,6 @@
+import 'package:android/models/proveedor.dart';
+import 'package:android/models/session_manager.dart';
+import 'package:android/services/service_proveedores.dart';
 import 'package:flutter/material.dart';
 import 'package:android/models/producto_inventario.dart';
 import 'package:android/services/service_inventory.dart';
@@ -30,6 +33,8 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
   Future<List<Lote>>? _futureLotes; // 👈 AÑADE ESTO
   List<Lote> _lotes = [];
   int _currentLoteIndex = 0;
+  List<Proveedor> _proveedores = [];
+  Proveedor? _proveedorProducto;
 
   final Map<String, IconData> categoryIcons = {
     'Verduras': FontAwesomeIcons.carrot,
@@ -52,13 +57,30 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
     _futureProduct = InventoryApiService.getProductoInventarioByName(
       widget.itemName,
     );
-    _futureProduct!.then((producto) {
+
+    _futureProduct!.then((producto) async {
       if (producto != null) {
-        final future = LoteProductoService.getLotesByProductoId(producto.id);
+        final futureLotes = LoteProductoService.getLotesByProductoId(
+          producto.id,
+        );
+        final proveedores = await ApiService.getProveedoresByNegocio(
+          int.parse(SessionManager.negocioId!),
+        );
+
         setState(() {
-          _futureLotes = future;
+          _futureLotes = futureLotes;
+          _proveedores = proveedores;
+          _proveedorProducto = proveedores.firstWhere(
+            (prov) => prov.id == producto.proveedorId,
+            orElse:
+                () => Proveedor(
+                  id: producto.proveedorId,
+                  name: 'Proveedor desconocido',
+                ),
+          );
         });
-        future.then((data) {
+
+        futureLotes.then((data) {
           setState(() {
             _lotes = data;
             _currentLoteIndex = 0;
@@ -170,6 +192,17 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
       text: producto.cantidadAviso.toString(),
     );
 
+    // Obtenemos proveedores del negocio
+    List<Proveedor> proveedores = await ApiService.getProveedoresByNegocio(
+      int.parse(SessionManager.negocioId!),
+    );
+
+    // Seleccionamos el proveedor actual
+    Proveedor? selectedProveedor = proveedores.firstWhere(
+      (prov) => prov.id == producto.proveedorId,
+      orElse: () => proveedores.first,
+    );
+
     await showDialog(
       context: context,
       builder:
@@ -203,6 +236,20 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                     ),
                     keyboardType: TextInputType.number,
                   ),
+                  DropdownButtonFormField<Proveedor>(
+                    value: selectedProveedor,
+                    decoration: const InputDecoration(labelText: "Proveedor"),
+                    items:
+                        proveedores.map((prov) {
+                          return DropdownMenuItem(
+                            value: prov,
+                            child: Text(prov.name!),
+                          );
+                        }).toList(),
+                    onChanged: (value) {
+                      selectedProveedor = value;
+                    },
+                  ),
                 ],
               ),
             ),
@@ -216,9 +263,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                   final updated = ProductoInventario(
                     id: producto.id,
                     name: nameController.text,
-                    categoria:
-                        producto
-                            .categoria, // Asegúrate de que tenga al menos el .id
+                    categoria: producto.categoria,
                     precioCompra:
                         double.tryParse(precioController.text) ??
                         producto.precioCompra,
@@ -228,6 +273,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                     cantidadAviso:
                         int.tryParse(avisoController.text) ??
                         producto.cantidadAviso,
+                    proveedorId: selectedProveedor!.id!, // Este es el nuevo
                   );
 
                   try {
@@ -236,12 +282,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
 
                     await Future.delayed(const Duration(milliseconds: 300));
 
-                    setState(() {
-                      _futureProduct =
-                          InventoryApiService.getProductoInventarioById(
-                            updated.id,
-                          );
-                    });
+                    _loadProduct();
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -334,26 +375,40 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                       ),
                       onPressed: () async {
                         try {
-                          List<ProductoInventario> productos = await InventoryApiService.getProductosInventario();
+                          List<ProductoInventario> productos =
+                              await InventoryApiService.getProductosInventario();
 
                           Map<int, List<Lote>> lotesPorProducto = {};
                           for (var producto in productos) {
-                            final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+                            final lotes =
+                                await LoteProductoService.getLotesByProductoId(
+                                  producto.id,
+                                );
                             lotesPorProducto[producto.id] = lotes;
                           }
 
                           final notificaciones = NotificacionService()
-                              .generarNotificacionesInventario(productos, lotesPorProducto);
+                              .generarNotificacionesInventario(
+                                productos,
+                                lotesPorProducto,
+                              );
 
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => NotificacionPage(notificaciones: notificaciones),
+                              builder:
+                                  (_) => NotificacionPage(
+                                    notificaciones: notificaciones,
+                                  ),
                             ),
                           );
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error cargando notificaciones: $e')),
+                            SnackBar(
+                              content: Text(
+                                'Error cargando notificaciones: $e',
+                              ),
+                            ),
                           );
                         }
                       },
@@ -414,7 +469,10 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                     categoryIcons[producto.categoria.name] ?? Icons.inventory_2;
                 return Center(
                   child: Container(
-                    width: MediaQuery.of(context).size.width * 0.85,
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.9,
+                      minWidth: MediaQuery.of(context).size.width * 0.85,
+                    ),
                     padding: const EdgeInsets.all(20),
                     margin: const EdgeInsets.only(bottom: 30),
                     decoration: BoxDecoration(
@@ -428,197 +486,210 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                         ),
                       ],
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(icon, size: 60, color: const Color(0xFF9B1D42)),
-                        const SizedBox(height: 20),
-                        Text(
-                          producto.name.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF9B1D42),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(icon, size: 60, color: const Color(0xFF9B1D42)),
+                          const SizedBox(height: 20),
+                          Text(
+                            producto.name.toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF9B1D42),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'Categoría: ${producto.categoria.name}',
-                          style: const TextStyle(fontSize: 22),
-                        ),
-                        Text(
-                          'Precio compra: €${producto.precioCompra.toStringAsFixed(2)}',
-                          style: const TextStyle(fontSize: 22),
-                        ),
-                        Text(
-                          'Cantidad deseada: ${producto.cantidadDeseada}',
-                          style: const TextStyle(fontSize: 22),
-                        ),
-                        Text(
-                          'Cantidad aviso: ${producto.cantidadAviso}',
-                          style: const TextStyle(fontSize: 22),
-                        ),
-                        const SizedBox(height: 30),
-                        const Text(
-                          "Lotes",
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF9B1D42),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Categoría: ${producto.categoria.name}',
+                            style: const TextStyle(fontSize: 22),
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        FutureBuilder<List<Lote>>(
-                          future: _futureLotes,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const CircularProgressIndicator();
-                            } else if (snapshot.hasError) {
-                              return Text(
-                                "Error al cargar lotes: ${snapshot.error}",
+                          Text(
+                            'Precio compra: €${producto.precioCompra.toStringAsFixed(2)}',
+                            style: const TextStyle(fontSize: 22),
+                          ),
+                          Text(
+                            'Cantidad deseada: ${producto.cantidadDeseada}',
+                            style: const TextStyle(fontSize: 22),
+                          ),
+                          Text(
+                            'Cantidad aviso: ${producto.cantidadAviso}',
+                            style: const TextStyle(fontSize: 22),
+                          ),
+                          Text(
+                            'Proveedor: ${_proveedorProducto?.name ?? "Proveedor desconocido"}',
+                            style: const TextStyle(fontSize: 22),
+                          ),
+
+                          const SizedBox(height: 30),
+                          const Text(
+                            "Lotes",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF9B1D42),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          FutureBuilder<List<Lote>>(
+                            future: _futureLotes,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const CircularProgressIndicator();
+                              } else if (snapshot.hasError) {
+                                return Text(
+                                  "Error al cargar lotes: ${snapshot.error}",
+                                );
+                              } else if (!snapshot.hasData ||
+                                  snapshot.data!.isEmpty) {
+                                return const Text(
+                                  "No hay lotes registrados para este producto",
+                                );
+                              }
+
+                              final lotes = snapshot.data!;
+                              final cantidadTotal = producto.calcularCantidad(
+                                lotes,
                               );
-                            } else if (!snapshot.hasData ||
-                                snapshot.data!.isEmpty) {
-                              return const Text(
-                                "No hay lotes registrados para este producto",
-                              );
-                            }
 
-                            final lotes = snapshot.data!;
-                            final cantidadTotal = producto.calcularCantidad(lotes);
+                              // Control de índice por fuera
+                              final lote = lotes[_currentLoteIndex];
 
-
-                            // Control de índice por fuera
-                            final lote = lotes[_currentLoteIndex];
-
-                            return Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  "Cantidad total: $cantidadTotal",
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF9B1D42),
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    "Cantidad total: $cantidadTotal",
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF9B1D42),
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 10),
-                                GestureDetector(
-                                  onTap: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (_) => LoteDetailPage(lote: lote),
-                                      ),
-                                    );
+                                  const SizedBox(height: 10),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (_) => LoteDetailPage(lote: lote),
+                                        ),
+                                      );
 
-                                    // Cuando vuelve, recarga los lotes y ajusta el índice
-                                    final nuevosLotes =
-                                        await LoteProductoService.getLotesByProductoId(
-                                          producto.id,
+                                      // Cuando vuelve, recarga los lotes y ajusta el índice
+                                      final nuevosLotes =
+                                          await LoteProductoService.getLotesByProductoId(
+                                            producto.id,
+                                          );
+                                      setState(() {
+                                        _lotes = nuevosLotes;
+                                        _futureLotes = Future.value(
+                                          nuevosLotes,
                                         );
-                                    setState(() {
-                                      _lotes = nuevosLotes;
-                                      _futureLotes = Future.value(nuevosLotes);
-                                      if (_currentLoteIndex >=
-                                          nuevosLotes.length) {
-                                        _currentLoteIndex =
-                                            nuevosLotes.isEmpty
-                                                ? 0
-                                                : nuevosLotes.length - 1;
-                                      }
-                                    });
-                                  },
+                                        if (_currentLoteIndex >=
+                                            nuevosLotes.length) {
+                                          _currentLoteIndex =
+                                              nuevosLotes.isEmpty
+                                                  ? 0
+                                                  : nuevosLotes.length - 1;
+                                        }
+                                      });
+                                    },
 
-                                  child: Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[100],
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: Colors.grey.shade300,
+                                    child: Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: Colors.grey.shade300,
+                                        ),
                                       ),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          "Cantidad: ${lote.cantidad}",
-                                          style: const TextStyle(fontSize: 18),
-                                        ),
-                                        Text(
-                                          "Caduca: ${lote.fechaCaducidad.toLocal().toString().split(' ')[0]}",
-                                          style: const TextStyle(fontSize: 18),
-                                        ),
-                                      ],
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            "Cantidad: ${lote.cantidad}",
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                          Text(
+                                            "Caduca: ${lote.fechaCaducidad.toLocal().toString().split(' ')[0]}",
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
 
-                                const SizedBox(height: 10),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.arrow_left,
-                                        size: 30,
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.arrow_left,
+                                          size: 30,
+                                        ),
+                                        onPressed:
+                                            _currentLoteIndex > 0
+                                                ? () => setState(() {
+                                                  _currentLoteIndex--;
+                                                })
+                                                : null,
                                       ),
-                                      onPressed:
-                                          _currentLoteIndex > 0
-                                              ? () => setState(() {
-                                                _currentLoteIndex--;
-                                              })
-                                              : null,
-                                    ),
-                                    Text(
-                                      "Lote ${_currentLoteIndex + 1} de ${lotes.length}",
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
+                                      Text(
+                                        "Lote ${_currentLoteIndex + 1} de ${lotes.length}",
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.arrow_right,
-                                        size: 30,
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.arrow_right,
+                                          size: 30,
+                                        ),
+                                        onPressed:
+                                            _currentLoteIndex < lotes.length - 1
+                                                ? () => setState(() {
+                                                  _currentLoteIndex++;
+                                                })
+                                                : null,
                                       ),
-                                      onPressed:
-                                          _currentLoteIndex < lotes.length - 1
-                                              ? () => setState(() {
-                                                _currentLoteIndex++;
-                                              })
-                                              : null,
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            );
-                          },
-                        ),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
 
-                        const SizedBox(height: 30),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _build3DButton(
-                              label: "Editar",
-                              icon: Icons.edit,
-                              onPressed: () => _editProduct(producto),
-                            ),
-                            const SizedBox(width: 16),
-                            _buildEliminarButton(
-                              label: "Eliminar",
-                              icon: Icons.delete,
-                              onPressed: () => _deleteProduct(producto.id),
-                            ),
-                          ],
-                        ),
-                      ],
+                          const SizedBox(height: 30),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _build3DButton(
+                                label: "Editar",
+                                icon: Icons.edit,
+                                onPressed: () => _editProduct(producto),
+                              ),
+                              const SizedBox(width: 16),
+                              _buildEliminarButton(
+                                label: "Eliminar",
+                                icon: Icons.delete,
+                                onPressed: () => _deleteProduct(producto.id),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );

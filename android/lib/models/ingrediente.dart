@@ -30,6 +30,7 @@ class Ingrediente {
         precioCompra: 0,
         cantidadDeseada: 0,
         cantidadAviso: 0,
+        proveedorId: 0,
       );
     }
 

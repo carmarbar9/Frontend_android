@@ -2,8 +2,7 @@ import 'package:android/models/session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:android/models/empleados.dart';
 import 'package:android/services/service_empleados.dart';
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
+import 'package:bcrypt/bcrypt.dart';
 
 class EmployeeDetailPage extends StatefulWidget {
   final int employeeId;
@@ -141,13 +140,14 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
                 final passwordInput = passwordController.text.trim();
 
                 if (passwordInput.isEmpty) {
-                  employee.password =
-                      employee.password; // Mantienes la que ya tenía
+                  // No cambia contraseña
+                  employee.password = employee.password;
                 } else {
-                  // Encriptar con SHA-256
-                  final bytes = utf8.encode(passwordInput);
-                  final hash = sha256.convert(bytes);
-                  employee.password = hash.toString();
+                  // Encriptar con BCrypt en Flutter
+                  employee.password = BCrypt.hashpw(
+                    passwordInput,
+                    BCrypt.gensalt(),
+                  );
                 }
 
                 employee.firstName = firstNameController.text;
@@ -167,10 +167,7 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
                     ),
                   );
                   Navigator.pop(dialogContext); // Cierra solo el AlertDialog
-                  Navigator.pop(
-                    context,
-                    true,
-                  ); // Cierra la pantalla detalle y avisa que se ha actualizado
+                  Navigator.pop(context, true); // Cierra pantalla detalle
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text("Error al actualizar: $e")),

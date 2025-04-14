@@ -20,7 +20,9 @@ class UserProfileService {
     );
 
     if (userResponse.statusCode != 200) {
-      throw Exception('Error al cargar datos del usuario: ${userResponse.statusCode}');
+      throw Exception(
+        'Error al cargar datos del usuario: ${userResponse.statusCode}',
+      );
     }
 
     final userJson = json.decode(userResponse.body);
@@ -36,14 +38,36 @@ class UserProfileService {
     );
 
     if (duenoResponse.statusCode != 200) {
-      throw Exception('Error al cargar datos del dueño: ${duenoResponse.statusCode}');
+      throw Exception(
+        'Error al cargar datos del dueño: ${duenoResponse.statusCode}',
+      );
     }
 
     return UserProfile.fromJson(json.decode(duenoResponse.body));
   }
 
+  Future<UserProfile> fetchUserProfileByUserId(int userId) async {
+  final response = await http.get(
+    Uri.parse('http://10.0.2.2:8080/api/duenos/user/$userId'),
+    headers: {
+      'Authorization': 'Bearer ${SessionManager.token}',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    return UserProfile.fromJson(json.decode(response.body));
+  } else {
+    throw Exception('Error al cargar datos del perfil: ${response.statusCode}');
+  }
+}
+
+
   /// Actualizar perfil
-  Future<UserProfile> updateUserProfile(int id, UserProfile updatedProfile) async {
+  Future<UserProfile> updateUserProfile(
+    int id,
+    UserProfile updatedProfile,
+  ) async {
     final url = Uri.parse('$duenoApiUrl$id');
 
     final response = await http.put(

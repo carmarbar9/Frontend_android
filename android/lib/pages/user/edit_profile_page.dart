@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:android/models/perfil.dart';
 import 'package:android/services/service_perfil.dart';
 import 'package:android/models/user.dart';
+import 'package:bcrypt/bcrypt.dart';
 
 class EditProfilePage extends StatefulWidget {
   final UserProfile profile;
@@ -24,7 +25,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   // Controladores para los campos de contraseña
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _repeatPasswordController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -59,8 +59,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        validator: (value) =>
-            (value == null || value.isEmpty) ? 'Campo requerido' : null,
+        validator:
+            (value) =>
+                (value == null || value.isEmpty) ? 'Campo requerido' : null,
         onSaved: onSaved,
       ),
     );
@@ -70,29 +71,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // Determinar la nueva contraseña:
-      // Si ambos campos están vacíos, se conserva la contraseña actual.
-      // En este caso, al estar pre-cargados se espera que el usuario los modifique o los deje iguales.
+      // Si el campo de password está vacío → mantener la actual
       String finalPassword = widget.profile.user.password;
-      if (_passwordController.text.isNotEmpty || _repeatPasswordController.text.isNotEmpty) {
-        if (_passwordController.text != _repeatPasswordController.text) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Las contraseñas no coinciden")),
-          );
-          return;
-        } else {
-          finalPassword = _passwordController.text;
-        }
+
+      // Si el usuario escribió algo → se enviará en texto plano para que el backend la encripte
+      if (_passwordController.text.isNotEmpty) {
+        final passwordInput = _passwordController.text.trim();
+        finalPassword = BCrypt.hashpw(passwordInput, BCrypt.gensalt());
       }
 
-      // Se construye el perfil actualizado, conservando el token actual
       UserProfile updatedProfile = UserProfile(
         id: widget.profile.id,
         firstName: _firstName ?? widget.profile.firstName,
         lastName: _lastName ?? widget.profile.lastName,
         email: _email ?? widget.profile.email,
         numTelefono: _numTelefono ?? widget.profile.numTelefono,
-        tokenDueno: widget.profile.tokenDueno, // Token no editable
+        tokenDueno: widget.profile.tokenDueno,
         user: widget.profile.user.copyWith(
           username: _username ?? widget.profile.user.username,
           password: finalPassword,
@@ -104,16 +98,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
       });
 
       try {
-        UserProfile updated = await UserProfileService()
-            .updateUserProfile(widget.profile.id, updatedProfile);
+        UserProfile updated = await UserProfileService().updateUserProfile(
+          widget.profile.id,
+          updatedProfile,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Perfil actualizado correctamente")),
         );
         Navigator.pop(context, updated);
       } catch (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error al actualizar: $error")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error al actualizar: $error")));
       } finally {
         setState(() {
           _isLoading = false;
@@ -130,15 +126,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _email = widget.profile.email;
     _username = widget.profile.user.username;
     _numTelefono = widget.profile.numTelefono;
-    // Pre-cargar ambos campos de contraseña con el valor actual
-    _passwordController.text = widget.profile.user.password;
-    _repeatPasswordController.text = widget.profile.user.password;
+    // Campos de contraseña vacíos por defecto
+    _passwordController.text = '';
   }
 
   @override
   void dispose() {
     _passwordController.dispose();
-    _repeatPasswordController.dispose();
     super.dispose();
   }
 
@@ -205,17 +199,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       keyboardType: TextInputType.text,
                       obscureText: true,
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.vpn_key, color: Color(0xFF9B1D42)),
+                        prefixIcon: const Icon(
+                          Icons.vpn_key,
+                          color: Color(0xFF9B1D42),
+                        ),
                         labelText: "Nueva Contraseña",
-                        labelStyle: const TextStyle(color: Color(0xFF9B1D42), fontSize: 16),
+                        labelStyle: const TextStyle(
+                          color: Color(0xFF9B1D42),
+                          fontSize: 16,
+                        ),
                         filled: true,
                         fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF9B1D42)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF9B1D42),
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF9B1D42),
+                            width: 2,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
@@ -226,33 +231,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                   ),
                   // Campo para repetir la nueva contraseña
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 18),
-                    child: TextFormField(
-                      controller: _repeatPasswordController,
-                      keyboardType: TextInputType.text,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.lock, color: Color(0xFF9B1D42)),
-                        labelText: "Repetir Contraseña",
-                        labelStyle: const TextStyle(color: Color(0xFF9B1D42), fontSize: 16),
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF9B1D42)),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF9B1D42), width: 2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) {
-                        // Es opcional; se validará en _submit.
-                        return null;
-                      },
-                    ),
-                  ),
                   _buildTextField(
                     icon: Icons.phone,
                     label: "Teléfono",
@@ -264,27 +242,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   _isLoading
                       ? const CircularProgressIndicator()
                       : SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF9B1D42),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF9B1D42),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
                             ),
-                            onPressed: _submit,
-                            child: const Text(
-                              "Guardar Cambios",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'TitanOne',
-                                color: Colors.white,
-                              ),
+                          ),
+                          onPressed: _submit,
+                          child: const Text(
+                            "Guardar Cambios",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'TitanOne',
+                              color: Colors.white,
                             ),
                           ),
                         ),
+                      ),
                 ],
               ),
             ),

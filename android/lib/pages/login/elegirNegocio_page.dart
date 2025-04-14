@@ -125,18 +125,10 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false, // Esto quita la flecha
         title: const Text('Selecciona tu negocio'),
         foregroundColor: Colors.white,
         backgroundColor: const Color.fromARGB(255, 156, 28, 66),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomePage()),
-            );
-          },
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
