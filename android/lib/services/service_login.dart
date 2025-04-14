@@ -51,24 +51,34 @@ class ApiService {
   }
 
   /// REGISTRO DE DUEÑO
-  static Future<Dueno?> registerDueno(Map<String, dynamic> data) async {
-    final url = Uri.parse('$baseUrl/duenos');
+  static Future<bool> registerDueno(Map<String, dynamic> registerData) async {
+    final url = Uri.parse('$baseUrl/auth/register');
 
     final response = await http.post(
       url,
       headers: {
-        'Authorization': 'Bearer ${SessionManager.token}',
-        'Content-Type': 'application/json; charset=UTF-8',
+        'Content-Type': 'application/json',
       },
-      body: jsonEncode(data),
+      body: json.encode(registerData),
     );
 
-    if (response.statusCode == 201) {
-      return Dueno.fromJson(jsonDecode(response.body));
-    } else if (response.statusCode == 409) {
-      throw Exception('El nombre de usuario ya existe');
+    if (response.statusCode == 200) {
+      return true;
     } else {
-      throw Exception('Error al registrar usuario: ${response.statusCode}');
+      String errorMessage = 'Error desconocido al registrar usuario';
+
+      try {
+        final decodedBody = json.decode(response.body);
+        if (decodedBody['message'] != null) {
+          errorMessage = decodedBody['message'];
+        }
+      } catch (_) {
+        // Por si no viene json bien
+      }
+
+      throw Exception(errorMessage);
     }
   }
+
+
 }

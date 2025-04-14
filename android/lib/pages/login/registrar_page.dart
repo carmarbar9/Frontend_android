@@ -1,7 +1,6 @@
 // lib/pages/login/register_page.dart
 import 'package:flutter/material.dart';
 import 'package:android/services/service_login.dart';
-import 'package:android/models/dueno.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -20,7 +19,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _numTelefonoController = TextEditingController();
-  final TextEditingController _tokenDuenoController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -37,23 +35,36 @@ class _RegisterPageState extends State<RegisterPage> {
       'lastName': _lastNameController.text.trim(),
       'email': _emailController.text.trim(),
       'numTelefono': _numTelefonoController.text.trim(),
-      'tokenDueno': _tokenDuenoController.text.trim(),
     };
 
     try {
-      final Dueno? dueno = await ApiService.registerDueno(registrationData);
+      final bool success = await ApiService.registerDueno(registrationData);
 
-      // Si el registro es exitoso, mostramos un mensaje y volvemos al login
-      if (dueno != null && mounted) {
+      if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('¡Registro exitoso!')),
         );
-        Navigator.pop(context); // Regresar a la pantalla anterior (LoginPage)
+        Navigator.pop(context);
       }
     } catch (e) {
-      // Mostrar error
+      String cleanError = e is Exception ? e.toString().replaceFirst('Exception: ', '') : e.toString();
+
+      // Limpiamos los mensajes feos
+      if (cleanError.contains('El teléfono debe ser correcto')) {
+        cleanError = 'El número de teléfono no es válido';
+      } else if (cleanError.contains('La contraseña debe tener')) {
+        cleanError = 'La contraseña debe tener entre 8 y 32 caracteres, 1 mayúscula, 1 minúscula, un número y un carácter especial';
+      } else if (cleanError.contains('Duplicate entry') || cleanError.contains('constraint') || cleanError.contains('UK_')) {
+        cleanError = 'Ese nombre de usuario ya existe';
+      } else {
+        cleanError = 'Error al registrar: $cleanError';
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al registrar: $e')),
+        SnackBar(
+          content: Text(cleanError),
+          duration: const Duration(seconds: 4),
+        ),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -103,7 +114,6 @@ class _RegisterPageState extends State<RegisterPage> {
     _lastNameController.dispose();
     _emailController.dispose();
     _numTelefonoController.dispose();
-    _tokenDuenoController.dispose();
     super.dispose();
   }
 
@@ -167,11 +177,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 label: "Número de teléfono",
                 controller: _numTelefonoController,
                 inputType: TextInputType.phone,
-              ),
-              _buildTextField(
-                icon: Icons.vpn_key,
-                label: "Token de Dueño",
-                controller: _tokenDuenoController,
               ),
               const SizedBox(height: 30),
               _isLoading
