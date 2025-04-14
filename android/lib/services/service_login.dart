@@ -65,7 +65,20 @@ class ApiService {
     if (response.statusCode == 200) {
       return true;
     } else {
-      throw Exception('Error al registrar usuario: ${response.statusCode}');
+      String errorMessage = 'Error desconocido al registrar usuario';
+
+      try {
+        final decodedBody = json.decode(response.body);
+        if (decodedBody['message'] != null) {
+          errorMessage = decodedBody['message'];
+        }
+      } catch (_) {
+        // Por si no viene json bien
+      }
+
+      throw Exception(errorMessage);
     }
   }
+
+
 }

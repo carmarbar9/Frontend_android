@@ -47,19 +47,23 @@ class _RegisterPageState extends State<RegisterPage> {
         Navigator.pop(context);
       }
     } catch (e) {
-  // Mostrar error y los datos enviados
+      String cleanError = e is Exception ? e.toString().replaceFirst('Exception: ', '') : e.toString();
+
+      // Limpiamos los mensajes feos
+      if (cleanError.contains('El teléfono debe ser correcto')) {
+        cleanError = 'El número de teléfono no es válido';
+      } else if (cleanError.contains('La contraseña debe tener')) {
+        cleanError = 'La contraseña debe tener entre 8 y 32 caracteres, 1 mayúscula, 1 minúscula, un número y un carácter especial';
+      } else if (cleanError.contains('Duplicate entry') || cleanError.contains('constraint') || cleanError.contains('UK_')) {
+        cleanError = 'Ese nombre de usuario ya existe';
+      } else {
+        cleanError = 'Error al registrar: $cleanError';
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Error al registrar: $e\n'
-            'username: ${_usernameController.text.trim()}\n'
-            'password: ${_passwordController.text.trim()}\n'
-            'firstName: ${_firstNameController.text.trim()}\n'
-            'lastName: ${_lastNameController.text.trim()}\n'
-            'email: ${_emailController.text.trim()}\n'
-            'numTelefono: ${_numTelefonoController.text.trim()}',
-          ),
-          duration: const Duration(seconds: 10),
+          content: Text(cleanError),
+          duration: const Duration(seconds: 4),
         ),
       );
     } finally {
