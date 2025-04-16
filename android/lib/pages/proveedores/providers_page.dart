@@ -12,6 +12,7 @@ import 'package:android/models/lote.dart';
 import 'package:android/services/service_inventory.dart';
 import 'package:android/services/service_lote.dart';
 import 'package:android/services/service_notificacion.dart';
+import 'package:android/pages/proveedores/carritoProveedor_page.dart';
 
 
 
@@ -611,9 +612,12 @@ class _ProvidersPageState extends State<ProvidersPage> {
 
                   label: "Ver Carrito",
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Funcionalidad pendiente")),
-                    );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CarritoProveedorPage(proveedor: proveedor),
+                    ),
+                  );
                   },
                 ),
               ),

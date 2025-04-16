@@ -27,6 +27,7 @@ class NotificacionService {
                 'Cantidad actual: $cantidadActual (Aviso: ${producto.cantidadAviso})',
             fecha: DateTime.now(),
             datosExtra: {
+              'proveedorId': producto.proveedorId,
               'productoId': producto.id,
               'cantidadActual': cantidadActual,
             },
@@ -60,6 +61,7 @@ class NotificacionService {
                   'Caduca en $diasRestantes días (${_formatearFecha(lote.fechaCaducidad)})',
               fecha: DateTime.now(),
               datosExtra: {
+                'proveedorId': producto.proveedorId,
                 'productoId': producto.id,
                 'fechaCaducidad': lote.fechaCaducidad.toIso8601String(),
               },
