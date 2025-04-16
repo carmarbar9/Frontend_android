@@ -46,7 +46,7 @@ class PlansPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => NotificacionPage(notificaciones: notificaciones),
+                    builder: (_) => NotificacionPage(),
                   ),
                 );
               } catch (e) {

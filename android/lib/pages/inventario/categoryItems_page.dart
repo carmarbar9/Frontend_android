@@ -403,9 +403,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
                             context,
                             MaterialPageRoute(
                               builder:
-                                  (_) => NotificacionPage(
-                                    notificaciones: notificaciones,
-                                  ),
+                                  (_) => NotificacionPage(),
                             ),
                           );
                         } catch (e) {

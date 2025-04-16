@@ -143,9 +143,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                             context,
                             MaterialPageRoute(
                               builder:
-                                  (_) => NotificacionPage(
-                                    notificaciones: notificaciones,
-                                  ),
+                                  (_) => NotificacionPage(),
                             ),
                           );
                         } catch (e) {

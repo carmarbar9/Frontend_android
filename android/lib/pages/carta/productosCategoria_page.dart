@@ -168,9 +168,7 @@ class _ProductosPorCategoriaPageState extends State<ProductosPorCategoriaPage> {
                             context,
                             MaterialPageRoute(
                               builder:
-                                  (_) => NotificacionPage(
-                                    notificaciones: notificaciones,
-                                  ),
+                                  (_) => NotificacionPage(),
                             ),
                           );
                         } catch (e) {

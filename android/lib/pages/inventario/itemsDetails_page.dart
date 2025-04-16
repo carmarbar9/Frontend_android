@@ -340,6 +340,80 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
     }
   }
 
+  void _anadirLoteManual(ProductoInventario producto) async {
+    final cantidadController = TextEditingController();
+    DateTime? fechaSeleccionada;
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Nuevo lote"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: cantidadController,
+              decoration: const InputDecoration(labelText: "Cantidad"),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final fecha = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now().add(const Duration(days: 1)),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (fecha != null) {
+                  setState(() => fechaSeleccionada = fecha);
+                }
+              },
+              icon: const Icon(Icons.calendar_today),
+              label: Text(
+                fechaSeleccionada == null
+                  ? "Seleccionar fecha de caducidad"
+                  : "Caduca: \${fechaSeleccionada!.day}/\${fechaSeleccionada!.month}/\${fechaSeleccionada!.year}",
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final cantidad = int.tryParse(cantidadController.text) ?? 0;
+              if (cantidad > 0 && fechaSeleccionada != null) {
+                final nuevoLote = Lote(
+                  id: 0,
+                  cantidad: cantidad,
+                  fechaCaducidad: fechaSeleccionada!,
+                  productoId: producto.id,
+                  reabastecimientoId: 1, // dummy por ahora
+                );
+                await LoteProductoService.createLote(nuevoLote);
+                Navigator.pop(context);
+                final nuevosLotes = await LoteProductoService.getLotesByProductoId(producto.id);
+                setState(() {
+                  _lotes = nuevosLotes;
+                  _futureLotes = Future.value(nuevosLotes);
+                  _currentLoteIndex = nuevosLotes.length - 1;
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Lote añadido correctamente")),
+                );
+              }
+            },
+            child: const Text("Guardar"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -397,9 +471,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                             context,
                             MaterialPageRoute(
                               builder:
-                                  (_) => NotificacionPage(
-                                    notificaciones: notificaciones,
-                                  ),
+                                  (_) => NotificacionPage(),
                             ),
                           );
                         } catch (e) {
@@ -670,6 +742,21 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                               );
                             },
                           ),
+
+                          ElevatedButton.icon(
+                            onPressed: () => _anadirLoteManual(producto),
+                            icon: const Icon(Icons.add),
+                            label: const Text("Añadir lote"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF9B1D42),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            ),
+                          ),
+
 
                           const SizedBox(height: 30),
                           Row(

@@ -251,7 +251,7 @@ class _ProvidersPageState extends State<ProvidersPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => NotificacionPage(notificaciones: notificaciones),
+                              builder: (_) => NotificacionPage(),
                             ),
                           );
                         } catch (e) {
