@@ -1,13 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:android/models/notificacion.dart';
+import 'package:android/models/producto_inventario.dart';
+import 'package:android/models/lote.dart';
+import 'package:android/services/service_notificacion.dart';
+import 'package:android/services/service_inventory.dart';
+import 'package:android/services/service_lote.dart';
+import 'package:android/models/session_manager.dart';
 import 'package:android/pages/user/user_profile.dart';
 import 'package:android/pages/login/login_page.dart';
-import 'package:android/models/session_manager.dart';
 
-class NotificacionPage extends StatelessWidget {
-  final List<Notificacion> notificaciones;
+class NotificacionPage extends StatefulWidget {
+  const NotificacionPage({super.key});
 
-  const NotificacionPage({super.key, required this.notificaciones});
+  @override
+  State<NotificacionPage> createState() => _NotificacionPageState();
+}
+
+class _NotificacionPageState extends State<NotificacionPage> {
+  final NotificacionService _notificacionService = NotificacionService();
+  List<Notificacion> _notificaciones = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarNotificaciones();
+  }
+
+  Future<void> _cargarNotificaciones() async {
+    try {
+      final productos = await InventoryApiService.getAllProductosInventario();
+
+      final Map<int, List<Lote>> lotesPorProducto = {};
+
+      for (var producto in productos) {
+        final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+        lotesPorProducto[producto.id] = lotes;
+      }
+
+      final notificacionesStock = _notificacionService.generarNotificacionesInventario(productos, lotesPorProducto);
+      final notificacionesCaducidad = _notificacionService.generarNotificacionesCaducidad(productos, lotesPorProducto);
+
+      setState(() {
+        _notificaciones = [...notificacionesStock, ...notificacionesCaducidad];
+      });
+    } catch (e) {
+      print('Error al cargar notificaciones: $e');
+    }
+  }
 
   Icon _iconoPorTipo(TipoNotificacion tipo) {
     switch (tipo) {
@@ -17,6 +56,8 @@ class NotificacionPage extends StatelessWidget {
         return const Icon(Icons.local_shipping, color: Colors.white, size: 40);
       case TipoNotificacion.empleado:
         return const Icon(Icons.people, color: Colors.white, size: 40);
+      case TipoNotificacion.caducidad:
+        return const Icon(Icons.hourglass_bottom_rounded, color: Colors.white, size: 40);
       default:
         return const Icon(Icons.notifications, color: Colors.white, size: 40);
     }
@@ -89,7 +130,7 @@ class NotificacionPage extends StatelessWidget {
           ),
 
           Expanded(
-            child: notificaciones.isEmpty
+            child: _notificaciones.isEmpty
                 ? const Center(
                     child: Text(
                       'No hay notificaciones activas',
@@ -101,9 +142,9 @@ class NotificacionPage extends StatelessWidget {
                     ),
                   )
                 : ListView.builder(
-                    itemCount: notificaciones.length,
+                    itemCount: _notificaciones.length,
                     itemBuilder: (context, index) {
-                      final noti = notificaciones[index];
+                      final noti = _notificaciones[index];
                       return Container(
                         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         padding: const EdgeInsets.all(12),
@@ -158,7 +199,6 @@ class NotificacionPage extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                 ),
                                 onPressed: () {
-                                  // Aquí deberías implementar la lógica de añadir al carrito
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text('Producto añadido al carrito (por implementar)'),

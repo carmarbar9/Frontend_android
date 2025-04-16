@@ -250,9 +250,7 @@ class _CartaPageState extends State<CartaPage> {
                             context,
                             MaterialPageRoute(
                               builder:
-                                  (_) => NotificacionPage(
-                                    notificaciones: notificaciones,
-                                  ),
+                                  (_) => NotificacionPage(),
                             ),
                           );
                         } catch (e) {
