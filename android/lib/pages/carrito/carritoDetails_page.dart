@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:android/models/carrito.dart';
 import 'package:android/models/lineaCarrito.dart';
 import 'package:android/services/service_lineaCarrito.dart';
+import 'package:android/models/session_manager.dart';
 
 class CarritoDetallePage extends StatefulWidget {
   final Carrito carrito;
@@ -19,7 +21,31 @@ class _CarritoDetallePageState extends State<CarritoDetallePage> {
   void initState() {
     super.initState();
     _futureLineas = ApiLineaCarritoService.getLineasByCarrito(widget.carrito.id!);
+    imprimirPayloadDelToken(); // 👈 Añadido aquí
   }
+
+ void imprimirPayloadDelToken() {
+  final token = SessionManager.token;
+
+  if (token == null || token.isEmpty) {
+    print("⚠️ No hay token disponible");
+    return;
+  }
+
+  try {
+    final parts = token.split('.');
+    if (parts.length != 3) {
+      print("❌ El token no tiene un formato válido.");
+      return;
+    }
+
+    final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+    print("🧠 Payload del token: $payload");
+  } catch (e) {
+    print("❌ Error al decodificar el token: $e");
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +61,22 @@ class _CarritoDetallePageState extends State<CarritoDetallePage> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          if (snapshot.hasError) {
+            print("❌ Error al cargar líneas del carrito: ${snapshot.error}");
+            return const Center(child: Text("Error al cargar las líneas."));
+          }
+
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            print("⚠️ No se encontraron líneas para el carrito con ID: ${widget.carrito.id}");
             return const Center(child: Text("Este carrito no tiene productos."));
           }
 
           final lineas = snapshot.data!;
+          print("✅ Líneas recibidas para carrito ${widget.carrito.id}:");
+          for (var linea in lineas) {
+            print("🧾 Producto: ${linea.producto.name}, Cantidad: ${linea.cantidad}");
+          }
+
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
