@@ -53,7 +53,10 @@ class CarritoManager {
   static Map<int, List<ProductoCarrito>> getTodosLosCarritos() {
     return _carritos;
   }
+
+
 }
+
 
 class ProductoCarrito {
   final ProductoInventario producto;

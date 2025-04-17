@@ -5,6 +5,9 @@ import 'package:android/models/proveedor.dart';
 import 'package:android/models/carritoManager.dart';
 import 'package:android/services/service_carrito.dart';
 import 'package:android/services/service_diaReparto.dart';
+import 'package:android/services/service_lineaCarrito.dart';
+import 'package:android/models/lineaCarrito.dart';
+import 'package:android/models/carrito.dart';
 
 
 
@@ -48,23 +51,23 @@ class _CarritoProveedorPageState extends State<CarritoProveedorPage> {
   }
 
   DateTime calcularProximaEntrega(String diaSemana) {
-  final dias = {
-    'MONDAY': DateTime.monday,
-    'TUESDAY': DateTime.tuesday,
-    'WEDNESDAY': DateTime.wednesday,
-    'THURSDAY': DateTime.thursday,
-    'FRIDAY': DateTime.friday,
-    'SATURDAY': DateTime.saturday,
-    'SUNDAY': DateTime.sunday,
-  };
+    final dias = {
+      'MONDAY': DateTime.monday,
+      'TUESDAY': DateTime.tuesday,
+      'WEDNESDAY': DateTime.wednesday,
+      'THURSDAY': DateTime.thursday,
+      'FRIDAY': DateTime.friday,
+      'SATURDAY': DateTime.saturday,
+      'SUNDAY': DateTime.sunday,
+    };
 
-  final hoy = DateTime.now();
-  final target = dias[diaSemana.toUpperCase()]!;
-  int diasFaltan = (target - hoy.weekday + 7) % 7;
-  if (diasFaltan == 0) diasFaltan = 7;
+    final hoy = DateTime.now();
+    final target = dias[diaSemana.toUpperCase()]!;
+    int diasFaltan = (target - hoy.weekday + 7) % 7;
+    if (diasFaltan == 0) diasFaltan = 7;
 
-  return hoy.add(Duration(days: diasFaltan));
-}
+    return hoy.add(Duration(days: diasFaltan));
+  }
 
 
   void _hacerPedido() async {
@@ -91,13 +94,24 @@ class _CarritoProveedorPageState extends State<CarritoProveedorPage> {
     }
 
     final diaEntrega = calcularProximaEntrega(diaReparto);
+    Carrito? nuevoCarrito;
 
     try {
-      await ApiCarritoService.crearCarrito(
+      final nuevoCarrito = await ApiCarritoService.crearCarrito(
         proveedorId: widget.proveedor.id!,
         precioTotal: precioTotal,
         diaEntrega: diaEntrega,
       );
+
+      for (var item in productos) {
+        await ApiLineaCarritoService.crearLineaDeCarrito(
+          carritoId: nuevoCarrito.id,
+          productoId: item.producto.id,
+          cantidad: item.cantidad,
+          precioLinea: item.producto.precioCompra * item.cantidad,
+        );
+      }
+
 
       CarritoManager.vaciarCarrito(widget.proveedor.id!);
 
@@ -106,7 +120,9 @@ class _CarritoProveedorPageState extends State<CarritoProveedorPage> {
       );
 
       Navigator.pop(context);
-    } catch (e) {
+    } catch (e, stacktrace) {
+      print('❌ Error al hacer pedido: $e');
+      print(stacktrace);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al hacer pedido: $e')),
       );
