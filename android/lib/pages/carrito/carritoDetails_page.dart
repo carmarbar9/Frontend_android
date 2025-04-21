@@ -32,21 +32,21 @@ class _CarritoDetallePageState extends State<CarritoDetallePage> {
     final token = SessionManager.token;
 
     if (token == null || token.isEmpty) {
-      print("⚠️ No hay token disponible");
+      print("No hay token disponible");
       return;
     }
 
     try {
       final parts = token.split('.');
       if (parts.length != 3) {
-        print("❌ El token no tiene un formato válido.");
+        print("El token no tiene un formato válido.");
         return;
       }
 
       final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
-      print("🧠 Payload del token: $payload");
+      print("Payload del token: $payload");
     } catch (e) {
-      print("❌ Error al decodificar el token: $e");
+      print("Error al decodificar el token: $e");
     }
   }
 
@@ -65,19 +65,19 @@ class _CarritoDetallePageState extends State<CarritoDetallePage> {
           }
 
           if (snapshot.hasError) {
-            print("❌ Error al cargar líneas del carrito: ${snapshot.error}");
+            print("Error al cargar líneas del carrito: ${snapshot.error}");
             return const Center(child: Text("Error al cargar las líneas."));
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            print("⚠️ No se encontraron líneas para el carrito con ID: ${widget.carrito.id}");
+            print("No se encontraron líneas para el carrito con ID: ${widget.carrito.id}");
             return const Center(child: Text("Este carrito no tiene productos."));
           }
 
           final lineas = snapshot.data!;
-          print("✅ Líneas recibidas para carrito ${widget.carrito.id}:");
+          print("Líneas recibidas para carrito ${widget.carrito.id}:");
           for (var linea in lineas) {
-            print("🧾 Producto: ${linea.producto.name}, Cantidad: ${linea.cantidad}");
+            print("Producto: ${linea.producto.name}, Cantidad: ${linea.cantidad}");
           }
 
           return ListView(
@@ -149,7 +149,6 @@ class _CarritoDetallePageState extends State<CarritoDetallePage> {
                       print("Lote creado para ${linea.producto.name} con caducidad: $fecha");
                     }
 
-                    // Eliminar el carrito una vez creado todo
                     await ApiCarritoService.deleteCarrito(widget.carrito.id!);
 
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -170,7 +169,7 @@ class _CarritoDetallePageState extends State<CarritoDetallePage> {
                 },
 
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: Color(0xFF9B1D42),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
