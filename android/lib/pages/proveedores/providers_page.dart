@@ -609,7 +609,7 @@ class _ProvidersPageState extends State<ProvidersPage> {
               SizedBox(
                 width: double.infinity,
                 child: _buildFlatWhiteButton(
-                  icon: Icon(Icons.shopping_cart, size: 32, color: Color(0xFF9B1D42)), // puedes ajustar el tamaño
+                  icon: Icon(Icons.shopping_cart, size: 30, color: Color(0xFF9B1D42)), // puedes ajustar el tamaño
 
                   label: "Ver Carrito",
                   onPressed: () {
@@ -622,6 +622,7 @@ class _ProvidersPageState extends State<ProvidersPage> {
                   },
                 ),
               ),
+              const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
                 child: _buildFlatWhiteButton(
