@@ -47,4 +47,24 @@ class ApiCarritoService {
     }
   }
 
+  static Future<void> deleteCarrito(int carritoId) async {
+    final url = Uri.parse('$baseUrl/$carritoId');
+
+    final response = await http.delete(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 204) {
+      print('Error al eliminar carrito: ${response.statusCode} - ${response.body}');
+      throw Exception('Error al eliminar el carrito');
+    } else {
+      print('Carrito $carritoId eliminado correctamente');
+    }
+  }
+
+
 }

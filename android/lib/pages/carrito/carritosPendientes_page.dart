@@ -65,11 +65,18 @@ class _CarritosPendientesPageState extends State<CarritosPendientesPage> {
                   leading: const Icon(Icons.inventory, color: Color(0xFF9B1D42)),
 
                    onTap: () {
-                    Navigator.push(
+                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => CarritoDetallePage(carrito: carrito),
-                ),
+                        builder: (_) => CarritoDetallePage(
+                          carrito: carrito,
+                          onPedidoConfirmado: () {
+                            setState(() {
+                              _futureCarritos = ApiCarritoService.getCarritosByProveedor(widget.proveedor.id!);
+                            });
+                          },
+                        ),
+                      ),
                     );
                   },
                 ),

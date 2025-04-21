@@ -392,7 +392,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                   cantidad: cantidad,
                   fechaCaducidad: fechaSeleccionada!,
                   productoId: producto.id,
-                  reabastecimientoId: 1, // dummy por ahora
+                  reabastecimientoId: 1,
                 );
                 await LoteProductoService.createLote(nuevoLote);
                 Navigator.pop(context);

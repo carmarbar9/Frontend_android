@@ -20,7 +20,7 @@ class CarritoProveedorPage extends StatefulWidget {
 
 class _CarritoProveedorPageState extends State<CarritoProveedorPage> {
   List<ProductoInventario> _productos = [];
-  Map<int, int> _cantidades = {}; // productoId -> cantidad seleccionada
+  Map<int, int> _cantidades = {}; 
 
   @override
   void initState() {

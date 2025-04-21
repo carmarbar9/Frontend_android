@@ -2,13 +2,20 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:android/models/carrito.dart';
 import 'package:android/models/lineaCarrito.dart';
+import 'package:android/models/lote.dart';
 import 'package:android/services/service_lineaCarrito.dart';
+import 'package:android/services/service_lote.dart';
 import 'package:android/models/session_manager.dart';
+import 'package:android/services/service_carrito.dart';
+import 'package:android/models/reabastecimiento.dart';
+import 'package:android/services/service_reabastecimiento.dart';
+
 
 class CarritoDetallePage extends StatefulWidget {
   final Carrito carrito;
+  final VoidCallback? onPedidoConfirmado;
 
-  const CarritoDetallePage({super.key, required this.carrito});
+  const CarritoDetallePage({super.key, required this.carrito, this.onPedidoConfirmado});
 
   @override
   State<CarritoDetallePage> createState() => _CarritoDetallePageState();
@@ -21,31 +28,30 @@ class _CarritoDetallePageState extends State<CarritoDetallePage> {
   void initState() {
     super.initState();
     _futureLineas = ApiLineaCarritoService.getLineasByCarrito(widget.carrito.id!);
-    imprimirPayloadDelToken(); // 👈 Añadido aquí
+    imprimirPayloadDelToken();
   }
 
- void imprimirPayloadDelToken() {
-  final token = SessionManager.token;
+  void imprimirPayloadDelToken() {
+    final token = SessionManager.token;
 
-  if (token == null || token.isEmpty) {
-    print("⚠️ No hay token disponible");
-    return;
-  }
-
-  try {
-    final parts = token.split('.');
-    if (parts.length != 3) {
-      print("❌ El token no tiene un formato válido.");
+    if (token == null || token.isEmpty) {
+      print("No hay token disponible");
       return;
     }
 
-    final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
-    print("🧠 Payload del token: $payload");
-  } catch (e) {
-    print("❌ Error al decodificar el token: $e");
-  }
-}
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        print("El token no tiene un formato válido.");
+        return;
+      }
 
+      final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+      print("Payload del token: $payload");
+    } catch (e) {
+      print("Error al decodificar el token: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,19 +68,19 @@ class _CarritoDetallePageState extends State<CarritoDetallePage> {
           }
 
           if (snapshot.hasError) {
-            print("❌ Error al cargar líneas del carrito: ${snapshot.error}");
+            print("Error al cargar líneas del carrito: ${snapshot.error}");
             return const Center(child: Text("Error al cargar las líneas."));
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            print("⚠️ No se encontraron líneas para el carrito con ID: ${widget.carrito.id}");
+            print("No se encontraron líneas para el carrito con ID: ${widget.carrito.id}");
             return const Center(child: Text("Este carrito no tiene productos."));
           }
 
           final lineas = snapshot.data!;
-          print("✅ Líneas recibidas para carrito ${widget.carrito.id}:");
+          print("Líneas recibidas para carrito ${widget.carrito.id}:");
           for (var linea in lineas) {
-            print("🧾 Producto: ${linea.producto.name}, Cantidad: ${linea.cantidad}");
+            print("Producto: ${linea.producto.name}, Cantidad: ${linea.cantidad}");
           }
 
           return ListView(
@@ -101,6 +107,88 @@ class _CarritoDetallePageState extends State<CarritoDetallePage> {
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF9B1D42),
                   ),
+                ),
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text('Confirmar recepción anticipada'),
+                onPressed: () async {
+                  final lineas = await ApiLineaCarritoService.getLineasByCarrito(widget.carrito.id!);
+
+                  final Map<int, DateTime?> fechasPorProducto = {};
+
+                  
+
+                  for (final linea in lineas) {
+                    final fechaSeleccionada = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now().add(const Duration(days: 7)),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      helpText: 'Fecha de caducidad para ${linea.producto.name}',
+                    );
+
+                    if (fechaSeleccionada == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Cancelado: Faltan fechas')),
+                      );
+                      return;
+                    }
+
+                    fechasPorProducto[linea.producto.id] = fechaSeleccionada;
+                  }
+
+                  try {
+                    for (final linea in lineas) {
+                      final fecha = fechasPorProducto[linea.producto.id]!;
+                      final nuevoReabastecimiento = Reabastecimiento(
+                        id: 0,
+                        fecha: DateTime.now(),
+                        precioTotal: widget.carrito.precioTotal,
+                        referencia: "REF${widget.carrito.id}",
+                        proveedorId: widget.carrito.proveedorId,
+                        negocioId: int.parse(SessionManager.negocioId!), 
+                      );
+
+                      final creado = await ReabastecimientoService.crearReabastecimiento(nuevoReabastecimiento);
+
+                      final nuevoLote = Lote(
+                        id: 0,
+                        cantidad: linea.cantidad,
+                        fechaCaducidad: fecha,
+                        productoId: linea.producto.id,
+                        reabastecimientoId: creado.id,
+                      );
+
+                      await LoteProductoService.createLote(nuevoLote);
+                      print("Lote creado para ${linea.producto.name} con caducidad: $fecha");
+                    }
+
+                    await ApiCarritoService.deleteCarrito(widget.carrito.id!);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Recepción confirmada y lotes creados')),
+                    );
+
+                    if (widget.onPedidoConfirmado != null) {
+                      widget.onPedidoConfirmado!();
+                    }
+
+                    Navigator.pop(context);
+                  } catch (e) {
+                    print("Error al confirmar recepción: $e");
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                },
+
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF9B1D42),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               )
             ],
