@@ -7,6 +7,9 @@ import 'package:android/services/service_lineaCarrito.dart';
 import 'package:android/services/service_lote.dart';
 import 'package:android/models/session_manager.dart';
 import 'package:android/services/service_carrito.dart';
+import 'package:android/models/reabastecimiento.dart';
+import 'package:android/services/service_reabastecimiento.dart';
+
 
 class CarritoDetallePage extends StatefulWidget {
   final Carrito carrito;
@@ -115,6 +118,8 @@ class _CarritoDetallePageState extends State<CarritoDetallePage> {
 
                   final Map<int, DateTime?> fechasPorProducto = {};
 
+                  
+
                   for (final linea in lineas) {
                     final fechaSeleccionada = await showDatePicker(
                       context: context,
@@ -137,12 +142,23 @@ class _CarritoDetallePageState extends State<CarritoDetallePage> {
                   try {
                     for (final linea in lineas) {
                       final fecha = fechasPorProducto[linea.producto.id]!;
+                      final nuevoReabastecimiento = Reabastecimiento(
+                        id: 0,
+                        fecha: DateTime.now(),
+                        precioTotal: widget.carrito.precioTotal,
+                        referencia: "REF${widget.carrito.id}",
+                        proveedorId: widget.carrito.proveedorId,
+                        negocioId: int.parse(SessionManager.negocioId!), 
+                      );
+
+                      final creado = await ReabastecimientoService.crearReabastecimiento(nuevoReabastecimiento);
+
                       final nuevoLote = Lote(
                         id: 0,
                         cantidad: linea.cantidad,
                         fechaCaducidad: fecha,
                         productoId: linea.producto.id,
-                        reabastecimientoId: 1,
+                        reabastecimientoId: creado.id,
                       );
 
                       await LoteProductoService.createLote(nuevoLote);
