@@ -25,27 +25,4 @@ class ReabastecimientoService {
     }
   }
 
-
-  static Future<String> generarReferenciaUnica() async {
-    final random = Random();
-
-    while (true) {
-      final referencia = 'REF${random.nextInt(999999).toString().padLeft(6, '0')}';
-      final url = Uri.parse('$baseUrl/referencia/$referencia');
-
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Bearer ${SessionManager.token}',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 404) {
-        return referencia; 
-      }
-
-    }
-  }
-
 }

@@ -72,7 +72,6 @@ class _CarritosPendientesPageState extends State<CarritosPendientesPage> {
                           carrito: carrito,
                           onPedidoConfirmado: () {
                             setState(() {
-                              // ⚡️ Actualizar la lista tras la eliminación
                               _futureCarritos = ApiCarritoService.getCarritosByProveedor(widget.proveedor.id!);
                             });
                           },
