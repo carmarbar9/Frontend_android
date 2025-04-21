@@ -12,6 +12,8 @@ import 'package:android/models/lote.dart';
 import 'package:android/services/service_inventory.dart';
 import 'package:android/services/service_lote.dart';
 import 'package:android/services/service_notificacion.dart';
+import 'package:android/pages/carrito/carritoProveedor_page.dart';
+import 'package:android/pages/carrito/carritosPendientes_page.dart';
 
 
 
@@ -607,16 +609,36 @@ class _ProvidersPageState extends State<ProvidersPage> {
               SizedBox(
                 width: double.infinity,
                 child: _buildFlatWhiteButton(
-                  icon: Icon(Icons.shopping_cart, size: 32, color: Color(0xFF9B1D42)), // puedes ajustar el tamaño
+                  icon: Icon(Icons.shopping_cart, size: 30, color: Color(0xFF9B1D42)), // puedes ajustar el tamaño
 
                   label: "Ver Carrito",
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Funcionalidad pendiente")),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CarritoProveedorPage(proveedor: proveedor),
+                    ),
+                  );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: _buildFlatWhiteButton(
+                  icon: Icon(Icons.pending_actions, size: 30, color: Color(0xFF9B1D42)),
+                  label: "Ver pendientes",
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CarritosPendientesPage(proveedor: proveedor),
+                      ),
                     );
                   },
                 ),
               ),
+
             ],
           ),
         );

@@ -8,6 +8,7 @@ import 'package:android/services/service_lote.dart';
 import 'package:android/models/session_manager.dart';
 import 'package:android/pages/user/user_profile.dart';
 import 'package:android/pages/login/login_page.dart';
+import 'package:android/models/carritoManager.dart';
 
 class NotificacionPage extends StatefulWidget {
   const NotificacionPage({super.key});
@@ -198,13 +199,65 @@ class _NotificacionPageState extends State<NotificacionPage> {
                                   ),
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                 ),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Producto añadido al carrito (por implementar)'),
+                                onPressed: () async {
+                                  final datos = noti.datosExtra;
+                                  final productoId = datos?['productoId'];
+                                  final proveedorId = datos?['proveedorId'];
+
+                                  if (productoId == null || proveedorId == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Error: Faltan datos ')),
+                                    );
+                                    return;
+                                  }
+
+                                  final producto = await InventoryApiService.getProductoInventarioById(productoId);
+
+                                  if (producto == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Producto no encontrado')),
+                                    );
+                                    return;
+                                  }
+
+                                  final cantidadController = TextEditingController();
+
+                                  await showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text('¿Cuántos de ${producto.name} quieres añadir?'),
+                                      content: TextField(
+                                        controller: cantidadController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: const InputDecoration(hintText: 'Cantidad'),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context),
+                                          child: const Text('Cancelar'),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            final cantidad = int.tryParse(cantidadController.text);
+                                            if (cantidad != null && cantidad > 0) {
+                                              CarritoManager.anadirProducto(
+                                                proveedorId: proveedorId,
+                                                producto: producto,
+                                                cantidad: cantidad,
+                                              );
+                                              Navigator.pop(context);
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Producto añadido al carrito')),
+                                              );
+                                            }
+                                          },
+                                          child: const Text('Añadir'),
+                                        ),
+                                      ],
                                     ),
                                   );
                                 },
+
                                 icon: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF9B1D42)),
                                 label: const Text(
                                   'Añadir al carrito',

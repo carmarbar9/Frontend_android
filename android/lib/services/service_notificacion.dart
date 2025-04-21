@@ -27,6 +27,7 @@ class NotificacionService {
                 'Cantidad actual: $cantidadActual (Aviso: ${producto.cantidadAviso})',
             fecha: DateTime.now(),
             datosExtra: {
+              'proveedorId': producto.proveedorId,
               'productoId': producto.id,
               'cantidadActual': cantidadActual,
             },
@@ -57,9 +58,10 @@ class NotificacionService {
               tipo: TipoNotificacion.caducidad,
               titulo: 'Caduca pronto: ${producto.name}',
               descripcion:
-                  'Caduca en $diasRestantes días (${_formatearFecha(lote.fechaCaducidad)})',
+                  'Caduca en $diasRestantes días (${formatearFecha(lote.fechaCaducidad)})',
               fecha: DateTime.now(),
               datosExtra: {
+                'proveedorId': producto.proveedorId,
                 'productoId': producto.id,
                 'fechaCaducidad': lote.fechaCaducidad.toIso8601String(),
               },
@@ -73,7 +75,7 @@ class NotificacionService {
   }
 
 
-  String _formatearFecha(DateTime fecha) {
+  String formatearFecha(DateTime fecha) {
     return '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
   }
 
