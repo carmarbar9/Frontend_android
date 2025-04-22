@@ -20,19 +20,20 @@ class Pedido {
       id: json['id'],
       fecha: json['fecha'],
       precioTotal: (json['precioTotal'] as num).toDouble(),
-      mesaId: json['mesa']['id'],
-      empleadoId: json['empleado']['id'],
-      negocioId: json['negocio']['id'],
+      mesaId: json['mesaId'],
+      empleadoId: json['empleadoId'],
+      negocioId: json['negocioId'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'fecha': fecha,
       'precioTotal': precioTotal,
-      'mesa': {'id': mesaId},
-      'empleado': {'id': empleadoId},
-      'negocio': {'id': negocioId},
+      'mesaId': mesaId,
+      'empleadoId': empleadoId,
+      'negocioId': negocioId,
     };
   }
 }

@@ -85,4 +85,26 @@ class PedidoService {
       throw Exception('Error al obtener el pedido: ${response.body}');
     }
   }
+
+Future<List<Pedido>> loadPedidosByNegocioId(int negocioId) async {
+  final url = Uri.parse('$baseUrl/dto/venta/$negocioId');
+
+  final response = await http.get(
+    url,
+    headers: {
+      'Authorization': 'Bearer ${SessionManager.token}',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final List<dynamic> jsonList = jsonDecode(response.body);
+    return jsonList.map((json) => Pedido.fromJson(json)).toList();
+  } else if (response.statusCode == 204) {
+    return [];
+  } else {
+    throw Exception('Error al obtener los pedidos del negocio: ${response.body}');
+  }
+}
+
 }
