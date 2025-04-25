@@ -180,6 +180,47 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
     );
   }
 
+  Widget _buildAnadirLoteButton({required VoidCallback onPressed}) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(3, 3)),
+          BoxShadow(color: Colors.white, blurRadius: 4, offset: Offset(-3, -3)),
+        ],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF9B1D42), Color(0xFF7B1533)], // Gradiente de vino
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+            side: const BorderSide(color: Color(0xFF9B1D42), width: 2),
+          ),
+          elevation: 0,
+        ),
+        onPressed: onPressed,
+        icon: const Icon(Icons.add, size: 24, color: Colors.white),
+        label: const Text(
+          "Añadir lote",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'TitanOne',
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
   void _editProduct(ProductoInventario producto) async {
     final nameController = TextEditingController(text: producto.name);
     final precioController = TextEditingController(
@@ -346,71 +387,77 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
 
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Nuevo lote"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: cantidadController,
-              decoration: const InputDecoration(labelText: "Cantidad"),
-              keyboardType: TextInputType.number,
+      builder:
+          (_) => AlertDialog(
+            title: const Text("Nuevo lote"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: cantidadController,
+                  decoration: const InputDecoration(labelText: "Cantidad"),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final fecha = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now().add(const Duration(days: 1)),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (fecha != null) {
+                      setState(() => fechaSeleccionada = fecha);
+                    }
+                  },
+                  icon: const Icon(Icons.calendar_today),
+                  label: Text(
+                    fechaSeleccionada == null
+                        ? "Seleccionar fecha de caducidad"
+                        : "Caduca: \${fechaSeleccionada!.day}/\${fechaSeleccionada!.month}/\${fechaSeleccionada!.year}",
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: () async {
-                final fecha = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now().add(const Duration(days: 1)),
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                );
-                if (fecha != null) {
-                  setState(() => fechaSeleccionada = fecha);
-                }
-              },
-              icon: const Icon(Icons.calendar_today),
-              label: Text(
-                fechaSeleccionada == null
-                  ? "Seleccionar fecha de caducidad"
-                  : "Caduca: \${fechaSeleccionada!.day}/\${fechaSeleccionada!.month}/\${fechaSeleccionada!.year}",
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancelar"),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar"),
+              ElevatedButton(
+                onPressed: () async {
+                  final cantidad = int.tryParse(cantidadController.text) ?? 0;
+                  if (cantidad > 0 && fechaSeleccionada != null) {
+                    final nuevoLote = Lote(
+                      id: 0,
+                      cantidad: cantidad,
+                      fechaCaducidad: fechaSeleccionada!,
+                      productoId: producto.id,
+                      reabastecimientoId: 1,
+                    );
+                    await LoteProductoService.createLote(nuevoLote);
+                    Navigator.pop(context);
+                    final nuevosLotes =
+                        await LoteProductoService.getLotesByProductoId(
+                          producto.id,
+                        );
+                    setState(() {
+                      _lotes = nuevosLotes;
+                      _futureLotes = Future.value(nuevosLotes);
+                      _currentLoteIndex = nuevosLotes.length - 1;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Lote añadido correctamente"),
+                      ),
+                    );
+                  }
+                },
+                child: const Text("Guardar"),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final cantidad = int.tryParse(cantidadController.text) ?? 0;
-              if (cantidad > 0 && fechaSeleccionada != null) {
-                final nuevoLote = Lote(
-                  id: 0,
-                  cantidad: cantidad,
-                  fechaCaducidad: fechaSeleccionada!,
-                  productoId: producto.id,
-                  reabastecimientoId: 1,
-                );
-                await LoteProductoService.createLote(nuevoLote);
-                Navigator.pop(context);
-                final nuevosLotes = await LoteProductoService.getLotesByProductoId(producto.id);
-                setState(() {
-                  _lotes = nuevosLotes;
-                  _futureLotes = Future.value(nuevosLotes);
-                  _currentLoteIndex = nuevosLotes.length - 1;
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Lote añadido correctamente")),
-                );
-              }
-            },
-            child: const Text("Guardar"),
-          ),
-        ],
-      ),
     );
   }
 
@@ -470,8 +517,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (_) => NotificacionPage(),
+                              builder: (_) => NotificacionPage(),
                             ),
                           );
                         } catch (e) {
@@ -743,20 +789,10 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                             },
                           ),
 
-                          ElevatedButton.icon(
+                          SizedBox(width: 16),
+                          _buildAnadirLoteButton(
                             onPressed: () => _anadirLoteManual(producto),
-                            icon: const Icon(Icons.add),
-                            label: const Text("Añadir lote"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF9B1D42),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            ),
                           ),
-
 
                           const SizedBox(height: 30),
                           Row(

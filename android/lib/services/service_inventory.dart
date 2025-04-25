@@ -97,6 +97,33 @@ class InventoryApiService {
     }
   }
 
+  static Future<List<ProductoInventario>> getProductosInventarioByCategoriaId(
+    int categoriaId, // Recibimos el ID de la categoría
+  ) async {
+    final url = Uri.parse('$_baseUrl/categoriaId/$categoriaId');
+    print('URL de productos por categoría: $url'); // Verifica la URL aquí
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${SessionManager.token}',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList.map((json) => ProductoInventario.fromJson(json)).toList();
+    } else {
+      print(
+        'Error en la respuesta de productos: ${response.body}',
+      ); // Imprime la respuesta para verificar
+      throw Exception(
+        'Error al obtener los productos de la categoría por ID: ${response.body}',
+      );
+    }
+  }
+
   /// Crea un producto de inventario
   static Future<ProductoInventario> createProductoInventario(
     Map<String, dynamic> data,

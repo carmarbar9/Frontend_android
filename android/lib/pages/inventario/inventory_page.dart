@@ -14,7 +14,6 @@ import 'package:android/services/service_lote.dart';
 import 'package:android/services/service_notificacion.dart';
 import 'package:android/services/service_inventory.dart';
 
-
 class InventoryPage extends StatefulWidget {
   final String negocioId;
   const InventoryPage({super.key, required this.negocioId});
@@ -94,7 +93,7 @@ class _InventoryPageState extends State<InventoryPage> {
             style: TextStyle(
               color: Color(0xFF9B1D42),
               fontWeight: FontWeight.bold,
-              fontFamily: 'TitanOne'
+              fontFamily: 'TitanOne',
             ),
           ),
           content: TextField(
@@ -260,16 +259,23 @@ class _InventoryPageState extends State<InventoryPage> {
                       ),
                       onPressed: () async {
                         try {
-                          final productos = await InventoryApiService.getProductosInventario();
+                          final productos =
+                              await InventoryApiService.getProductosInventario();
 
                           final Map<int, List<Lote>> lotesPorProducto = {};
                           for (var producto in productos) {
-                            final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+                            final lotes =
+                                await LoteProductoService.getLotesByProductoId(
+                                  producto.id,
+                                );
                             lotesPorProducto[producto.id] = lotes;
                           }
 
                           final notificaciones = NotificacionService()
-                              .generarNotificacionesInventario(productos, lotesPorProducto);
+                              .generarNotificacionesInventario(
+                                productos,
+                                lotesPorProducto,
+                              );
 
                           Navigator.push(
                             context,
@@ -279,7 +285,11 @@ class _InventoryPageState extends State<InventoryPage> {
                           );
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error cargando notificaciones: $e')),
+                            SnackBar(
+                              content: Text(
+                                'Error cargando notificaciones: $e',
+                              ),
+                            ),
                           );
                         }
                       },
@@ -517,8 +527,9 @@ class _InventoryPageState extends State<InventoryPage> {
                   context,
                   MaterialPageRoute(
                     builder:
-                        (context) =>
-                            CategoryItemsPage(categoryName: categoria.name),
+                        (context) => CategoryItemsPage(
+                          categoryId: int.parse(categoria.id),
+                        ), // Convertir a int
                   ),
                 );
               },
@@ -529,7 +540,11 @@ class _InventoryPageState extends State<InventoryPage> {
               ),
               label: const Text(
                 "Ver",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'TitanOne'),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'TitanOne',
+                ),
               ),
             ),
 
