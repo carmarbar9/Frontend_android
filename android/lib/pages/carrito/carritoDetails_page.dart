@@ -114,75 +114,79 @@ class _CarritoDetallePageState extends State<CarritoDetallePage> {
                 icon: const Icon(Icons.check_circle_outline),
                 label: const Text('Confirmar recepción anticipada'),
                 onPressed: () async {
-                  final lineas = await ApiLineaCarritoService.getLineasByCarrito(widget.carrito.id!);
+  final lineas = await ApiLineaCarritoService.getLineasByCarrito(widget.carrito.id!);
 
-                  final Map<int, DateTime?> fechasPorProducto = {};
+  final Map<int, DateTime?> fechasPorProducto = {};
 
-                  
+  // Pedir fechas de caducidad para cada producto
+  for (final linea in lineas) {
+    final fechaSeleccionada = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(const Duration(days: 7)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      helpText: 'Fecha de caducidad para ${linea.producto.name}',
+    );
 
-                  for (final linea in lineas) {
-                    final fechaSeleccionada = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now().add(const Duration(days: 7)),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                      helpText: 'Fecha de caducidad para ${linea.producto.name}',
-                    );
+    if (fechaSeleccionada == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cancelado: Faltan fechas')),
+      );
+      return;
+    }
 
-                    if (fechaSeleccionada == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Cancelado: Faltan fechas')),
-                      );
-                      return;
-                    }
+    fechasPorProducto[linea.producto.id] = fechaSeleccionada;
+  }
 
-                    fechasPorProducto[linea.producto.id] = fechaSeleccionada;
-                  }
+  try {
+    // 🔥 Crear un solo reabastecimiento para todo el carrito
+    final nuevoReabastecimiento = Reabastecimiento(
+      id: 0,
+      fecha: DateTime.now(),
+      precioTotal: widget.carrito.precioTotal,
+      referencia: "Pedido ${widget.carrito.id} ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}",
+      proveedorId: widget.carrito.proveedorId,
+      negocioId: int.parse(SessionManager.negocioId!),
+    );
 
-                  try {
-                    for (final linea in lineas) {
-                      final fecha = fechasPorProducto[linea.producto.id]!;
-                      final nuevoReabastecimiento = Reabastecimiento(
-                        id: 0,
-                        fecha: DateTime.now(),
-                        precioTotal: widget.carrito.precioTotal,
-                        referencia: "REF${widget.carrito.id}",
-                        proveedorId: widget.carrito.proveedorId,
-                        negocioId: int.parse(SessionManager.negocioId!), 
-                      );
+    final reabastecimientoCreado = await ReabastecimientoService.crearReabastecimiento(nuevoReabastecimiento);
 
-                      final creado = await ReabastecimientoService.crearReabastecimiento(nuevoReabastecimiento);
+    // 🔥 Crear un lote para cada producto, asociado al reabastecimiento
+    for (final linea in lineas) {
+      final fecha = fechasPorProducto[linea.producto.id]!;
 
-                      final nuevoLote = Lote(
-                        id: 0,
-                        cantidad: linea.cantidad,
-                        fechaCaducidad: fecha,
-                        productoId: linea.producto.id,
-                        reabastecimientoId: creado.id,
-                      );
+      final nuevoLote = Lote(
+        id: 0,
+        cantidad: linea.cantidad,
+        fechaCaducidad: fecha,
+        productoId: linea.producto.id,
+        reabastecimientoId: reabastecimientoCreado.id!,
+      );
 
-                      await LoteProductoService.createLote(nuevoLote);
-                      print("Lote creado para ${linea.producto.name} con caducidad: $fecha");
-                    }
+      await LoteProductoService.createLote(nuevoLote);
+      print("Lote creado para ${linea.producto.name} con caducidad: $fecha");
+    }
 
-                    await ApiCarritoService.deleteCarrito(widget.carrito.id!);
+    // 🔥 Borrar el carrito recibido
+    await ApiCarritoService.deleteCarrito(widget.carrito.id!);
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Recepción confirmada y lotes creados')),
-                    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Recepción confirmada, reabastecimiento y lotes creados')),
+    );
 
-                    if (widget.onPedidoConfirmado != null) {
-                      widget.onPedidoConfirmado!();
-                    }
+    if (widget.onPedidoConfirmado != null) {
+      widget.onPedidoConfirmado!();
+    }
 
-                    Navigator.pop(context);
-                  } catch (e) {
-                    print("Error al confirmar recepción: $e");
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
-                    );
-                  }
-                },
+    Navigator.pop(context);
+  } catch (e) {
+    print("Error al confirmar recepción: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  }
+},
+
 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF9B1D42),
