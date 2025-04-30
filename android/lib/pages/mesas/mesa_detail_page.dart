@@ -184,7 +184,7 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.mesa.name ?? "Mesa"),
-          backgroundColor: const Color(0xFF9B1D42),
+          backgroundColor: const Color.fromARGB(255, 155, 29, 66),
           foregroundColor: Colors.white,
           bottom: const TabBar(
             unselectedLabelColor: Colors.white70,
@@ -240,7 +240,7 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
                 });
               }
             },
-            icon: const Icon(Icons.receipt_long),
+            icon: const Icon(Icons.receipt_long, color: Color.fromARGB(255, 155, 29, 66),),
             label: const Text("Comanda"),
           ),
           const SizedBox(height: 20),

@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:android/models/producto_venta.dart';
 import 'package:android/models/pedido.dart';
@@ -10,7 +10,6 @@ import 'package:android/services/service_pedido.dart';
 import 'package:android/services/service_lineaPedido.dart';
 import 'package:android/services/service_empleados.dart';
 import 'order_info_page.dart';
-import 'package:intl/intl.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final Map<String, int> order;
@@ -71,9 +70,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         SessionManager.token!,
       );
 
-      if (empleado == null) {
-        throw Exception("Empleado no encontrado.");
-      }
+      if (empleado == null) throw Exception("Empleado no encontrado.");
 
       double precioTotal = 0;
       _order.forEach((nombreProducto, cantidad) {
@@ -91,9 +88,6 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         empleadoId: SessionManager.empleadoId!,
       );
 
-      print("📦 Enviando nuevo pedido al backend:");
-      print(jsonEncode(nuevoPedido.toJson()));
-
       Pedido creado = await PedidoService().createPedidoConDto(nuevoPedido);
       setState(() {
         _pedidoActualId = creado.id!;
@@ -101,122 +95,101 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         _order.clear();
       });
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Nuevo pedido creado.")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Nuevo pedido creado.")));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al crear nuevo pedido: $e")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error al crear nuevo pedido: $e")));
     }
   }
 
-Future<void> finalizeOrder() async {
-  try {
-    if (_pedidoActualId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No hay un pedido actual seleccionado.")),
-      );
-      return;
-    }
+  Future<void> finalizeOrder() async {
+    try {
+      if (_pedidoActualId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No hay un pedido actual seleccionado.")),
+        );
+        return;
+      }
 
-    double precioTotal = 0;
-    List<LineaDePedido> nuevasLineas = [];
+      double precioTotal = 0;
+      List<LineaDePedido> nuevasLineas = [];
 
-    _order.forEach((nombreProducto, cantidad) {
-      final producto = widget.products[nombreProducto];
-      if (producto != null) {
-        double precioUnitario = producto.precioVenta;
-        precioTotal += precioUnitario * cantidad;
-        nuevasLineas.add(
-          LineaDePedido(
+      _order.forEach((nombreProducto, cantidad) {
+        final producto = widget.products[nombreProducto];
+        if (producto != null) {
+          double precioUnitario = producto.precioVenta;
+          precioTotal += precioUnitario * cantidad;
+          nuevasLineas.add(LineaDePedido(
             cantidad: cantidad,
             precioUnitario: precioUnitario,
             salioDeCocina: false,
-            pedidoId: _pedidoActualId!, // ✅ Usar el pedido actual
+            pedidoId: _pedidoActualId!,
             productoId: producto.id,
-          ),
-        );
+          ));
+        }
+      });
+
+      if (nuevasLineas.isEmpty) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("No hay productos en la orden.")));
+        return;
       }
-    });
 
-    if (nuevasLineas.isEmpty) {
+      for (var linea in nuevasLineas) {
+        await LineaDePedidoService().createLineaDePedido(linea);
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No hay productos en la orden.")),
+        SnackBar(
+          content:
+              Text("Orden añadida al pedido actual. Total: \$${precioTotal.toStringAsFixed(2)}"),
+        ),
       );
-      return;
+
+      setState(() => _order.clear());
+      Navigator.pop(context, <String, int>{});
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error al finalizar la orden: $e")));
     }
+  }
 
-    // Crear cada línea en el pedido actual
-    for (var linea in nuevasLineas) {
-      await LineaDePedidoService().createLineaDePedido(linea);
+  String _formatFecha(String isoDate) {
+    try {
+      final dateTime = DateTime.parse(isoDate).toLocal();
+      final dias = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
+      final meses = [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre"
+      ];
+      return "${dias[dateTime.weekday - 1].capitalize()}, ${dateTime.day} de ${meses[dateTime.month - 1]} de ${dateTime.year} – ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}";
+    } catch (e) {
+      return isoDate;
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Orden añadida al pedido actual. Total: \$${precioTotal.toStringAsFixed(2)}"),
-      ),
-    );
-
-    setState(() {
-      _order.clear();
-    });
-
-    Navigator.pop(context, <String, int>{});
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Error al finalizar la orden: $e")),
-    );
   }
-}
-
-
-String _formatFecha(String isoDate) {
-  try {
-    final dateTime = DateTime.parse(isoDate).toLocal();
-    final List<String> dias = [
-      "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"
-    ];
-    final List<String> meses = [
-      "enero", "febrero", "marzo", "abril", "mayo", "junio",
-      "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
-    ];
-
-    final String diaSemana = dias[dateTime.weekday - 1];
-    final String dia = dateTime.day.toString();
-    final String mes = meses[dateTime.month - 1];
-    final String anio = dateTime.year.toString();
-    final String hora = dateTime.hour.toString().padLeft(2, '0');
-    final String minuto = dateTime.minute.toString().padLeft(2, '0');
-
-    return "${capitalize(diaSemana)}, $dia de $mes de $anio – $hora:$minuto";
-  } catch (e) {
-    return isoDate;
-  }
-}
-
-String capitalize(String s) => s[0].toUpperCase() + s.substring(1);
-
 
   Widget _buildCompletedOrderBox(Pedido pedido, int index) {
     final isActual = pedido.id == _pedidoActualId;
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
+    return Card(
+      color: isActual ? Colors.amber[100] : null,
+      child: ListTile(
+        title: Text("Pedido ${index + 1}" + (isActual ? " (actual)" : "")),
+        subtitle: Text(
+            "Fecha: ${_formatFecha(pedido.fecha)}"),
+        onTap: () => Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => OrderInfoPage(pedido: pedido),
-          ),
-        );
-      },
-      child: Card(
-        color: isActual ? Colors.amber[100] : null,
-        margin: const EdgeInsets.symmetric(vertical: 5),
-        child: ListTile(
-          title: Text("Pedido ${index + 1}" + (isActual ? " (actual)" : "")),
-          subtitle: Text(
-          "Fecha: ${_formatFecha(pedido.fecha)}\nTotal: \$${pedido.precioTotal.toStringAsFixed(2)}",
-          ),
+          MaterialPageRoute(builder: (_) => OrderInfoPage(pedido: pedido)),
         ),
       ),
     );
@@ -228,69 +201,41 @@ String capitalize(String s) => s[0].toUpperCase() + s.substring(1);
       appBar: AppBar(
         title: const Text("Detalle de Comanda"),
         backgroundColor: const Color(0xFF9B1D42),
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.post_add),
+            tooltip: "Nuevo pedido",
+            onPressed: crearNuevoPedido,
+          )
+        ],
       ),
       backgroundColor: Colors.grey[200],
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          ElevatedButton.icon(
-            onPressed: crearNuevoPedido,
-            icon: const Icon(Icons.add),
-            label: const Text("Nuevo pedido"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF9B1D42),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
+          const Text("Productos en la orden:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
           ..._order.entries.map((entry) {
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              elevation: 3,
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
+                padding: const EdgeInsets.all(12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      entry.key,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
+                    Text(entry.key, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                     Row(
                       children: [
                         IconButton(
                           onPressed: () {
-                            if (entry.value > 0) {
-                              _updateOrder(entry.key, entry.value - 1);
-                            }
+                            if (entry.value > 0) _updateOrder(entry.key, entry.value - 1);
                           },
                           icon: const Icon(Icons.remove, color: Colors.red),
                         ),
-                        Text(
-                          '${entry.value}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.black87,
-                          ),
-                        ),
+                        Text('${entry.value}', style: const TextStyle(fontSize: 16)),
                         IconButton(
-                          onPressed: () {
-                            _updateOrder(entry.key, entry.value + 1);
-                          },
+                          onPressed: () => _updateOrder(entry.key, entry.value + 1),
                           icon: const Icon(Icons.add, color: Colors.green),
                         ),
                       ],
@@ -300,48 +245,31 @@ String capitalize(String s) => s[0].toUpperCase() + s.substring(1);
               ),
             );
           }).toList(),
-          const SizedBox(height: 20),
-          Container(
-            alignment: Alignment.center,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF9B1D42),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 15,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-              onPressed: finalizeOrder,
-              child: const Text(
-                "Finalizar Orden",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: finalizeOrder,
+            icon: const Icon(Icons.check_circle, color: Colors.white,),
             
+
+            label: const Text("Finalizar Orden"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF9B1D42),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              textStyle: const TextStyle(fontSize: 16),
+            ),
           ),
           const SizedBox(height: 30),
           const Divider(),
-          const Text(
-            "Pedidos realizados:",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          const Text("Pedidos realizados:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          Column(
-            children: List.generate(
-              _pedidos.length,
-              (index) => _buildCompletedOrderBox(_pedidos[index], index),
-            ),
-          ),
+          ..._pedidos.asMap().entries.map((entry) => _buildCompletedOrderBox(entry.value, entry.key)).toList(),
         ],
       ),
     );
   }
-  
+}
+
+extension StringCapitalize on String {
+  String capitalize() => isEmpty ? this : this[0].toUpperCase() + substring(1);
 }
