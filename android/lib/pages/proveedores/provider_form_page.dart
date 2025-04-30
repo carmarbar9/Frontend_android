@@ -182,7 +182,7 @@ class _ProviderFormPageState extends State<ProviderFormPage> {
                           id: 0,
                           diaSemana: diaSemana!,
                           descripcion: descController.text,
-                          proveedorId: widget.proveedor?.id,
+                          proveedorId: widget.proveedor?.id ?? 0,
                         ),
                       );
                     }

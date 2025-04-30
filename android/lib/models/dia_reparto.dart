@@ -19,4 +19,13 @@ class DiaReparto {
       proveedorId: json['proveedor']['id'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "id": id,
+      "diaSemana": diaSemana,
+      "descripcion": descripcion,
+      "proveedorId": proveedorId,
+    };
+  }
 }

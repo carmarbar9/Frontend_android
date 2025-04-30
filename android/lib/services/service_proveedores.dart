@@ -137,16 +137,23 @@ class ApiService {
   }
 
   static Future<DiaReparto> createDiaReparto(DiaReparto diaReparto) async {
-    final url = Uri.parse('$_baseUrl/api/diasReparto');
+    // 🔍 Depuración: mostrar datos que se van a enviar
+    print("Creando día de reparto:");
+    print("- Día de la semana: ${diaReparto.diaSemana}");
+    print("- Descripción: ${diaReparto.descripcion}");
+    print("- Proveedor ID: ${diaReparto.proveedorId}");
+
+    final url = Uri.parse('$_baseUrl/api/diasReparto/dto');
     final response = await http.post(
       url,
       headers: _headers,
-      body: jsonEncode({
-        "diaSemana": diaReparto.diaSemana,
-        "descripcion": diaReparto.descripcion,
-        "proveedor": {"id": diaReparto.proveedorId},
-      }),
+      body: jsonEncode(
+        diaReparto.toJson(),
+      ), // ✅ usar toJson() con proveedorId plano
     );
+
+    print("Código de respuesta: ${response.statusCode}");
+    print("Cuerpo de la respuesta: ${response.body}");
 
     if (response.statusCode == 201) {
       return DiaReparto.fromJson(jsonDecode(response.body));
