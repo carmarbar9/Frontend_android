@@ -47,9 +47,10 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
         final productoVentaService = ProductoVentaService();
         List<ProductoVenta> productos = await productoVentaService
             .getProductosByCategoriaNombre(cat.name);
-        productos = productos
-            .where((prod) => prod.categoria.negocioId == negocioIdStr)
-            .toList();
+        productos =
+            productos
+                .where((prod) => prod.categoria.negocioId == negocioIdStr)
+                .toList();
         loadedCategories.add({'category': cat.name, 'products': productos});
       }
 
@@ -228,21 +229,20 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
               elevation: 4,
             ),
             onPressed: () async {
-              final updatedOrder = await Navigator.push<Map<String, int>>(
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => OrderDetailPage(
-                    order: Map<String, int>.from(_order),
-                    products: _getProductMap(),
-                    mesaId: widget.mesa.id!,
-                  ),
+                  builder:
+                      (context) => OrderDetailPage(
+                        order: _order,
+                        products: _getProductMap(),
+                        mesaId: widget.mesa.id!,
+                      ),
                 ),
               );
-              if (updatedOrder != null) {
-                setState(() {
-                  _order = updatedOrder;
-                });
-              }
+
+              // Fuerza redibujar los productos para reflejar las cantidades actualizadas
+              setState(() {});
             },
             icon: const Icon(Icons.receipt_long, color: Color(0xFF9B1D42)),
             label: const Text("Comanda"),
@@ -266,11 +266,10 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: (cat['products'] as List).length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(width: 10),
+                    separatorBuilder:
+                        (context, index) => const SizedBox(width: 10),
                     itemBuilder: (context, index) {
-                      ProductoVenta product =
-                          (cat['products'] as List)[index];
+                      ProductoVenta product = (cat['products'] as List)[index];
                       int quantity = _order[product.name] ?? 0;
                       return _buildProductCard(product.name, quantity);
                     },
@@ -344,10 +343,7 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
                   'x$quantity',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
                 ),
               ),
           ],

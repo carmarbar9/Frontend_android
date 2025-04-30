@@ -37,7 +37,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   @override
   void initState() {
     super.initState();
-    _order = Map.from(widget.order);
+    _order = widget.order;
     _cargarPedidosYSetearActual();
   }
 
@@ -55,9 +55,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     setState(() {
       _order[key] = newValue;
     });
-    if (widget.onOrderChanged != null) {
-      widget.onOrderChanged!(_order);
-    }
+  
   }
 
   Future<void> crearNuevoPedido() async {
@@ -179,7 +177,8 @@ Future<void> finalizeOrder() async {
     );
 
     setState(() => _order.clear());
-    Navigator.pop(context, <String, int>{});
+Navigator.pop(context);
+
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Error al finalizar la orden: $e")),
