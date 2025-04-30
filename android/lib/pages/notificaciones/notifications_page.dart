@@ -27,27 +27,47 @@ class _NotificacionPageState extends State<NotificacionPage> {
     _cargarNotificaciones();
   }
 
-  Future<void> _cargarNotificaciones() async {
-    try {
-      final productos = await InventoryApiService.getAllProductosInventario();
-
-      final Map<int, List<Lote>> lotesPorProducto = {};
-
-      for (var producto in productos) {
-        final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
-        lotesPorProducto[producto.id] = lotes;
-      }
-
-      final notificacionesStock = _notificacionService.generarNotificacionesInventario(productos, lotesPorProducto);
-      final notificacionesCaducidad = _notificacionService.generarNotificacionesCaducidad(productos, lotesPorProducto);
-
-      setState(() {
-        _notificaciones = [...notificacionesStock, ...notificacionesCaducidad];
-      });
-    } catch (e) {
-      print('Error al cargar notificaciones: $e');
+Future<void> _cargarNotificaciones() async {
+  try {
+    if (SessionManager.negocioId == null) {
+      throw Exception('No se ha seleccionado ningún negocio');
     }
+
+    final negocioIdActual = SessionManager.negocioId!;
+    final todosLosProductos = await InventoryApiService.getAllProductosInventario();
+
+    print('Negocio actual: $negocioIdActual');
+    for (var p in todosLosProductos) {
+      print('Producto: ${p.name}, negocioId desde categoría: ${p.categoria.negocioId}');
+    }
+
+    // Usamos el negocioId desde la categoría
+    final productos = todosLosProductos.where(
+      (p) => p.categoria.negocioId == negocioIdActual,
+    ).toList();
+
+    final Map<int, List<Lote>> lotesPorProducto = {};
+    for (var producto in productos) {
+      final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+      lotesPorProducto[producto.id] = lotes;
+    }
+
+    final notificacionesStock = _notificacionService
+        .generarNotificacionesInventario(productos, lotesPorProducto);
+    final notificacionesCaducidad = _notificacionService
+        .generarNotificacionesCaducidad(productos, lotesPorProducto);
+
+    setState(() {
+      _notificaciones = [...notificacionesStock, ...notificacionesCaducidad];
+    });
+  } catch (e) {
+    print('Error al cargar notificaciones: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
   }
+}
+
 
   Icon _iconoPorTipo(TipoNotificacion tipo) {
     switch (tipo) {
@@ -70,7 +90,6 @@ class _NotificacionPageState extends State<NotificacionPage> {
       backgroundColor: Colors.grey[100],
       body: Column(
         children: [
-          // CABECERA gourmet
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             decoration: const BoxDecoration(
@@ -115,7 +134,6 @@ class _NotificacionPageState extends State<NotificacionPage> {
               ],
             ),
           ),
-
           const Padding(
             padding: EdgeInsets.only(top: 20.0, bottom: 10),
             child: Text(
@@ -129,7 +147,6 @@ class _NotificacionPageState extends State<NotificacionPage> {
               ),
             ),
           ),
-
           Expanded(
             child: _notificaciones.isEmpty
                 ? const Center(
@@ -206,7 +223,7 @@ class _NotificacionPageState extends State<NotificacionPage> {
 
                                   if (productoId == null || proveedorId == null) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Error: Faltan datos ')),
+                                      const SnackBar(content: Text('Error: Faltan datos')),
                                     );
                                     return;
                                   }
@@ -257,7 +274,6 @@ class _NotificacionPageState extends State<NotificacionPage> {
                                     ),
                                   );
                                 },
-
                                 icon: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF9B1D42)),
                                 label: const Text(
                                   'Añadir al carrito',

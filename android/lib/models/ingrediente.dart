@@ -31,6 +31,7 @@ class Ingrediente {
         cantidadDeseada: 0,
         cantidadAviso: 0,
         proveedorId: 0,
+        negocioId: 0,
       );
     }
 
