@@ -103,57 +103,90 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
   }
 
-  Future<void> finalizeOrder() async {
-    try {
-      if (_pedidoActualId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No hay un pedido actual seleccionado.")),
-        );
-        return;
+Future<void> finalizeOrder() async {
+  try {
+    // Si no hay pedido, lo creamos y seguimos
+    if (_pedidoActualId == null) {
+      final String fechaIso = DateTime.now().toUtc().toIso8601String();
+      final int negocioId = int.parse(SessionManager.negocioId!);
+      final int userId = int.parse(SessionManager.userId!);
+      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(
+        userId,
+        SessionManager.token!,
+      );
+
+      if (empleado == null) {
+        throw Exception("Empleado no encontrado.");
       }
 
       double precioTotal = 0;
-      List<LineaDePedido> nuevasLineas = [];
-
       _order.forEach((nombreProducto, cantidad) {
         final producto = widget.products[nombreProducto];
         if (producto != null) {
-          double precioUnitario = producto.precioVenta;
-          precioTotal += precioUnitario * cantidad;
-          nuevasLineas.add(LineaDePedido(
-            cantidad: cantidad,
-            precioUnitario: precioUnitario,
-            salioDeCocina: false,
-            pedidoId: _pedidoActualId!,
-            productoId: producto.id,
-          ));
+          precioTotal += producto.precioVenta * cantidad;
         }
       });
 
-      if (nuevasLineas.isEmpty) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("No hay productos en la orden.")));
-        return;
-      }
-
-      for (var linea in nuevasLineas) {
-        await LineaDePedidoService().createLineaDePedido(linea);
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text("Orden añadida al pedido actual. Total: \$${precioTotal.toStringAsFixed(2)}"),
-        ),
+      Pedido nuevoPedido = Pedido(
+        fecha: fechaIso,
+        precioTotal: precioTotal,
+        mesaId: widget.mesaId,
+        negocioId: negocioId,
+        empleadoId: SessionManager.empleadoId!,
       );
 
-      setState(() => _order.clear());
-      Navigator.pop(context, <String, int>{});
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error al finalizar la orden: $e")));
+      Pedido creado = await PedidoService().createPedidoConDto(nuevoPedido);
+
+      setState(() {
+        _pedidoActualId = creado.id!;
+        _pedidos.insert(0, creado);
+      });
     }
+
+    if (_pedidoActualId == null || _order.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No hay productos en la orden.")),
+      );
+      return;
+    }
+
+    double precioTotal = 0;
+    List<LineaDePedido> nuevasLineas = [];
+
+    _order.forEach((nombreProducto, cantidad) {
+      final producto = widget.products[nombreProducto];
+      if (producto != null) {
+        double precioUnitario = producto.precioVenta;
+        precioTotal += precioUnitario * cantidad;
+        nuevasLineas.add(LineaDePedido(
+          cantidad: cantidad,
+          precioUnitario: precioUnitario,
+          salioDeCocina: false,
+          pedidoId: _pedidoActualId!,
+          productoId: producto.id,
+        ));
+      }
+    });
+
+    for (var linea in nuevasLineas) {
+      await LineaDePedidoService().createLineaDePedido(linea);
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Orden añadida al pedido actual. Total: \$${precioTotal.toStringAsFixed(2)}"),
+      ),
+    );
+
+    setState(() => _order.clear());
+    Navigator.pop(context, <String, int>{});
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error al finalizar la orden: $e")),
+    );
   }
+}
+
 
   String _formatFecha(String isoDate) {
     try {
