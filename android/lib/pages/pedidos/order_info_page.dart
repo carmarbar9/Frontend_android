@@ -93,102 +93,109 @@ class _OrderInfoPageState extends State<OrderInfoPage> {
     await loadLineas();
   }
 
-Widget _buildLineaItem(LineaDePedido linea) {
-  String productoName = linea.productoName ?? "Producto ${linea.productoId}";
-  double totalLinea = linea.cantidad * linea.precioUnitario;
+  Widget _buildLineaItem(LineaDePedido linea) {
+    String productoName = linea.productoName ?? "Producto ${linea.productoId}";
+    double totalLinea = linea.cantidad * linea.precioUnitario;
 
-  return Card(
-    margin: const EdgeInsets.symmetric(vertical: 8),
-    elevation: 3,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  productoName,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+    return Card(
+      color: linea.salioDeCocina ? Colors.green[50] : Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    productoName,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: linea.salioDeCocina ? Colors.green[600] : Colors.orange[300],
-                  borderRadius: BorderRadius.circular(20),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: linea.salioDeCocina ? Colors.green : Colors.orange,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        linea.salioDeCocina ? Icons.check : Icons.hourglass_bottom,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        linea.salioDeCocina ? 'Entregado' : 'Pendiente',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Row(
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
                   children: [
-                    Icon(
-                      linea.salioDeCocina ? Icons.check_circle : Icons.access_time,
-                      color: Colors.white,
-                      size: 18,
+                    IconButton(
+                      onPressed: () => _actualizarCantidad(linea, -1),
+                      icon: const Icon(Icons.remove_circle, color: Colors.redAccent),
                     ),
-                    const SizedBox(width: 5),
                     Text(
-                      linea.salioDeCocina ? 'Entregado' : 'Pendiente',
-                      style: const TextStyle(color: Colors.white),
+                      '${linea.cantidad}',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    IconButton(
+                      onPressed: () => _actualizarCantidad(linea, 1),
+                      icon: const Icon(Icons.add_circle, color: Colors.green),
                     ),
                   ],
                 ),
-              )
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => _actualizarCantidad(linea, -1),
-                    icon: const Icon(Icons.remove, color: Colors.red),
-                  ),
-                  Text('${linea.cantidad}', style: const TextStyle(fontSize: 16)),
-                  IconButton(
-                    onPressed: () => _actualizarCantidad(linea, 1),
-                    icon: const Icon(Icons.add, color: Colors.green),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-               if (!linea.salioDeCocina)
-  IconButton(
-    onPressed: () async {
-      setState(() => _isLoading = true);
-      try {
-        await LineaDePedidoService().marcarComoSalidoDeCocina(linea.id!);
-        await loadLineas();
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-        setState(() => _isLoading = false);
-      }
-    },
-    icon: const Icon(Icons.check_circle_outline, color: Colors.blue),
-    tooltip: "Marcar como salido",
-  ),
-
-                  Text('€${totalLinea.toStringAsFixed(2)}'),
-                ],
-              ),
-            ],
-          ),
-        ],
+                Row(
+                  children: [
+                    if (!linea.salioDeCocina)
+                      IconButton(
+                        tooltip: 'Marcar como entregado',
+                        icon: const Icon(Icons.local_shipping, color: Colors.blueAccent),
+                        onPressed: () async {
+                          setState(() => _isLoading = true);
+                          try {
+                            await LineaDePedidoService().marcarComoSalidoDeCocina(linea.id!);
+                            await loadLineas();
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                            setState(() => _isLoading = false);
+                          }
+                        },
+                      ),
+                    Text(
+                      '€${totalLinea.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -204,19 +211,33 @@ Widget _buildLineaItem(LineaDePedido linea) {
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    Text(
-                      'Fecha: ${_formatFecha(widget.pedido.fecha)}',
-                      style: const TextStyle(fontSize: 18),
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 20, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _formatFecha(widget.pedido.fecha),
+                            style: const TextStyle(fontSize: 16, color: Colors.black87),
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      'Total: \$${_totalActual.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 18),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(Icons.attach_money, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Total: €${_totalActual.toStringAsFixed(2)}',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 20),
                     const Text(
                       'Productos:',
-                      style: TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const Divider(),
                     ..._lineas.map(_buildLineaItem).toList(),
