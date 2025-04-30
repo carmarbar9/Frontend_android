@@ -51,12 +51,16 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
   }
 
-  void _updateOrder(String key, int newValue) {
-    setState(() {
+void _updateOrder(String key, int newValue) {
+  setState(() {
+    if (newValue <= 0) {
+      _order.remove(key); 
+    } else {
       _order[key] = newValue;
-    });
-  
-  }
+    }
+  });
+}
+
 
   Future<void> crearNuevoPedido() async {
     try {

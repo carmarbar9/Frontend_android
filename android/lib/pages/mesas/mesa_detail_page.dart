@@ -206,18 +206,7 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          if (_order.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Text(
-                'Productos añadidos: ${_order.length}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
+  
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
