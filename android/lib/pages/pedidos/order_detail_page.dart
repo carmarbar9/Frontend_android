@@ -10,6 +10,7 @@ import 'package:android/services/service_pedido.dart';
 import 'package:android/services/service_lineaPedido.dart';
 import 'package:android/services/service_empleados.dart';
 import 'order_info_page.dart';
+import 'package:intl/intl.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final Map<String, int> order;
@@ -110,86 +111,92 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
   }
 
-  Future<void> finalizeOrder() async {
-    try {
-      double precioTotal = 0;
-      List<LineaDePedido> nuevasLineas = [];
-
-      // Generar líneas de pedido y calcular precio total antes
-      _order.forEach((nombreProducto, cantidad) {
-        final producto = widget.products[nombreProducto];
-        if (producto != null) {
-          double precioUnitario = producto.precioVenta;
-          precioTotal += precioUnitario * cantidad;
-          nuevasLineas.add(
-            LineaDePedido(
-              cantidad: cantidad,
-              precioUnitario: precioUnitario,
-              salioDeCocina: false,
-              pedidoId: 0, // Lo actualizamos tras crear el pedido
-              productoId: producto.id,
-            ),
-          );
-        }
-      });
-
-      if (nuevasLineas.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No hay productos en la orden.")),
-        );
-        return;
-      }
-
-      final String fechaIso = DateTime.now().toUtc().toIso8601String();
-      final int negocioId = int.parse(SessionManager.negocioId!);
-      final int userId = int.parse(SessionManager.userId!);
-      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(
-        userId,
-        SessionManager.token!,
-      );
-
-      if (empleado == null) {
-        throw Exception("Empleado no encontrado.");
-      }
-
-      // Crear el pedido ya con el total correcto
-      Pedido nuevoPedido = Pedido(
-        fecha: fechaIso,
-        precioTotal: precioTotal,
-        mesaId: widget.mesaId,
-        negocioId: negocioId,
-        empleadoId: SessionManager.empleadoId!,
-      );
-
-      Pedido creado = await PedidoService().createPedidoConDto(nuevoPedido);
-      _pedidoActualId = creado.id!;
-      _pedidos.insert(0, creado);
-
-      // Crear líneas con el ID real del pedido
-      for (var linea in nuevasLineas) {
-        linea.pedidoId = _pedidoActualId!;
-        await LineaDePedidoService().createLineaDePedido(linea);
-      }
-
+Future<void> finalizeOrder() async {
+  try {
+    if (_pedidoActualId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Pedido creado. Total: \$${precioTotal.toStringAsFixed(2)}",
-          ),
-        ),
+        const SnackBar(content: Text("No hay un pedido actual seleccionado.")),
       );
-
-      setState(() {
-        _order.clear();
-      });
-
-      Navigator.pop(context, <String, int>{});
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al finalizar el pedido: $e")),
-      );
+      return;
     }
+
+    double precioTotal = 0;
+    List<LineaDePedido> nuevasLineas = [];
+
+    _order.forEach((nombreProducto, cantidad) {
+      final producto = widget.products[nombreProducto];
+      if (producto != null) {
+        double precioUnitario = producto.precioVenta;
+        precioTotal += precioUnitario * cantidad;
+        nuevasLineas.add(
+          LineaDePedido(
+            cantidad: cantidad,
+            precioUnitario: precioUnitario,
+            salioDeCocina: false,
+            pedidoId: _pedidoActualId!, // ✅ Usar el pedido actual
+            productoId: producto.id,
+          ),
+        );
+      }
+    });
+
+    if (nuevasLineas.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No hay productos en la orden.")),
+      );
+      return;
+    }
+
+    // Crear cada línea en el pedido actual
+    for (var linea in nuevasLineas) {
+      await LineaDePedidoService().createLineaDePedido(linea);
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Orden añadida al pedido actual. Total: \$${precioTotal.toStringAsFixed(2)}"),
+      ),
+    );
+
+    setState(() {
+      _order.clear();
+    });
+
+    Navigator.pop(context, <String, int>{});
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error al finalizar la orden: $e")),
+    );
   }
+}
+
+
+String _formatFecha(String isoDate) {
+  try {
+    final dateTime = DateTime.parse(isoDate).toLocal();
+    final List<String> dias = [
+      "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"
+    ];
+    final List<String> meses = [
+      "enero", "febrero", "marzo", "abril", "mayo", "junio",
+      "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+    ];
+
+    final String diaSemana = dias[dateTime.weekday - 1];
+    final String dia = dateTime.day.toString();
+    final String mes = meses[dateTime.month - 1];
+    final String anio = dateTime.year.toString();
+    final String hora = dateTime.hour.toString().padLeft(2, '0');
+    final String minuto = dateTime.minute.toString().padLeft(2, '0');
+
+    return "${capitalize(diaSemana)}, $dia de $mes de $anio – $hora:$minuto";
+  } catch (e) {
+    return isoDate;
+  }
+}
+
+String capitalize(String s) => s[0].toUpperCase() + s.substring(1);
+
 
   Widget _buildCompletedOrderBox(Pedido pedido, int index) {
     final isActual = pedido.id == _pedidoActualId;
@@ -208,7 +215,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         child: ListTile(
           title: Text("Pedido ${index + 1}" + (isActual ? " (actual)" : "")),
           subtitle: Text(
-            "Fecha: ${pedido.fecha}\nTotal: \$${pedido.precioTotal.toStringAsFixed(2)}",
+          "Fecha: ${_formatFecha(pedido.fecha)}\nTotal: \$${pedido.precioTotal.toStringAsFixed(2)}",
           ),
         ),
       ),

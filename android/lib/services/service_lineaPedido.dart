@@ -51,7 +51,7 @@ class LineaDePedidoService {
         'Authorization': 'Bearer ${SessionManager.token}',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode(linea.toJson()),
+      body: jsonEncode(linea.toDtoJson()),
     );
 
     if (response.statusCode != 200) {
@@ -73,4 +73,21 @@ class LineaDePedidoService {
       throw Exception('Error al eliminar la línea: ${response.body}');
     }
   }
+
+
+Future<void> marcarComoSalidoDeCocina(int id) async {
+  final url = Uri.parse('$baseUrl/$id/saleDeCocina');
+  final response = await http.put(
+    url,
+    headers: {
+      'Authorization': 'Bearer ${SessionManager.token}',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Error al marcar como salido de cocina: ${response.body}');
+  }
+}
+
 }

@@ -17,18 +17,18 @@ class LineaDePedido {
     this.productoName,
   });
 
-  factory LineaDePedido.fromJson(Map<String, dynamic> json) {
-    return LineaDePedido(
-      id: json['id'],
-      cantidad: json['cantidad'],
-      precioUnitario: (json['precioUnitario'] as num).toDouble(),
-      salioDeCocina:
-          json['estado'] ?? false, // ✅ usa 'estado' del DTO y valor por defecto
-      pedidoId: json['pedidoId'] ?? json['pedido']['id'],
-      productoId: json['productoId'] ?? json['producto']['id'],
-      productoName: json['nombreProducto'] ?? json['producto']?['name'],
-    );
-  }
+factory LineaDePedido.fromJson(Map<String, dynamic> json) {
+  return LineaDePedido(
+    id: json['id'],
+    cantidad: json['cantidad'],
+    precioUnitario: (json['precioUnitario'] as num).toDouble(),
+    salioDeCocina: json['salioDeCocina'].toString() == 'true', // ✅ renombrado y forzado a bool
+    pedidoId: json['pedidoId'] ?? json['pedido']['id'],
+    productoId: json['productoId'] ?? json['producto']['id'],
+    productoName: json['nombreProducto'] ?? json['producto']?['name'],
+  );
+}
+
 
   Map<String, dynamic> toJson() {
     return {
@@ -40,14 +40,16 @@ class LineaDePedido {
     };
   }
 
-  Map<String, dynamic> toDtoJson() {
-    return {
-      if (id != null) 'id': id,
-      'cantidad': cantidad,
-      'precioUnitario': precioUnitario,
-      'estado': salioDeCocina, // el backend espera este nombre
-      'pedidoId': pedidoId,
-      'productoId': productoId,
-    };
-  }
+Map<String, dynamic> toDtoJson() {
+  return {
+    if (id != null) 'id': id,
+    'cantidad': cantidad,
+    'precioUnitario': precioUnitario,
+    'salioDeCocina': salioDeCocina, // ✅ renombrado
+    'pedidoId': pedidoId,
+    'productoId': productoId,
+  };
+}
+
+  
 }
