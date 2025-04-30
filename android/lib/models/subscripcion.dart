@@ -3,48 +3,32 @@ enum SubscripcionStatus { ACTIVE, CANCELED, PAST_DUE, UNPAID }
 enum SubscripcionType { FREE, PREMIUM, PILOT }
 
 class Subscripcion {
-  final int id;
-  final SubscripcionType type;
+  final SubscripcionType planType;
   final SubscripcionStatus status;
-  final String startDate;
-  final String endDate;
-  final String nextBillingDate;
+  final DateTime expirationDate;
+  final DateTime nextBillingDate;
+  final bool isActive;
+  final bool isPremium;
 
   Subscripcion({
-    required this.id,
-    required this.type,
+    required this.planType,
     required this.status,
-    required this.startDate,
-    required this.endDate,
+    required this.expirationDate,
     required this.nextBillingDate,
+    required this.isActive,
+    required this.isPremium,
   });
 
   factory Subscripcion.fromJson(Map<String, dynamic> json) {
     return Subscripcion(
-      id: json['id'],
-      type: SubscripcionType.values.firstWhere(
-          (e) => e.toString().split('.').last == json['type']),
+      planType: SubscripcionType.values.firstWhere(
+          (e) => e.toString().split('.').last == json['planType']),
       status: SubscripcionStatus.values.firstWhere(
           (e) => e.toString().split('.').last == json['status']),
-      startDate: json['startDate'],
-      endDate: json['endDate'],
-      nextBillingDate: json['nextBillingDate'],
+      expirationDate: DateTime.parse(json['expirationDate']),
+      nextBillingDate: DateTime.parse(json['nextBillingDate']),
+      isActive: json['isActive'],
+      isPremium: json['isPremium'],
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'type': type.toString().split('.').last,
-      'status': status.toString().split('.').last,
-      'startDate': startDate,
-      'endDate': endDate,
-      'nextBillingDate': nextBillingDate,
-    };
-  }
-
-  bool get isActive => status == SubscripcionStatus.ACTIVE;
-
-  bool get isPremium =>
-      type == SubscripcionType.PREMIUM && isActive;
 }
