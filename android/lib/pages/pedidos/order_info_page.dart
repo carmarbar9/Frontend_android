@@ -145,22 +145,27 @@ class _OrderInfoPageState extends State<OrderInfoPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => _actualizarCantidad(linea, -1),
-                      icon: const Icon(Icons.remove_circle, color: Colors.redAccent),
-                    ),
-                    Text(
-                      '${linea.cantidad}',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    IconButton(
-                      onPressed: () => _actualizarCantidad(linea, 1),
-                      icon: const Icon(Icons.add_circle, color: Colors.green),
-                    ),
-                  ],
-                ),
+                linea.salioDeCocina
+                    ? Text(
+                      'Cantidad: ${linea.cantidad}',
+                        style: const TextStyle(fontSize: 16),
+                      )
+                    : Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => _actualizarCantidad(linea, -1),
+                            icon: const Icon(Icons.remove_circle, color: Colors.redAccent),
+                          ),
+                          Text(
+                            '${linea.cantidad}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          IconButton(
+                            onPressed: () => _actualizarCantidad(linea, 1),
+                            icon: const Icon(Icons.add_circle, color: Colors.green),
+                          ),
+                        ],
+                      ),
                 Row(
                   children: [
                     if (!linea.salioDeCocina)
@@ -202,6 +207,7 @@ class _OrderInfoPageState extends State<OrderInfoPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Detalles del Pedido ${widget.pedido.id}"),
+        foregroundColor: Colors.white,
         backgroundColor: const Color(0xFF9B1D42),
       ),
       body: _isLoading

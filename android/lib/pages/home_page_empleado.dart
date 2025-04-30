@@ -279,21 +279,7 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
             ),
           ),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Buscar mesa...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                filled: true,
-                fillColor: Colors.white,
-              ),
-            ),
-          ),
+
           const SizedBox(height: 20),
           Expanded(
             child: FutureBuilder<List<Mesa>>(
@@ -357,17 +343,21 @@ class _HomePageEmpleadoState extends State<HomePageEmpleado> {
                             ),
                           ],
                         ),
-                        child: Center(
-                          child: Text(
-                            mesa.name ?? '',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'TitanOne',
+                       child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.table_bar, size: 40, color: Color.fromARGB(255, 59, 3, 20)),
+                            const SizedBox(height: 8),
+                            Text(
+                              mesa.name ?? '',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Color.fromARGB(255, 255, 255, 255),
+                              ),
                             ),
-                            textAlign: TextAlign.center,
-                          ),
+                          ],
                         ),
                       ),
                     );
