@@ -23,37 +23,34 @@ class _OrderInfoPageState extends State<OrderInfoPage> {
     loadLineas();
   }
 
-Future<void> loadLineas() async {
-  try {
-    List<LineaDePedido> lineas = await LineaDePedidoService().getLineasByPedidoId(widget.pedido.id!);
-    lineas = lineas.reversed.toList(); // Invertimos el orden
-    setState(() {
-      _lineas = lineas;
-      _isLoading = false;
-    });
-  } catch (e) {
-    setState(() {
-      _error = e.toString();
-      _isLoading = false;
-    });
+  Future<void> loadLineas() async {
+    try {
+      List<LineaDePedido> lineas =
+          await LineaDePedidoService().getLineasByPedidoId(widget.pedido.id!);
+      lineas = lineas.reversed.toList();
+      setState(() {
+        _lineas = lineas;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
-}
-
 
   Future<void> _actualizarCantidad(LineaDePedido linea, int cambio) async {
     final nuevaCantidad = linea.cantidad + cambio;
 
     if (nuevaCantidad <= 0) {
-      // Eliminar línea si la cantidad va a ser 0 o menor
       await LineaDePedidoService().deleteLineaDePedido(linea.id!);
     } else {
-      // Actualizar línea con nueva cantidad y precio recalculado
-      final nuevoPrecio = (linea.precioLinea / linea.cantidad) * nuevaCantidad;
-
       LineaDePedido actualizada = LineaDePedido(
         id: linea.id,
         cantidad: nuevaCantidad,
-        precioLinea: nuevoPrecio,
+        precioUnitario: linea.precioUnitario,
+        salioDeCocina: linea.salioDeCocina,
         pedidoId: linea.pedidoId,
         productoId: linea.productoId,
         productoName: linea.productoName,
@@ -67,6 +64,7 @@ Future<void> loadLineas() async {
 
   Widget _buildLineaItem(LineaDePedido linea) {
     String productoName = linea.productoName ?? "Producto ${linea.productoId}";
+    double totalLinea = linea.cantidad * linea.precioUnitario;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -85,7 +83,7 @@ Future<void> loadLineas() async {
             ),
           ],
         ),
-        trailing: Text('\$${linea.precioLinea.toStringAsFixed(2)}'),
+        trailing: Text('\$${totalLinea.toStringAsFixed(2)}'),
       ),
     );
   }
@@ -104,10 +102,20 @@ Future<void> loadLineas() async {
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    Text('Fecha: ${widget.pedido.fecha}', style: const TextStyle(fontSize: 18)),
-                    Text('Total: \$${widget.pedido.precioTotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18)),
+                    Text(
+                      'Fecha: ${widget.pedido.fecha}',
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                    Text(
+                      'Total: \$${widget.pedido.precioTotal.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 18),
+                    ),
                     const SizedBox(height: 20),
-                    const Text('Productos:', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Productos:',
+                      style: TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
                     const Divider(),
                     ..._lineas.map(_buildLineaItem).toList(),
                   ],

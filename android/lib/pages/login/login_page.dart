@@ -73,6 +73,11 @@ class _LoginPageState extends State<LoginPage> {
         if (empleado.negocio == null) throw 'Empleado sin negocio asignado';
 
         SessionManager.negocioId = empleado.negocio.toString();
+        SessionManager.empleadoId = empleado.id!;
+
+        print('Empleado logueado correctamente. ID: ${SessionManager.empleadoId}');
+        print('Negocio logueado correctamente. ID: ${SessionManager.negocioId}');
+        print('Authority: ${SessionManager.authority}');
 
         Navigator.pushReplacement(
           context,

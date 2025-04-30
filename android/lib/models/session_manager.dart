@@ -10,6 +10,7 @@ class SessionManager {
   static String? negocioNombre;
   static String? ciudad;
   static int? duenoId;
+  static int? empleadoId;
 
   // Limpiar sesión
   static void clear() {
@@ -22,6 +23,7 @@ class SessionManager {
     negocioNombre = null;
     ciudad = null;
     duenoId = null;
+    empleadoId = null;
   }
 
   // Guardar datos del usuario tras login y fetch de /me

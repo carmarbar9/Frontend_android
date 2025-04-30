@@ -172,11 +172,9 @@ class EmpleadoService {
     }
   }
 
-  static Future<Empleado?> fetchEmpleadoByUserId(
-    int userId,
-    String token,
-  ) async {
+  static Future<Empleado?> fetchEmpleadoByUserId(int userId, String token) async {
     final url = Uri.parse('$_baseUrl/user/$userId');
+
     final response = await http.get(
       url,
       headers: {
@@ -186,12 +184,9 @@ class EmpleadoService {
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      return Empleado.fromJson(data);
+      return Empleado.fromJson(json.decode(response.body));
     } else {
-      print(
-        '❌ Error en fetchEmpleadoByUserId: ${response.statusCode} - ${response.body}',
-      );
+      print("Error obteniendo empleado por userId: ${response.statusCode}");
       return null;
     }
   }

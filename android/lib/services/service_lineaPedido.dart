@@ -8,12 +8,12 @@ class LineaDePedidoService {
 
   Future<LineaDePedido> createLineaDePedido(LineaDePedido linea) async {
     final response = await http.post(
-      Uri.parse(baseUrl),
+      Uri.parse(baseUrl), // Asegúrate de que termina en "/dto"
       headers: {
         'Authorization': 'Bearer ${SessionManager.token}',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode(linea.toJson()),
+      body: jsonEncode(linea.toDtoJson()),
     );
 
     if (response.statusCode == 201) {

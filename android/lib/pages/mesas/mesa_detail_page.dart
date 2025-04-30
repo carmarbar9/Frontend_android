@@ -81,7 +81,6 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
     return productMap;
   }
 
-
   /// Finaliza el pedido actual:
   /// 1. Recorre la orden (_order) para obtener cada producto y calcular el precio total,
   ///    creando las líneas de pedido correspondientes.
@@ -113,8 +112,9 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
           lineas.add(
             LineaDePedido(
               cantidad: cantidad,
-              precioLinea: precioUnitario * cantidad,
-              pedidoId: 0, // Se actualizará tras crear el Pedido.
+              precioUnitario: precioUnitario,
+              salioDeCocina: false, // por defecto
+              pedidoId: 0, // se setea luego
               productoId: productoEncontrado.id,
             ),
           );
@@ -134,7 +134,10 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
 
       // Obtén el empleado asociado usando su userId.
       final int userId = int.parse(SessionManager.userId!);
-      final empleado = await EmpleadoService.fetchEmpleadoByUserId(userId, SessionManager.token!);
+      final empleado = await EmpleadoService.fetchEmpleadoByUserId(
+        userId,
+        SessionManager.token!,
+      );
       if (empleado == null) {
         throw Exception("Empleado no encontrado para el userId: $userId");
       }
@@ -187,16 +190,10 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
             unselectedLabelColor: Colors.white70,
             labelColor: Colors.white,
             indicatorColor: Colors.white,
-            tabs: [
-              Tab(text: "Pedidos")
-            ],
+            tabs: [Tab(text: "Pedidos")],
           ),
         ),
-        body: TabBarView(
-          children: [
-            _buildPedidosTab(),
-          ],
-        ),
+        body: TabBarView(children: [_buildPedidosTab()]),
       ),
     );
   }

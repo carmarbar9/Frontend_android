@@ -1,18 +1,18 @@
 class Pedido {
   int? id;
-  String fecha; // En formato ISO
+  String fecha;
   double precioTotal;
   int mesaId;
-  int empleadoId;
   int negocioId;
+  int? empleadoId; // 👈 ahora opcional
 
   Pedido({
     this.id,
     required this.fecha,
     required this.precioTotal,
     required this.mesaId,
-    required this.empleadoId,
     required this.negocioId,
+    this.empleadoId, // 👈 ya no es required
   });
 
   factory Pedido.fromJson(Map<String, dynamic> json) {
@@ -20,20 +20,30 @@ class Pedido {
       id: json['id'],
       fecha: json['fecha'],
       precioTotal: (json['precioTotal'] as num).toDouble(),
-      mesaId: json['mesaId'],
-      empleadoId: json['empleadoId'],
-      negocioId: json['negocioId'],
+      mesaId: json['mesa']?['id'] ?? json['mesaId'],
+      negocioId: json['negocio']?['id'] ?? json['negocioId'],
+      empleadoId: json['empleado']?['id'] ?? json['empleadoId'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id != null) 'id': id,
+      'fecha': fecha,
+      'precioTotal': precioTotal,
+      'mesa': {'id': mesaId},
+      'negocio': {'id': negocioId},
+    };
+  }
+
+  Map<String, dynamic> toJsonParaDto() {
+    return {
+      if (id != null) 'id': id,
       'fecha': fecha,
       'precioTotal': precioTotal,
       'mesaId': mesaId,
-      'empleadoId': empleadoId,
       'negocioId': negocioId,
+      'empleadoId': empleadoId,// ❌ No se incluye empleadoId: backend lo infiere del token
     };
   }
 }

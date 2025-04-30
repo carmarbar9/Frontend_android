@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:android/models/producto_venta.dart';
 import 'package:android/models/pedido.dart';
@@ -60,33 +62,47 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
   Future<void> crearNuevoPedido() async {
     try {
-      final String fechaIso = DateTime.now().toIso8601String();
+      final String fechaIso = DateTime.now().toUtc().toIso8601String();
       final int negocioId = int.parse(SessionManager.negocioId!);
       final int userId = int.parse(SessionManager.userId!);
-      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId, SessionManager.token!);
+      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(
+        userId,
+        SessionManager.token!,
+      );
 
       if (empleado == null) {
         throw Exception("Empleado no encontrado.");
       }
 
+      double precioTotal = 0;
+      _order.forEach((nombreProducto, cantidad) {
+        final producto = widget.products[nombreProducto];
+        if (producto != null) {
+          precioTotal += producto.precioVenta * cantidad;
+        }
+      });
+
       Pedido nuevoPedido = Pedido(
         fecha: fechaIso,
-        precioTotal: 0.01,
+        precioTotal: precioTotal,
         mesaId: widget.mesaId,
-        empleadoId: empleado.id!,
         negocioId: negocioId,
+        empleadoId: SessionManager.empleadoId!,
       );
 
-      Pedido creado = await PedidoService().createPedido(nuevoPedido);
+      print("📦 Enviando nuevo pedido al backend:");
+      print(jsonEncode(nuevoPedido.toJson()));
+
+      Pedido creado = await PedidoService().createPedidoConDto(nuevoPedido);
       setState(() {
         _pedidoActualId = creado.id!;
         _pedidos.insert(0, creado);
         _order.clear();
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Nuevo pedido creado.")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Nuevo pedido creado.")));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error al crear nuevo pedido: $e")),
@@ -94,93 +110,86 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
   }
 
-Future<void> finalizeOrder() async {
-  try {
-    double precioTotal = 0;
-    List<LineaDePedido> nuevasLineas = [];
+  Future<void> finalizeOrder() async {
+    try {
+      double precioTotal = 0;
+      List<LineaDePedido> nuevasLineas = [];
 
-    // Si no hay pedido actual, créalo primero
-    if (_pedidoActualId == null) {
-      final String fechaIso = DateTime.now().toIso8601String();
+      // Generar líneas de pedido y calcular precio total antes
+      _order.forEach((nombreProducto, cantidad) {
+        final producto = widget.products[nombreProducto];
+        if (producto != null) {
+          double precioUnitario = producto.precioVenta;
+          precioTotal += precioUnitario * cantidad;
+          nuevasLineas.add(
+            LineaDePedido(
+              cantidad: cantidad,
+              precioUnitario: precioUnitario,
+              salioDeCocina: false,
+              pedidoId: 0, // Lo actualizamos tras crear el pedido
+              productoId: producto.id,
+            ),
+          );
+        }
+      });
+
+      if (nuevasLineas.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No hay productos en la orden.")),
+        );
+        return;
+      }
+
+      final String fechaIso = DateTime.now().toUtc().toIso8601String();
       final int negocioId = int.parse(SessionManager.negocioId!);
       final int userId = int.parse(SessionManager.userId!);
-      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(userId, SessionManager.token!);
+      Empleado? empleado = await EmpleadoService.fetchEmpleadoByUserId(
+        userId,
+        SessionManager.token!,
+      );
 
       if (empleado == null) {
         throw Exception("Empleado no encontrado.");
       }
 
+      // Crear el pedido ya con el total correcto
       Pedido nuevoPedido = Pedido(
         fecha: fechaIso,
-        precioTotal: 0.01,
+        precioTotal: precioTotal,
         mesaId: widget.mesaId,
-        empleadoId: empleado.id!,
         negocioId: negocioId,
+        empleadoId: SessionManager.empleadoId!,
       );
 
-      Pedido creado = await PedidoService().createPedido(nuevoPedido);
+      Pedido creado = await PedidoService().createPedidoConDto(nuevoPedido);
       _pedidoActualId = creado.id!;
       _pedidos.insert(0, creado);
-    }
 
-    // Generar líneas de pedido
-    _order.forEach((nombreProducto, cantidad) {
-      final producto = widget.products[nombreProducto];
-      if (producto != null) {
-        double precioUnitario = producto.precioVenta;
-        precioTotal += precioUnitario * cantidad;
-        nuevasLineas.add(LineaDePedido(
-          cantidad: cantidad,
-          precioLinea: precioUnitario * cantidad,
-          pedidoId: _pedidoActualId!,
-          productoId: producto.id,
-        ));
+      // Crear líneas con el ID real del pedido
+      for (var linea in nuevasLineas) {
+        linea.pedidoId = _pedidoActualId!;
+        await LineaDePedidoService().createLineaDePedido(linea);
       }
-    });
 
-    if (nuevasLineas.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No hay productos en la orden.")),
+        SnackBar(
+          content: Text(
+            "Pedido creado. Total: \$${precioTotal.toStringAsFixed(2)}",
+          ),
+        ),
       );
-      return;
+
+      setState(() {
+        _order.clear();
+      });
+
+      Navigator.pop(context, <String, int>{});
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al finalizar el pedido: $e")),
+      );
     }
-
-    // Añadir líneas al pedido
-    for (var linea in nuevasLineas) {
-      await LineaDePedidoService().createLineaDePedido(linea);
-    }
-
-    // Actualizar precio total del pedido
-    Pedido pedidoExistente = await PedidoService().getPedidoById(_pedidoActualId!);
-    final double nuevoTotal = pedidoExistente.precioTotal + precioTotal;
-
-    Pedido pedidoActualizado = Pedido(
-      id: pedidoExistente.id,
-      fecha: pedidoExistente.fecha,
-      mesaId: pedidoExistente.mesaId,
-      empleadoId: pedidoExistente.empleadoId,
-      negocioId: pedidoExistente.negocioId,
-      precioTotal: nuevoTotal,
-    );
-
-    await PedidoService().updatePedido(_pedidoActualId!, pedidoActualizado);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Pedido actualizado. Total: \$${nuevoTotal.toStringAsFixed(2)}")),
-    );
-
-    setState(() {
-      _order.clear();
-    });
-
-    Navigator.pop(context, <String, int>{});
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Error al finalizar el pedido: $e")),
-    );
   }
-}
-
 
   Widget _buildCompletedOrderBox(Pedido pedido, int index) {
     final isActual = pedido.id == _pedidoActualId;
@@ -198,7 +207,9 @@ Future<void> finalizeOrder() async {
         margin: const EdgeInsets.symmetric(vertical: 5),
         child: ListTile(
           title: Text("Pedido ${index + 1}" + (isActual ? " (actual)" : "")),
-          subtitle: Text("Fecha: ${pedido.fecha}\nTotal: \$${pedido.precioTotal.toStringAsFixed(2)}"),
+          subtitle: Text(
+            "Fecha: ${pedido.fecha}\nTotal: \$${pedido.precioTotal.toStringAsFixed(2)}",
+          ),
         ),
       ),
     );
@@ -223,23 +234,34 @@ Future<void> finalizeOrder() async {
               backgroundColor: const Color(0xFF9B1D42),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
           const SizedBox(height: 20),
           ..._order.entries.map((entry) {
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               elevation: 3,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       entry.key,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
                     Row(
                       children: [
@@ -253,7 +275,10 @@ Future<void> finalizeOrder() async {
                         ),
                         Text(
                           '${entry.value}',
-                          style: const TextStyle(fontSize: 16, color: Colors.black87),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
                         ),
                         IconButton(
                           onPressed: () {
@@ -274,15 +299,25 @@ Future<void> finalizeOrder() async {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF9B1D42),
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 15,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
               ),
               onPressed: finalizeOrder,
               child: const Text(
                 "Finalizar Orden",
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
+            
           ),
           const SizedBox(height: 30),
           const Divider(),
@@ -301,4 +336,5 @@ Future<void> finalizeOrder() async {
       ),
     );
   }
+  
 }

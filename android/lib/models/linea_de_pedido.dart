@@ -1,15 +1,17 @@
 class LineaDePedido {
   int? id;
   int cantidad;
-  double precioLinea;
+  double precioUnitario; // ✅ obligatorio
+  bool salioDeCocina; // ✅ obligatorio
   int pedidoId;
   int productoId;
-  String? productoName; // Nuevo campo opcional
+  String? productoName; // opcional para mostrar
 
   LineaDePedido({
     this.id,
     required this.cantidad,
-    required this.precioLinea,
+    required this.precioUnitario,
+    required this.salioDeCocina,
     required this.pedidoId,
     required this.productoId,
     this.productoName,
@@ -19,22 +21,33 @@ class LineaDePedido {
     return LineaDePedido(
       id: json['id'],
       cantidad: json['cantidad'],
-      precioLinea: (json['precioLinea'] as num).toDouble(),
-      pedidoId: json['pedido']['id'],
-      productoId: json['producto']['id'],
-      productoName: json['producto']['name'], // Se obtiene el nombre
+      precioUnitario: (json['precioUnitario'] as num).toDouble(),
+      salioDeCocina:
+          json['estado'] ?? false, // ✅ usa 'estado' del DTO y valor por defecto
+      pedidoId: json['pedidoId'] ?? json['pedido']['id'],
+      productoId: json['productoId'] ?? json['producto']['id'],
+      productoName: json['nombreProducto'] ?? json['producto']?['name'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'cantidad': cantidad,
-      'precioLinea': precioLinea,
+      'precioUnitario': precioUnitario,
+      'salioDeCocina': salioDeCocina,
       'pedido': {'id': pedidoId},
-      'producto': {
-        'id': productoId,
-        'name': productoName, // Se incluye el nombre en el JSON
-      },
+      'producto': {'id': productoId},
+    };
+  }
+
+  Map<String, dynamic> toDtoJson() {
+    return {
+      if (id != null) 'id': id,
+      'cantidad': cantidad,
+      'precioUnitario': precioUnitario,
+      'estado': salioDeCocina, // el backend espera este nombre
+      'pedidoId': pedidoId,
+      'productoId': productoId,
     };
   }
 }
