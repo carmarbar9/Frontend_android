@@ -315,6 +315,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                         int.tryParse(avisoController.text) ??
                         producto.cantidadAviso,
                     proveedorId: selectedProveedor!.id!, // Este es el nuevo
+                    negocioId: int.parse(SessionManager.negocioId!),
                   );
 
                   try {
