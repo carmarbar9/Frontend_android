@@ -5,7 +5,7 @@ import '../models/session_manager.dart';
 
 class ProductoVentaService {
   Future<List<ProductoVenta>> getProductosByCategoriaNombre(String categoriaNombre) async {
-    final url = Uri.parse('http://10.0.2.2:8080/api/productosVenta/categoriaVenta/$categoriaNombre');
+    final url = Uri.parse('https://ispp-2425-g2.ew.r.appspot.com/api/productosVenta/categoriaVenta/$categoriaNombre');
     
     final response = await http.get(
       url,
@@ -24,7 +24,7 @@ class ProductoVentaService {
   }
 
   Future<void> deleteProductoVenta(int id) async {
-    final url = Uri.parse('http://10.0.2.2:8080/api/productosVenta/$id');
+    final url = Uri.parse('https://ispp-2425-g2.ew.r.appspot.com/api/productosVenta/$id');
 
     final response = await http.delete(
       url,
@@ -40,7 +40,7 @@ class ProductoVentaService {
   }
 
   Future<void> updateProductoVenta(ProductoVenta producto) async {
-    final url = Uri.parse('http://10.0.2.2:8080/api/productosVenta/${producto.id}');
+    final url = Uri.parse('https://ispp-2425-g2.ew.r.appspot.com/api/productosVenta/${producto.id}');
     
     final response = await http.put(
       url,
@@ -57,7 +57,7 @@ class ProductoVentaService {
   }
 
   Future<ProductoVenta> createProductoVenta(ProductoVenta producto) async {
-    final url = Uri.parse('http://10.0.2.2:8080/api/productosVenta');
+    final url = Uri.parse('https://ispp-2425-g2.ew.r.appspot.com/api/productosVenta');
 
     final response = await http.post(
       url,

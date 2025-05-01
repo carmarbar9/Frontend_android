@@ -5,7 +5,7 @@ import 'package:android/models/session_manager.dart';
 
 class InventoryApiService {
   static const String _baseUrl =
-      'http://10.0.2.2:8080/api/productosInventario';
+      'https://ispp-2425-g2.ew.r.appspot.com/api/productosInventario';
 
   /// Obtiene todos los productos de inventario
   static Future<List<ProductoInventario>> getProductosInventario() async {
