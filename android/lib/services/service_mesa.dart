@@ -6,25 +6,30 @@ import 'package:android/models/session_manager.dart';
 class MesaService {
   static const String _baseUrl = 'http://10.0.2.2:8080/api/mesas';
 
-  /// Obtener todas las mesas
-  static Future<List<Mesa>> getMesas() async {
-    final url = Uri.parse(_baseUrl);
-    final response = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer ${SessionManager.token}',
-        'Content-Type': 'application/json',
-      },
-    );
 
-    if (response.statusCode == 200) {
-      final decodedBody = utf8.decode(response.bodyBytes);
-      final List<dynamic> jsonList = jsonDecode(decodedBody);
-      return jsonList.map((json) => Mesa.fromJson(json)).toList();
-    } else {
-      throw Exception('Error al obtener las mesas: ${response.body}');
-    }
+static Future<List<Mesa>> getMesas() async {
+  final int negocioId = int.parse(SessionManager.negocioId!);
+
+  final url = Uri.parse('$_baseUrl/negocio/$negocioId');
+
+  final response = await http.get(
+    url,
+    headers: {
+      'Authorization': 'Bearer ${SessionManager.token}',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final decodedBody = utf8.decode(response.bodyBytes);
+    final List<dynamic> jsonList = jsonDecode(decodedBody);
+    return jsonList.map((json) => Mesa.fromJson(json)).toList();
+  } else if (response.statusCode == 204) {
+    return []; // No hay mesas
+  } else {
+    throw Exception('Error al obtener las mesas: ${response.body}');
   }
+}
 
   /// Crear una nueva mesa
   static Future<Mesa> createMesa(Mesa mesa) async {
@@ -45,7 +50,6 @@ class MesaService {
       throw Exception('Error al crear la mesa: ${response.body}');
     }
   }
-
   /// Eliminar una mesa por ID
   static Future<void> deleteMesaById(int id) async {
     final url = Uri.parse("$_baseUrl/$id");

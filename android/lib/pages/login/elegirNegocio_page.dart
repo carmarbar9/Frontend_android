@@ -125,6 +125,7 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false, // Esto quita la flecha
         title: const Text('Selecciona tu negocio'),
         foregroundColor: Colors.white,
         backgroundColor: const Color.fromARGB(255, 156, 28, 66),
@@ -136,6 +137,7 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
           ),
         ],
       ),
+
       body: FutureBuilder<List<Negocio>>(
         future: _negocios,
         builder: (context, snapshot) {

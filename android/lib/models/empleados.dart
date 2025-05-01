@@ -54,7 +54,6 @@ class Empleado {
     if (lastName != null) data['lastName'] = lastName;
     if (email != null) data['email'] = email;
     if (numTelefono != null) data['numTelefono'] = numTelefono;
-    if (tokenEmpleado != null) data['tokenEmpleado'] = tokenEmpleado;
     if (descripcion != null) data['descripcion'] = descripcion;
     if (negocio != null) data['negocio'] = negocio;
     return data;

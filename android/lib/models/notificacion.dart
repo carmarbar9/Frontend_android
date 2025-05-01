@@ -2,6 +2,7 @@ enum TipoNotificacion {
   inventario,
   proveedor,
   empleado,
+  caducidad,
   otro,
 }
 

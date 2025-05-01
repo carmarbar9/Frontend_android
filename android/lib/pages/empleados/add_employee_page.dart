@@ -129,7 +129,6 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                   _buildTextField(icon: Icons.person_outline, label: "Apellido", onSaved: (val) => _lastName = val),
                   _buildTextField(icon: Icons.email, label: "Email", inputType: TextInputType.emailAddress, onSaved: (val) => _email = val),
                   _buildTextField(icon: Icons.phone, label: "Teléfono", inputType: TextInputType.phone, onSaved: (val) => _numTelefono = val),
-                  _buildTextField(icon: Icons.vpn_key, label: "Token Empleado", onSaved: (val) => _tokenEmpleado = val),
                   _buildTextField(icon: Icons.description, label: "Descripción", maxLines: 3, onSaved: (val) => _descripcion = val),
                   _buildTextField(icon: Icons.person_pin, label: "Usuario", onSaved: (val) => _username = val),
                   _buildTextField(icon: Icons.lock, label: "Contraseña", obscureText: true, onSaved: (val) => _password = val),

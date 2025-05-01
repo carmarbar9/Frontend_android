@@ -19,9 +19,15 @@ class ProductoVenta {
       id: json['id'],
       name: json['name'],
       precioVenta: (json['precioVenta'] as num).toDouble(),
-      categoria: categoriaJson is Map<String, dynamic>
-          ? Categoria.fromJson(categoriaJson)
-          : Categoria(id: categoriaJson.toString(), name: '', pertenece: '', negocioId: ''),
+      categoria:
+          categoriaJson is Map<String, dynamic>
+              ? Categoria.fromJson(categoriaJson)
+              : Categoria(
+                id: categoriaJson.toString(),
+                name: '',
+                pertenece: '',
+                negocioId: '',
+              ),
     );
   }
 
@@ -29,7 +35,7 @@ class ProductoVenta {
     final json = {
       'name': name,
       'precioVenta': precioVenta,
-      'categoria': categoria.toJson(),
+      'categoriaId': int.parse(categoria.id), 
     };
 
     if (includeId) {

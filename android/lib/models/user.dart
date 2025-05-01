@@ -22,10 +22,9 @@ class User {
       username: json['username'],
       password: json['password'],
       authority: Authority.fromJson(json['authority']),
-      subscripcion:
-          json['subscripcion'] != null
-              ? Subscripcion.fromJson(json['subscripcion'])
-              : null,
+      subscripcion: json['subscripcion'] != null
+          ? Subscripcion.fromJson(json['subscripcion'])
+          : null,
     );
   }
 

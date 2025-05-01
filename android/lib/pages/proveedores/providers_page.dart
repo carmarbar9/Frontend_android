@@ -12,6 +12,9 @@ import 'package:android/models/lote.dart';
 import 'package:android/services/service_inventory.dart';
 import 'package:android/services/service_lote.dart';
 import 'package:android/services/service_notificacion.dart';
+import 'package:android/pages/carrito/carritoProveedor_page.dart';
+import 'package:android/pages/carrito/carritosPendientes_page.dart';
+import 'package:android/pages/reabastecimientos/reabastecimiento_page.dart';
 
 
 
@@ -73,6 +76,16 @@ class _ProvidersPageState extends State<ProvidersPage> {
       });
     }
   }
+
+  void _verTodosReabastecimientos() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ReabastecimientosPage(),
+      ),
+    );
+  }
+
 
   void _deleteProvider(Proveedor proveedor) async {
     bool? confirm = await showDialog<bool>(
@@ -251,7 +264,7 @@ class _ProvidersPageState extends State<ProvidersPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => NotificacionPage(notificaciones: notificaciones),
+                              builder: (_) => NotificacionPage(),
                             ),
                           );
                         } catch (e) {
@@ -309,11 +322,11 @@ class _ProvidersPageState extends State<ProvidersPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Buscar y Añadir juntos
+                  // Buscar, Añadir y reabastecimientos juntos
                   Row(
                     children: [
                       Expanded(
-                        child: _build3DActionButton(
+                        child: _buildGourmetButton(
                           icon: Icons.search,
                           label: "Buscar",
                           onPressed: _showSearchDialog,
@@ -321,7 +334,7 @@ class _ProvidersPageState extends State<ProvidersPage> {
                       ),
                       const SizedBox(width: 15),
                       Expanded(
-                        child: _build3DActionButton(
+                        child: _buildGourmetButton(
                           icon: Icons.add,
                           label: "Añadir",
                           onPressed: _navigateToAddProvider,
@@ -329,6 +342,19 @@ class _ProvidersPageState extends State<ProvidersPage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
+                  // Reabastecimientos abajo centrado
+                  Center(
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.65,
+                      child: _buildGourmetButton(
+                        icon: Icons.history,
+                        label: "Reabastecimientos",
+                        onPressed: _verTodosReabastecimientos,
+                      ),
+                    ),
+                  ),
+
 
                   if (_searchQuery != null)
                     Padding(
@@ -419,14 +445,12 @@ class _ProvidersPageState extends State<ProvidersPage> {
     );
   }
 
-  // Botón reutilizable con estilo 3D (para Buscar y Añadir)
-  Widget _build3DActionButton({
+  Widget _buildGourmetButton({
     required IconData icon,
     required String label,
     required VoidCallback onPressed,
   }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 100),
+    return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
         boxShadow: const [
@@ -443,7 +467,7 @@ class _ProvidersPageState extends State<ProvidersPage> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           foregroundColor: const Color(0xFF9B1D42),
-          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
             side: const BorderSide(color: Color(0xFF9B1D42), width: 2),
@@ -451,26 +475,20 @@ class _ProvidersPageState extends State<ProvidersPage> {
           elevation: 0,
         ),
         onPressed: onPressed,
-        icon: Icon(icon, size: 30, color: const Color(0xFF9B1D42)),
+        icon: Icon(icon, size: 24, color: const Color(0xFF9B1D42)),
         label: Text(
           label,
           style: const TextStyle(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
             fontFamily: 'TitanOne',
             color: Color(0xFF9B1D42),
-            shadows: [
-              Shadow(
-                offset: Offset(1.5, 1.5),
-                blurRadius: 3,
-                color: Colors.black12,
-              ),
-            ],
           ),
         ),
       ),
     );
   }
+
 
   // Tarjeta del proveedor
   Widget _buildProviderCard(Proveedor proveedor) {
@@ -607,12 +625,31 @@ class _ProvidersPageState extends State<ProvidersPage> {
               SizedBox(
                 width: double.infinity,
                 child: _buildFlatWhiteButton(
-                  icon: Icon(Icons.shopping_cart, size: 32, color: Color(0xFF9B1D42)), // puedes ajustar el tamaño
+                  icon: Icon(Icons.shopping_cart, size: 30, color: Color(0xFF9B1D42)), // puedes ajustar el tamaño
 
                   label: "Ver Carrito",
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Funcionalidad pendiente")),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CarritoProveedorPage(proveedor: proveedor),
+                    ),
+                  );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: _buildFlatWhiteButton(
+                  icon: Icon(Icons.pending_actions, size: 30, color: Color(0xFF9B1D42)),
+                  label: "Ver pendientes",
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CarritosPendientesPage(proveedor: proveedor),
+                      ),
                     );
                   },
                 ),

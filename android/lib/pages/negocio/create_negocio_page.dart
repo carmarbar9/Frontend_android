@@ -4,6 +4,7 @@ import 'package:android/models/negocio.dart';
 import 'package:android/models/dueno.dart';
 import 'package:android/services/service_negocio.dart';
 import 'package:android/models/session_manager.dart';
+import 'dart:math';
 
 class CreateNegocioPage extends StatefulWidget {
   const CreateNegocioPage({Key? key}) : super(key: key);
@@ -16,7 +17,6 @@ class _CreateNegocioPageState extends State<CreateNegocioPage> {
   final _formKey = GlobalKey<FormState>();
 
   String? _name;
-  String? _tokenNegocio;
   String? _direccion;
   String? _codigoPostal;
   String? _ciudad;
@@ -29,33 +29,28 @@ class _CreateNegocioPageState extends State<CreateNegocioPage> {
       _formKey.currentState!.save();
       setState(() => _isLoading = true);
       try {
-        int? token = _tokenNegocio != null ? int.tryParse(_tokenNegocio!) : null;
+        // Generar un token aleatorio solo para cumplir el DTO
+        int token = Random().nextInt(900000000) + 100000000; // 9 dígitos random
 
-        // Construir el negocio asignando el dueño desde SessionManager
         Negocio nuevoNegocio = Negocio(
           name: _name,
-          tokenNegocio: token,
+          tokenNegocio: token, // random
           direccion: _direccion,
           codigoPostal: _codigoPostal,
           ciudad: _ciudad,
           pais: _pais,
-          dueno: SessionManager.currentUser != null
-              ? Dueno(
-                  id: SessionManager.duenoId ?? 0,
-                  name: SessionManager.username,
-                  tokenDueno: '',
-                )
-              : null,
+          idDueno: SessionManager.duenoId, // lo coges del usuario logueado
         );
+
         Negocio creado = await NegocioService.createNegocio(nuevoNegocio);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Negocio creado correctamente")),
         );
         Navigator.pop(context, creado);
       } catch (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $error")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error: $error")));
       } finally {
         setState(() => _isLoading = false);
       }
@@ -89,8 +84,9 @@ class _CreateNegocioPageState extends State<CreateNegocioPage> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        validator: (value) =>
-            (value == null || value.isEmpty) ? 'Campo requerido' : null,
+        validator:
+            (value) =>
+                (value == null || value.isEmpty) ? 'Campo requerido' : null,
         onSaved: onSaved,
       ),
     );
@@ -132,12 +128,6 @@ class _CreateNegocioPageState extends State<CreateNegocioPage> {
                     onSaved: (val) => _name = val,
                   ),
                   _buildTextField(
-                    icon: Icons.vpn_key,
-                    label: "Token Negocio",
-                    inputType: TextInputType.number,
-                    onSaved: (val) => _tokenNegocio = val,
-                  ),
-                  _buildTextField(
                     icon: Icons.location_on,
                     label: "Dirección",
                     onSaved: (val) => _direccion = val,
@@ -162,28 +152,32 @@ class _CreateNegocioPageState extends State<CreateNegocioPage> {
                   _isLoading
                       ? const CircularProgressIndicator()
                       : SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF9B1D42),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF9B1D42),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
                             ),
-                            onPressed: _crear,
-                            icon: const Icon(Icons.add, color: Colors.white, size: 36),
-                            label: const Text(
-                              "Crear Negocio",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'TitanOne',
-                                color: Colors.white,
-                              ),
+                          ),
+                          onPressed: _crear,
+                          icon: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 36,
+                          ),
+                          label: const Text(
+                            "Crear Negocio",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'TitanOne',
+                              color: Colors.white,
                             ),
                           ),
                         ),
+                      ),
                 ],
               ),
             ),

@@ -1,5 +1,7 @@
 import 'package:android/models/categoria.dart';
+import 'package:android/models/proveedor.dart';
 import 'package:android/models/session_manager.dart';
+import 'package:android/services/service_proveedores.dart';
 import 'package:flutter/material.dart';
 import 'package:android/models/producto_inventario.dart';
 import 'package:android/services/service_inventory.dart';
@@ -13,9 +15,12 @@ import 'package:android/models/lote.dart';
 import 'package:android/services/service_lote.dart';
 
 class CategoryItemsPage extends StatefulWidget {
-  final String categoryName;
+  final int categoryId; // Recibe un entero en lugar de un String
 
-  const CategoryItemsPage({super.key, required this.categoryName});
+  const CategoryItemsPage({
+    super.key,
+    required this.categoryId,
+  }); // Cambiar para recibir categoryId
 
   @override
   State<CategoryItemsPage> createState() => _CategoryItemsPageState();
@@ -34,43 +39,25 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
   }
 
   void _initData() async {
-    final negocioId = SessionManager.negocioId!;
+    print("Iniciando carga de productos...");
 
-    final categorias = await CategoryApiService.getCategoriesByName(
-      widget.categoryName,
-    );
-    final categoriaCorrecta = categorias.firstWhere(
-      (cat) => cat.negocioId == negocioId && cat.pertenece == "INVENTARIO",
-      orElse: () => Categoria(id: "", name: "", pertenece: "", negocioId: ""),
-    );
+    // Asignamos el categoryId recibido al _categoryId
+    _categoryId = widget.categoryId; // Usa el categoryId recibido
 
-    if (categoriaCorrecta.id.isNotEmpty) {
-      _categoryId = int.tryParse(categoriaCorrecta.id);
+    // Llamar al servicio para obtener productos por categoriaId
+    final productos =
+        await InventoryApiService.getProductosInventarioByCategoriaId(
+          _categoryId!,
+        );
 
-      final productos =
-          await InventoryApiService.getProductosInventarioByCategoria(
-            widget.categoryName,
-          );
+    print(
+      'Productos obtenidos: $productos',
+    ); // Verifica los productos obtenidos
 
-      setState(() {
-        if (_categoryId != null) {
-          _allProducts =
-              productos
-                  .where((p) => p.categoria.id == _categoryId.toString())
-                  .toList();
-        } else {
-          _allProducts = [];
-        }
-
-        _applyFilter(); // Mostrar filtrados
-      });
-    } else {
-      // No se encontró categoría válida, así que mostramos lista vacía
-      setState(() {
-        _allProducts = [];
-        _applyFilter();
-      });
-    }
+    setState(() {
+      _allProducts = productos; // Asignamos los productos obtenidos
+      _applyFilter(); // Mostrar filtrados
+    });
   }
 
   void _applyFilter() {
@@ -173,11 +160,18 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
     });
   }
 
-  void _showAddProductDialog() {
+  void _showAddProductDialog() async {
     final nameController = TextEditingController();
     final precioController = TextEditingController();
     final cantidadDeseadaController = TextEditingController();
     final cantidadAvisoController = TextEditingController();
+
+    final negocioId = int.parse(SessionManager.negocioId!);
+
+    List<Proveedor> proveedores = await ApiService.getProveedoresByNegocio(
+      negocioId,
+    );
+    Proveedor? selectedProveedor;
 
     showDialog(
       context: context,
@@ -212,6 +206,19 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
                       labelText: "Cantidad aviso",
                     ),
                   ),
+                  DropdownButtonFormField<Proveedor>(
+                    decoration: const InputDecoration(labelText: "Proveedor"),
+                    items:
+                        proveedores.map((proveedor) {
+                          return DropdownMenuItem(
+                            value: proveedor,
+                            child: Text(proveedor.name!),
+                          );
+                        }).toList(),
+                    onChanged: (value) {
+                      selectedProveedor = value;
+                    },
+                  ),
                 ],
               ),
             ),
@@ -235,7 +242,8 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
                       precio == null ||
                       deseada == null ||
                       aviso == null ||
-                      _categoryId == null) {
+                      _categoryId == null ||
+                      selectedProveedor == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
@@ -246,13 +254,24 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
                     return;
                   }
 
-                  await InventoryApiService.createProductoInventario({
-                    "name": name,
-                    "precioCompra": precio,
-                    "cantidadDeseada": deseada,
-                    "cantidadAviso": aviso,
-                    "categoria": {"id": _categoryId},
-                  });
+                  try {
+                    await InventoryApiService.createProductoInventario({
+                      "name": name,
+                      "precioCompra": precio,
+                      "cantidadDeseada": deseada,
+                      "cantidadAviso": aviso,
+                      "categoriaId": widget.categoryId,
+                      "proveedorId": selectedProveedor!.id,
+                    });
+
+                    Navigator.pop(context);
+                    _initData();
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error al crear producto: $e')),
+                    );
+                  }
 
                   Navigator.pop(context);
                   _initData();
@@ -368,10 +387,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (_) => NotificacionPage(
-                                    notificaciones: notificaciones,
-                                  ),
+                              builder: (_) => NotificacionPage(),
                             ),
                           );
                         } catch (e) {
@@ -511,7 +527,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
                                   builder:
                                       (context) => ItemDetailsPage(
                                         itemName: producto.name,
-                                        category: widget.categoryName,
+                                        category: widget.categoryId.toString(),
                                       ),
                                 ),
                               );

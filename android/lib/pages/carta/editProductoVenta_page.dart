@@ -100,7 +100,16 @@ class _EditProductoVentaPageState extends State<EditProductoVentaPage> {
   }
 
   Future<void> _addIngrediente() async {
-    if (_ingredienteSeleccionado == null || _productoActual.id == 0) return;
+    if (_productoActual.id == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Guarda primero el producto para añadir ingredientes.'),
+        ),
+      );
+      return;
+    }
+
+    if (_ingredienteSeleccionado == null) return;
 
     final existente = _ingredientes.firstWhere(
       (ing) => ing.productoInventario.id == _ingredienteSeleccionado!.id,
@@ -139,7 +148,8 @@ class _EditProductoVentaPageState extends State<EditProductoVentaPage> {
         precioVenta:
             double.tryParse(_precioController.text) ??
             _productoActual.precioVenta,
-        categoria: _productoActual.categoria,
+        categoria:
+            _productoActual.categoria, // <-- Esto ya tiene el categoriaId bien
       );
 
       if (widget.isCreating && _productoActual.id == 0 && !_yaCreado) {
@@ -373,7 +383,10 @@ class _EditProductoVentaPageState extends State<EditProductoVentaPage> {
                 icon: const Icon(Icons.check, color: Colors.white, size: 28),
                 label: Text(
                   widget.isCreating && !_yaCreado ? 'Crear' : 'Confirmar',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'TitanOne'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'TitanOne',
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF9B1D42),

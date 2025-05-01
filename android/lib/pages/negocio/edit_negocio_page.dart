@@ -1,4 +1,5 @@
 // lib/pages/negocio/edit_negocio_page.dart
+import 'package:android/models/session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:android/models/negocio.dart';
 import 'package:android/services/service_negocio.dart';
@@ -49,7 +50,7 @@ class _EditNegocioPageState extends State<EditNegocioPage> {
           codigoPostal: _codigoPostal,
           ciudad: _ciudad,
           pais: _pais,
-          dueno: widget.negocio.dueno,
+          idDueno: SessionManager.duenoId,
         );
         Negocio actualizado = await NegocioService.updateNegocio(widget.negocio.id!, negocioActualizado);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -184,13 +185,6 @@ class _EditNegocioPageState extends State<EditNegocioPage> {
                     label: "Nombre del Negocio",
                     initialValue: _name,
                     onSaved: (val) => _name = val!,
-                  ),
-                  _buildTextField(
-                    icon: Icons.vpn_key,
-                    label: "Token Negocio",
-                    inputType: TextInputType.number,
-                    initialValue: _tokenNegocio,
-                    onSaved: (val) => _tokenNegocio = val!,
                   ),
                   _buildTextField(
                     icon: Icons.location_on,

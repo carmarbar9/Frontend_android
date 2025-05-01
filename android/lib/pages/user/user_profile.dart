@@ -31,11 +31,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   void _refreshUserProfile() {
-    final String? username = SessionManager.username;
-    if (username != null && username.isNotEmpty) {
+    final int? userId = SessionManager.currentUser?.id;
+
+    if (userId != null) {
       setState(() {
-        _userProfileFuture = service.fetchUserProfileByUsername(username);
+        _userProfileFuture = service.fetchUserProfileByUserId(userId);
       });
+    } else {
+      print("No hay userId en SessionManager");
     }
   }
 
@@ -140,9 +143,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                             context,
                             MaterialPageRoute(
                               builder:
-                                  (_) => NotificacionPage(
-                                    notificaciones: notificaciones,
-                                  ),
+                                  (_) => NotificacionPage(),
                             ),
                           );
                         } catch (e) {
@@ -453,7 +454,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
         duration: const Duration(milliseconds: 100),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          color: Colors.white
+          color: Colors.white,
         ),
         child: ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
