@@ -20,15 +20,37 @@ class Subscripcion {
   });
 
   factory Subscripcion.fromJson(Map<String, dynamic> json) {
-    return Subscripcion(
-      planType: SubscripcionType.values.firstWhere(
-          (e) => e.toString().split('.').last == json['planType']),
-      status: SubscripcionStatus.values.firstWhere(
-          (e) => e.toString().split('.').last == json['status']),
-      expirationDate: DateTime.parse(json['expirationDate']),
-      nextBillingDate: DateTime.parse(json['nextBillingDate']),
-      isActive: json['isActive'],
-      isPremium: json['isPremium'],
-    );
+    try {
+      return Subscripcion(
+        planType: SubscripcionType.values.firstWhere(
+          (e) => e.toString().split('.').last == json['type'],
+          orElse: () => SubscripcionType.FREE,
+        ),
+        status: SubscripcionStatus.values.firstWhere(
+          (e) => e.toString().split('.').last == json['status'],
+          orElse: () => SubscripcionStatus.UNPAID,
+        ),
+        expirationDate:
+            json['end_date'] != null
+                ? DateTime.parse(json['end_date'])
+                : DateTime.now().add(const Duration(days: 30)),
+        nextBillingDate:
+            json['start_date'] != null
+                ? DateTime.parse(json['start_date'])
+                : DateTime.now(),
+        isActive: json['active'] ?? false,
+        isPremium: json['premium'] ?? false,
+      );
+    } catch (e) {
+      print('❌ Error al parsear Subscripcion: $e');
+      return Subscripcion(
+        planType: SubscripcionType.FREE,
+        status: SubscripcionStatus.UNPAID,
+        expirationDate: DateTime.now().add(const Duration(days: 30)),
+        nextBillingDate: DateTime.now(),
+        isActive: false,
+        isPremium: false,
+      );
+    }
   }
 }

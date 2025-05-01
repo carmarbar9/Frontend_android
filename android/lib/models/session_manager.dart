@@ -35,4 +35,10 @@ class SessionManager {
     username = user.username;
     authority = user.authority.authority.toLowerCase(); // <-- Esto es clave
   }
+
+  static User? get user => currentUser;
+
+  static bool get tienePremium =>
+      currentUser?.subscripcion?.isPremium == true &&
+      currentUser?.subscripcion?.isActive == true;
 }

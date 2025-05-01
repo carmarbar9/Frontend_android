@@ -25,73 +25,83 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
   void _login() async {
-  if (_formKey.currentState!.validate()) {
-    _formKey.currentState!.save();
-    setState(() => _isLoading = true);
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      setState(() => _isLoading = true);
 
-    try {
-      final apiService = ApiService();
+      try {
+        final apiService = ApiService();
 
-      // 1. Login: obtenemos el token
-      final authResponse = await apiService.login(_username, _password);
+        // 1. Login: obtenemos el token
+        final authResponse = await apiService.login(_username, _password);
 
-      // Limpiamos sesión previa y guardamos el token
-      SessionManager.clear();
-      SessionManager.token = authResponse.token;
+        // Limpiamos sesión previa y guardamos el token
+        SessionManager.clear();
+        SessionManager.token = authResponse.token;
 
-      // 2. Obtenemos el usuario actual (/me)
-      final user = await apiService.fetchCurrentUser();
+        // 2. Obtenemos el usuario actual (/me)
+        final user = await apiService.fetchCurrentUser();
 
-      // 3. Guardamos datos del usuario en SessionManager
-      SessionManager.saveUserSession(user, authResponse.token);
+        // 3. Guardamos datos del usuario en SessionManager
+        SessionManager.saveUserSession(user, authResponse.token);
 
-      // 4. Comprobamos authority
-      if (SessionManager.authority == 'dueno') {
-        final dueno = await DuenoService.fetchDuenoByUserId(
-          user.id,
-          SessionManager.token!,
-        );
+        // 4. Comprobamos authority
+        if (SessionManager.authority == 'dueno') {
+          final dueno = await DuenoService.fetchDuenoByUserId(
+            user.id,
+            SessionManager.token!,
+          );
 
-        if (dueno == null) throw 'No se encontró el dueño';
+          if (dueno == null) throw 'No se encontró el dueño';
 
-        SessionManager.duenoId = dueno.id;
+          SessionManager.duenoId = dueno.id;
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ElegirNegocioPage(user: user),
-          ),
-        );
+          print("➡️ Suscripción del usuario:");
+          print("Tipo: ${SessionManager.user?.subscripcion?.planType}");
+          print(
+            "¿Es premium?: ${SessionManager.user?.subscripcion?.isPremium}",
+          );
+          print(
+            "¿Está activa?: ${SessionManager.user?.subscripcion?.isActive}",
+          );
 
-      } else if (SessionManager.authority == 'empleado') {
-        final empleado = await EmpleadoService.fetchEmpleadoByUserId(
-          user.id,
-          SessionManager.token!,
-        );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ElegirNegocioPage(user: user),
+            ),
+          );
+        } else if (SessionManager.authority == 'empleado') {
+          final empleado = await EmpleadoService.fetchEmpleadoByUserId(
+            user.id,
+            SessionManager.token!,
+          );
 
-        if (empleado == null) throw 'No se encontró el empleado';
-        if (empleado.negocio == null) throw 'Empleado sin negocio asignado';
+          if (empleado == null) throw 'No se encontró el empleado';
+          if (empleado.negocio == null) throw 'Empleado sin negocio asignado';
 
-        SessionManager.negocioId = empleado.negocio.toString();
-        SessionManager.empleadoId = empleado.id!;
+          SessionManager.negocioId = empleado.negocio.toString();
+          SessionManager.empleadoId = empleado.id!;
 
-        print('Empleado logueado correctamente. ID: ${SessionManager.empleadoId}');
-        print('Negocio logueado correctamente. ID: ${SessionManager.negocioId}');
-        print('Authority: ${SessionManager.authority}');
+          print(
+            'Empleado logueado correctamente. ID: ${SessionManager.empleadoId}',
+          );
+          print(
+            'Negocio logueado correctamente. ID: ${SessionManager.negocioId}',
+          );
+          print('Authority: ${SessionManager.authority}');
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePageEmpleado(user: user),
-          ),
-        );
-
-      } else {
-        throw 'Rol no reconocido';
-      }
-
-    } catch (e) {
-      final errorMessage = '''
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePageEmpleado(user: user),
+            ),
+          );
+        } else {
+          throw 'Rol no reconocido';
+        }
+      } catch (e) {
+        final errorMessage = '''
         Error: $e
         Username: $_username
         Token: ${SessionManager.token}
@@ -100,20 +110,17 @@ class _LoginPageState extends State<LoginPage> {
         Authority: ${SessionManager.authority}
       ''';
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          duration: const Duration(seconds: 4),
-        ),
-      );
-
-    } finally {
-      setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      } finally {
+        setState(() => _isLoading = false);
+      }
     }
   }
-}
-
-
 
   void _navigateToRegister() {
     Navigator.push(
@@ -122,9 +129,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _navigateToForgotPassword() {
-    // Lógica para recuperación de contraseña
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -252,19 +256,6 @@ class _LoginPageState extends State<LoginPage> {
                               'Entrar',
                               style: TextStyle(fontSize: 18),
                             ),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                GestureDetector(
-                  onTap: _navigateToForgotPassword,
-                  child: const Text(
-                    '¿Has olvidado la contraseña?\nRECUPERAR',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      decoration: TextDecoration.underline,
-                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
