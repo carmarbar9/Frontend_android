@@ -1,10 +1,9 @@
 # Frontend_android - GastroStock 🍽️📱
 
-GastroStock es una aplicación PWA desarrollada en Flutter que permite gestionar de forma eficiente el inventario de bares y restaurantes. 📊🍷 Optimiza el control de productos, predice la demanda con IA 🤖, ayuda en la realización de pedidos a proveedores 📦 y analiza ventas y rentabilidades. Además, se integra con sistemas TPV y de facturación para mejorar la eficiencia operativa. 💰
+GastroStock es una aplicación PWA desarrollada en Flutter que permite gestionar de forma eficiente el inventario de bares y restaurantes. 📊🍷 Optimiza el control de productos, predice la demanda, ayuda en la realización de pedidos a proveedores 📦 y analiza ventas y rentabilidades. Además, se integra con sistemas TPV y de facturación para mejorar la eficiencia operativa. 💰
 
 ## ✨ Características principales
 - 📦 **Gestión de inventario en tiempo real.**
-- 🔮 **Predicción de demanda con inteligencia artificial.**
 - 🤖 **Automatización de pedidos a proveedores con supervisión.**
 - 🔗 **Integración con TPV y sistemas de facturación.**
 - 📊 **Análisis de ventas y rentabilidad.**
@@ -55,13 +54,9 @@ Si deseas contribuir a este proyecto, puedes seguir estos pasos:
    ```bash
    flutter pub get
    ```
-3. ▶️ Ejecuta la aplicación en un emulador o dispositivo físico:
+3. ▶️ Ejecuta la aplicación en un emulador o dispositivo físico a la misma vez que el backend:
    ```bash
    flutter run
    ```
 
-## 📩 Contacto
-Si tienes alguna pregunta o sugerencia, puedes contactarme en [tu-email@ejemplo.com].
-
-¡Gracias por usar **GastroStock**! 🍽️📦🚀
 
