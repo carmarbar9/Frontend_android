@@ -13,7 +13,8 @@ import 'package:android/pages/carta/productosCategoria_page.dart';
 import 'package:android/services/service_categoria.dart';
 
 class CartaPage extends StatefulWidget {
-  const CartaPage({super.key});
+  final String negocioId;
+  const CartaPage({super.key, required this.negocioId});
 
   @override
   State<CartaPage> createState() => _CartaPageState();
@@ -55,8 +56,10 @@ class _CartaPageState extends State<CartaPage> {
 
                 try {
                   await CategoryApiService.createCategory({
-                    "name": nombre,
-                    "negocio": {"id": negocioId},
+                    "nombre": nombre,
+                    "negocioId": int.parse(
+                    widget.negocioId,
+                  ),
                     "pertenece": "VENTA",
                   });
 
@@ -115,8 +118,10 @@ class _CartaPageState extends State<CartaPage> {
                 try {
                   await CategoryApiService.updateCategory(categoria.id, {
                     "id": categoria.id,
-                    "name": nuevoNombre,
-                    "negocio": {"id": negocioId},
+                    "nombre": nuevoNombre,
+                    "negocioId": int.parse(
+                    widget.negocioId,
+                  ),
                     "pertenece": categoria.pertenece,
                   });
 
@@ -249,8 +254,7 @@ class _CartaPageState extends State<CartaPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (_) => NotificacionPage(),
+                              builder: (_) => NotificacionPage(),
                             ),
                           );
                         } catch (e) {
@@ -471,18 +475,22 @@ class _CartaPageState extends State<CartaPage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      "Error al cargar categorías: \${snapshot.error}",
-                    ),
+                  final error = snapshot.error.toString();
+                  debugPrint("❌ Error al cargar categorías: $error");
+
+                  return const Center(
+                    child: Text("No se pudieron cargar las categorías"),
                   );
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                }
+
+                final categorias = snapshot.data ?? [];
+
+                if (categorias.isEmpty) {
                   return const Center(
                     child: Text("No hay categorías disponibles"),
                   );
                 }
 
-                final categorias = snapshot.data!;
                 return ListView.builder(
                   itemCount: categorias.length,
                   itemBuilder: (context, index) {

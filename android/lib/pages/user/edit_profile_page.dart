@@ -25,6 +25,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   // Controladores para los campos de contraseña
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _oldPasswordController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -71,14 +72,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // Si el campo de password está vacío → mantener la actual
-      String finalPassword = widget.profile.user.password;
-
-      // Si el usuario escribió algo → se enviará en texto plano para que el backend la encripte
-      if (_passwordController.text.isNotEmpty) {
-        final passwordInput = _passwordController.text.trim();
-        finalPassword = BCrypt.hashpw(passwordInput, BCrypt.gensalt());
+      if (_passwordController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Debes introducir una nueva contraseña'),
+          ),
+        );
+        return;
       }
+
+      final String finalPassword = _passwordController.text.trim();
 
       UserProfile updatedProfile = UserProfile(
         id: widget.profile.id,
@@ -89,7 +92,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         tokenDueno: widget.profile.tokenDueno,
         user: widget.profile.user.copyWith(
           username: _username ?? widget.profile.user.username,
-          password: finalPassword,
+          password: finalPassword, // se manda en texto plano
         ),
       );
 
@@ -98,7 +101,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       });
 
       try {
-        UserProfile updated = await UserProfileService().updateUserProfile(
+        final updated = await UserProfileService().updateUserProfile(
           widget.profile.id,
           updatedProfile,
         );
@@ -111,9 +114,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           context,
         ).showSnackBar(SnackBar(content: Text("Error al actualizar: $error")));
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -230,6 +231,48 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       },
                     ),
                   ),
+                  if (_passwordController.text.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 18),
+                      child: TextFormField(
+                        controller: _oldPasswordController,
+                        keyboardType: TextInputType.text,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.lock_open,
+                            color: Color(0xFF9B1D42),
+                          ),
+                          labelText: "Contraseña actual",
+                          labelStyle: const TextStyle(
+                            color: Color(0xFF9B1D42),
+                            fontSize: 16,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Color(0xFF9B1D42),
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Color(0xFF9B1D42),
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (_passwordController.text.isNotEmpty &&
+                              (value == null || value.isEmpty)) {
+                            return 'Introduce tu contraseña actual';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
                   // Campo para repetir la nueva contraseña
                   _buildTextField(
                     icon: Icons.phone,

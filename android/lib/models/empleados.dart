@@ -39,9 +39,10 @@ class Empleado {
       numTelefono: json['numTelefono'],
       tokenEmpleado: json['tokenEmpleado'],
       descripcion: json['descripcion'],
-      negocio: negocioObj is int
-          ? negocioObj
-          : (negocioObj != null ? negocioObj['id'] : null),
+      negocio:
+          negocioObj is int
+              ? negocioObj
+              : (negocioObj != null ? negocioObj['id'] : null),
       negocioNombre: negocioObj != null ? negocioObj['name'] : null,
     );
   }
@@ -55,8 +56,7 @@ class Empleado {
     if (email != null) data['email'] = email;
     if (numTelefono != null) data['numTelefono'] = numTelefono;
     if (descripcion != null) data['descripcion'] = descripcion;
-    if (negocio != null) data['negocio'] = negocio;
+    if (negocio != null) data['negocio'] = negocio; // 👈 debe llamarse así
     return data;
   }
-
 }

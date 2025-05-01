@@ -201,7 +201,7 @@ class ApiService {
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body);
       return jsonList.map((json) => Proveedor.fromJson(json)).toList();
-    } else if (response.statusCode == 404) {
+    } else if (response.statusCode == 204) {
       return [];
     } else {
       throw Exception('Error al obtener proveedores del negocio');

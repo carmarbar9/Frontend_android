@@ -20,7 +20,7 @@ class CarritoProveedorPage extends StatefulWidget {
 
 class _CarritoProveedorPageState extends State<CarritoProveedorPage> {
   List<ProductoInventario> _productos = [];
-  Map<int, int> _cantidades = {}; 
+  Map<int, int> _cantidades = {};
 
   @override
   void initState() {
@@ -30,19 +30,21 @@ class _CarritoProveedorPageState extends State<CarritoProveedorPage> {
 
   void _cargarProductosDelProveedor() async {
     final todos = await InventoryApiService.getAllProductosInventario();
-    final asociados = todos.where((p) => p.proveedorId == widget.proveedor.id).toList();
+    final asociados =
+        todos.where((p) => p.proveedorId == widget.proveedor.id).toList();
 
     setState(() {
       _productos = asociados;
       _cantidades = {
         for (var producto in asociados)
-          producto.id: CarritoManager
-              .getProductosDelCarrito(widget.proveedor.id!)
-              .firstWhere(
-                (p) => p.producto.id == producto.id,
-                orElse: () => ProductoCarrito(producto: producto, cantidad: 0),
-              )
-              .cantidad,
+          producto.id:
+              CarritoManager.getProductosDelCarrito(widget.proveedor.id!)
+                  .firstWhere(
+                    (p) => p.producto.id == producto.id,
+                    orElse:
+                        () => ProductoCarrito(producto: producto, cantidad: 0),
+                  )
+                  .cantidad,
       };
     });
   }
@@ -67,7 +69,9 @@ class _CarritoProveedorPageState extends State<CarritoProveedorPage> {
   }
 
   void _hacerPedido() async {
-    final productos = CarritoManager.getProductosDelCarrito(widget.proveedor.id!);
+    final productos = CarritoManager.getProductosDelCarrito(
+      widget.proveedor.id!,
+    );
 
     print('📦 Productos en carrito: ${productos.length}');
     for (var p in productos) {
@@ -86,7 +90,9 @@ class _CarritoProveedorPageState extends State<CarritoProveedorPage> {
       (total, p) => total + (p.producto.precioCompra * p.cantidad),
     );
 
-    final diaReparto = await DiaRepartoService.getPrimerDiaRepartoDelProveedor(widget.proveedor.id!);
+    final diaReparto = await DiaRepartoService.getPrimerDiaRepartoDelProveedor(
+      widget.proveedor.id!,
+    );
     if (diaReparto == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo obtener el día de reparto')),
@@ -108,7 +114,9 @@ class _CarritoProveedorPageState extends State<CarritoProveedorPage> {
       print('✅ Carrito creado con ID: ${nuevoCarrito.id}');
 
       for (var item in productos) {
-        print('➡️ Creando línea de carrito para producto: ${item.producto.name}, cantidad: ${item.cantidad}');
+        print(
+          '➡️ Creando línea de carrito para producto: ${item.producto.name}, cantidad: ${item.cantidad}',
+        );
         await ApiLineaCarritoService.crearLineaDeCarrito(
           carritoId: nuevoCarrito.id!,
           productoId: item.producto.id,
@@ -126,9 +134,9 @@ class _CarritoProveedorPageState extends State<CarritoProveedorPage> {
     } catch (e, stacktrace) {
       print('❌ Error al hacer pedido: $e');
       print(stacktrace);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al hacer pedido: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al hacer pedido: $e')));
     }
   }
 
@@ -139,82 +147,100 @@ class _CarritoProveedorPageState extends State<CarritoProveedorPage> {
         title: Text('Carrito - ${widget.proveedor.name}'),
         backgroundColor: const Color(0xFF9B1D42),
       ),
-      body: _productos.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                ..._productos.map((producto) {
-                  return Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            producto.name,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF9B1D42),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Cantidad:'),
-                              SizedBox(
-                                width: 80,
-                                child: TextFormField(
-                                  initialValue: _cantidades[producto.id].toString(),
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    border: OutlineInputBorder(),
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                                  ),
-                                  onChanged: (value) {
-                                    final parsed = int.tryParse(value) ?? 0;
-                                    final clamped = parsed.clamp(0, 999);
-                                    setState(() {
-                                      _cantidades[producto.id] = clamped;
-                                      CarritoManager.anadirProducto(
-                                        proveedorId: widget.proveedor.id!,
-                                        producto: producto,
-                                        cantidad: clamped,
-                                      );
-                                    });
-                                  },
-                                ),
+      body:
+          _productos.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  ..._productos.map((producto) {
+                    return Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              producto.name,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF9B1D42),
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Cantidad:'),
+                                SizedBox(
+                                  width: 80,
+                                  child: TextFormField(
+                                    initialValue:
+                                        _cantidades[producto.id].toString(),
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        vertical: 10,
+                                        horizontal: 10,
+                                      ),
+                                    ),
+                                    onChanged: (value) {
+                                      final parsed = int.tryParse(value) ?? 0;
+                                      final clamped = parsed.clamp(0, 999);
+                                      setState(() {
+                                        _cantidades[producto.id] = clamped;
+                                        CarritoManager.anadirProducto(
+                                          proveedorId: widget.proveedor.id!,
+                                          producto: producto,
+                                          cantidad: clamped,
+                                        );
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    icon: const Icon(
+                      Icons.shopping_cart_checkout,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    label: const Text(
+                      'Hacer pedido',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'TitanOne',
+                        color: Colors.white,
                       ),
                     ),
-                  );
-                }).toList(),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.shopping_cart_checkout),
-                  label: const Text('Hacer pedido'),
-                  onPressed: _hacerPedido,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF9B1D42),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    onPressed: _hacerPedido,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF9B1D42),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                     ),
                   ),
-                )
-              ],
-            ),
+                ],
+              ),
     );
   }
 }

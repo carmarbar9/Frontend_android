@@ -25,9 +25,7 @@ class Categoria {
       'id': id,
       'name': name,
       'pertenece': pertenece,
-      'negocio': {
-        'id': negocioId,
-      },
+      'negocio': negocioId,
     };
   }
 }

@@ -42,6 +42,8 @@ class _ElegirNegocioPageState extends State<ElegirNegocioPage> {
     SessionManager.negocioNombre = negocio.name ?? 'Sin nombre';
     SessionManager.ciudad = negocio.ciudad ?? 'Sin ciudad';
 
+    print('DEBUG --- Negocio seleccionado: ${negocio.id}');
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const HomePage()),

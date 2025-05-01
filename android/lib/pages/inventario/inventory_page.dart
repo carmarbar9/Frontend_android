@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:android/models/categoria.dart';
+import 'package:android/models/session_manager.dart';
 import 'package:android/pages/inventario/categoryItems_page.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/services/service_categoria.dart';
@@ -191,10 +194,15 @@ class _InventoryPageState extends State<InventoryPage> {
 
                 // Agrega el campo "pertenece" con el valor que tu backend requiera:
                 final newCategoryData = {
-                  "name": newName,
-                  "negocio": {"id": widget.negocioId},
-                  "pertenece": "INVENTARIO",
+                  "nombre": newName, // 👈 cambia "name" por "nombre"
+                  "negocioId": int.parse(
+                    widget.negocioId,
+                  ), // 👈 cambia estructura, solo el ID
+                  "pertenece": "INVENTARIO", // ya está bien
                 };
+
+                print("📤 Enviando categoría DTO:");
+                print(jsonEncode(newCategoryData));
 
                 try {
                   await CategoryApiService.createCategory(newCategoryData);
@@ -378,9 +386,25 @@ class _InventoryPageState extends State<InventoryPage> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                }
+
+                if (snapshot.hasError) {
+                  debugPrint('❌ Error: ${snapshot.error}');
+                  return const Center(
+                    child: Text(
+                      'No se pudieron cargar las categorías',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF9B1D42),
+                      ),
+                    ),
+                  );
+                }
+
+                final categories = snapshot.data ?? [];
+
+                if (categories.isEmpty) {
                   return const Center(
                     child: Text(
                       'No se encontraron categorías',
@@ -391,19 +415,18 @@ class _InventoryPageState extends State<InventoryPage> {
                       ),
                     ),
                   );
-                } else {
-                  final categories = snapshot.data!;
-                  return CardSwiper(
-                    cardsCount: categories.length,
-                    numberOfCardsDisplayed:
-                        categories.length >= 3 ? 3 : categories.length,
-                    onSwipe: (prev, curr, dir) => true,
-                    cardBuilder: (context, index, _, __) {
-                      final categoria = categories[index];
-                      return _buildCategoryCard(categoria);
-                    },
-                  );
                 }
+
+                return CardSwiper(
+                  cardsCount: categories.length,
+                  numberOfCardsDisplayed:
+                      categories.length >= 3 ? 3 : categories.length,
+                  onSwipe: (prev, curr, dir) => true,
+                  cardBuilder: (context, index, _, __) {
+                    final categoria = categories[index];
+                    return _buildCategoryCard(categoria);
+                  },
+                );
               },
             ),
           ),
@@ -677,8 +700,8 @@ class _InventoryPageState extends State<InventoryPage> {
 
                 final data = {
                   "id": categoria.id,
-                  "name": newName,
-                  "negocio": {"id": widget.negocioId},
+                  "nombre": newName,
+                  "negocioId": int.parse(widget.negocioId),
                   "pertenece": "INVENTARIO",
                 };
 

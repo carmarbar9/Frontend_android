@@ -4,7 +4,6 @@ import 'package:android/services/service_reabastecimiento.dart';
 import 'package:android/models/proveedor.dart';
 import 'package:android/services/service_proveedores.dart';
 import 'package:android/models/session_manager.dart';
-import 'package:android/pages/reabastecimientos/reabastecimiento_detail_page.dart';
 
 class ReabastecimientosPage extends StatefulWidget {
   const ReabastecimientosPage({super.key});
@@ -60,14 +59,6 @@ class _ReabastecimientosPageState extends State<ReabastecimientosPage> {
                         subtitle: Text(
                           "Proveedor: $proveedorNombre\nFecha: ${_formatFecha(r.fecha)}\nTotal: ${r.precioTotal.toStringAsFixed(2)} €",
                         ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => DetalleReabastecimientoPage(reabastecimiento: r),
-                            ),
-                          );
-                        },
                         leading: const Icon(Icons.inventory_2),
                       ),
                     );

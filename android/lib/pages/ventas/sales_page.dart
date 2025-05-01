@@ -1,4 +1,12 @@
+import 'package:android/models/lote.dart';
+import 'package:android/pages/login/elegirNegocio_page.dart';
+import 'package:android/pages/login/login_page.dart';
+import 'package:android/pages/notificaciones/notifications_page.dart';
+import 'package:android/pages/user/user_profile.dart';
 import 'package:android/services/service_empleados.dart';
+import 'package:android/services/service_inventory.dart';
+import 'package:android/services/service_lote.dart';
+import 'package:android/services/service_notificacion.dart';
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:android/models/pedido.dart';
@@ -93,17 +101,67 @@ class _SalesPageState extends State<SalesPage> {
                         Icons.notifications,
                         color: Colors.black,
                       ),
-                      onPressed: () {},
+                      onPressed: () async {
+                        try {
+                          final productos =
+                              await InventoryApiService.getProductosInventario();
+
+                          final Map<int, List<Lote>> lotesPorProducto = {};
+                          for (var producto in productos) {
+                            final lotes =
+                                await LoteProductoService.getLotesByProductoId(
+                                  producto.id,
+                                );
+                            lotesPorProducto[producto.id] = lotes;
+                          }
+
+                          final notificaciones = NotificacionService()
+                              .generarNotificacionesInventario(
+                                productos,
+                                lotesPorProducto,
+                              );
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => NotificacionPage(),
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Error al cargar notificaciones: $e',
+                              ),
+                            ),
+                          );
+                        }
+                      },
                     ),
                     IconButton(
                       iconSize: 48,
                       icon: const Icon(Icons.person, color: Colors.black),
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const UserProfilePage(),
+                          ),
+                        );
+                      },
                     ),
                     IconButton(
                       iconSize: 48,
                       icon: const Icon(Icons.logout, color: Colors.black),
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginPage(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

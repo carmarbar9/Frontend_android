@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:android/models/categoria.dart';
 import 'package:android/models/session_manager.dart';
 import 'package:android/services/service_categoria.dart';
@@ -100,45 +102,90 @@ class _EditProductoVentaPageState extends State<EditProductoVentaPage> {
   }
 
   Future<void> _addIngrediente() async {
-    if (_productoActual.id == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Guarda primero el producto para añadir ingredientes.'),
-        ),
-      );
-      return;
-    }
+  if (_productoActual.id == 0) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Guarda primero el producto para añadir ingredientes.'),
+      ),
+    );
+    return;
+  }
 
-    if (_ingredienteSeleccionado == null) return;
+  if (_ingredienteSeleccionado == null) {
+    print("❌ No se ha seleccionado un ingrediente");
+    return;
+  }
 
-    final existente = _ingredientes.firstWhere(
-      (ing) => ing.productoInventario.id == _ingredienteSeleccionado!.id,
-      orElse:
-          () => Ingrediente(
-            id: -1,
-            cantidad: 0,
-            productoInventario: _ingredienteSeleccionado!,
-            productoVenta: _productoActual,
-          ),
+  // Imprimir información del ingrediente y el producto seleccionado
+  print("🔎 Ingrediente seleccionado: ${_ingredienteSeleccionado?.name} (ID: ${_ingredienteSeleccionado?.id})");
+  print("🔎 Cantidad seleccionada: $_cantidad");
+
+  // Verificar si el ingrediente ya existe
+  final existente = _ingredientes.firstWhere(
+    (ing) => ing.productoInventario.id == _ingredienteSeleccionado!.id,
+    orElse: () => Ingrediente(
+      id: -1,
+      cantidad: 0,
+      productoInventario: _ingredienteSeleccionado!,
+      productoVenta: _productoActual,
+    ),
+  );
+
+  if (existente.id != -1) {
+    print("✅ Ingrediente ya existe. Actualizando cantidad...");
+    print("📝 Actualizando ingrediente ${_ingredienteSeleccionado?.name} con cantidad ${existente.cantidad + _cantidad}");
+
+    await IngredienteService.updateIngrediente(
+      id: existente.id,
+      cantidad: existente.cantidad + _cantidad,
+      productoInventarioId: _ingredienteSeleccionado!.id,
+      productoVentaId: _productoActual.id,
+    );
+  } else {
+    print("➕ Añadiendo nuevo ingrediente: ${_ingredienteSeleccionado?.name}");
+    print("📝 Nuevo ingrediente, cantidad: $_cantidad");
+
+    final producto = _ingredienteSeleccionado!;
+    
+    // Obtener el ID correcto de la categoría
+    final categoriaId = int.tryParse(_ingredienteSeleccionado!.categoria.id) ?? 0; // Correcto
+    final negocioId = int.parse(SessionManager.negocioId!);
+
+    // Log del objeto a enviar
+    print("🔎 Enviando ingrediente: {"
+        "cantidad: $_cantidad, "
+        "productoInventario: {id: ${producto.id}, categoria: {id: $categoriaId, negocio: {id: $negocioId}}}, "
+        "productoVenta: {id: ${_productoActual.id}}"
     );
 
-    if (existente.id != -1) {
-      await IngredienteService.updateIngrediente(
-        id: existente.id,
-        cantidad: existente.cantidad + _cantidad,
-        productoInventarioId: _ingredienteSeleccionado!.id,
-        productoVentaId: _productoActual.id,
-      );
-    } else {
-      await IngredienteService.addIngrediente(
-        cantidad: _cantidad,
-        productoInventarioId: _ingredienteSeleccionado!.id,
-        productoVentaId: _productoActual.id,
-      );
-    }
+    // Verifica el payload que se va a enviar
+    final payload = {
+      "cantidad": _cantidad,
+      "productoInventario": {
+        "id": producto.id,
+        "categoria": {
+          "id": categoriaId,
+          "negocio": {"id": negocioId},
+        },
+      },
+      "productoVenta": {"id": _productoActual.id}
+    };
 
-    _loadIngredientes();
+    print("📤 Payload a enviar: ${jsonEncode(payload)}");
+
+    // Llamada para añadir ingrediente
+    await IngredienteService.addIngrediente(
+      cantidad: _cantidad,
+      productoInventarioId: producto.id,
+      productoVentaId: _productoActual.id,
+      categoriaId: categoriaId,
+      negocioId: negocioId,
+    );
   }
+
+  _loadIngredientes();
+}
+
 
   Future<void> _confirmarCambios() async {
     try {

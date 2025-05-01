@@ -71,10 +71,14 @@ class EmpleadoService {
   static Future<Empleado> updateEmpleado(int id, Empleado empleado) async {
     final url = Uri.parse('$_baseUrl/$id');
 
-    // No enviar password si está vacío
     if (empleado.password == null || empleado.password!.isEmpty) {
       empleado.password = null;
     }
+
+    final body = jsonEncode(empleado.toJson());
+
+    print("📤 Actualizando empleado $id con:");
+    print(body);
 
     final response = await http.put(
       url,
@@ -82,8 +86,11 @@ class EmpleadoService {
         'Authorization': 'Bearer ${SessionManager.token}',
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode(empleado.toJson()),
+      body: body,
     );
+
+    print("📥 Código de respuesta: ${response.statusCode}");
+    print("📥 Respuesta body: ${response.body}");
 
     if (response.statusCode == 200) {
       final decodedBody = utf8.decode(response.bodyBytes);
@@ -91,7 +98,9 @@ class EmpleadoService {
     } else if (response.statusCode == 409) {
       throw Exception('El nombre de usuario ya está en uso');
     } else {
-      throw Exception('Error al actualizar el empleado');
+      throw Exception(
+        'Error al actualizar empleado\nCódigo: ${response.statusCode}\n${response.body}',
+      );
     }
   }
 
@@ -172,7 +181,10 @@ class EmpleadoService {
     }
   }
 
-  static Future<Empleado?> fetchEmpleadoByUserId(int userId, String token) async {
+  static Future<Empleado?> fetchEmpleadoByUserId(
+    int userId,
+    String token,
+  ) async {
     final url = Uri.parse('$_baseUrl/user/$userId');
 
     final response = await http.get(

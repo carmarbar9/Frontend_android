@@ -101,14 +101,7 @@ class _LoginPageState extends State<LoginPage> {
           throw 'Rol no reconocido';
         }
       } catch (e) {
-        final errorMessage = '''
-        Error: $e
-        Username: $_username
-        Token: ${SessionManager.token}
-        User ID: ${SessionManager.userId}
-        Username: ${SessionManager.username}
-        Authority: ${SessionManager.authority}
-      ''';
+        final errorMessage = 'Este usuario no existe';
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

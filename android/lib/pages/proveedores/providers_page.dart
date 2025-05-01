@@ -16,8 +16,6 @@ import 'package:android/pages/carrito/carritoProveedor_page.dart';
 import 'package:android/pages/carrito/carritosPendientes_page.dart';
 import 'package:android/pages/reabastecimientos/reabastecimiento_page.dart';
 
-
-
 class ProvidersPage extends StatefulWidget {
   const ProvidersPage({Key? key}) : super(key: key);
 
@@ -36,19 +34,18 @@ class _ProvidersPageState extends State<ProvidersPage> {
   }
 
   void _loadProveedores() {
-  final negocioIdStr = SessionManager.negocioId;
-  if (negocioIdStr != null) {
-    final negocioId = int.tryParse(negocioIdStr);
-    if (negocioId != null) {
-      _futureProveedores = ApiService.getProveedoresByNegocio(negocioId);
+    final negocioIdStr = SessionManager.negocioId;
+    if (negocioIdStr != null) {
+      final negocioId = int.tryParse(negocioIdStr);
+      if (negocioId != null) {
+        _futureProveedores = ApiService.getProveedoresByNegocio(negocioId);
+      } else {
+        _futureProveedores = Future.value([]);
+      }
     } else {
       _futureProveedores = Future.value([]);
     }
-  } else {
-    _futureProveedores = Future.value([]);
   }
-}
-
 
   void _navigateToAddProvider() async {
     final result = await Navigator.push(
@@ -80,12 +77,9 @@ class _ProvidersPageState extends State<ProvidersPage> {
   void _verTodosReabastecimientos() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const ReabastecimientosPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const ReabastecimientosPage()),
     );
   }
-
 
   void _deleteProvider(Proveedor proveedor) async {
     bool? confirm = await showDialog<bool>(
@@ -250,16 +244,23 @@ class _ProvidersPageState extends State<ProvidersPage> {
                       ),
                       onPressed: () async {
                         try {
-                          final productos = await InventoryApiService.getProductosInventario();
+                          final productos =
+                              await InventoryApiService.getProductosInventario();
 
                           final Map<int, List<Lote>> lotesPorProducto = {};
                           for (var producto in productos) {
-                            final lotes = await LoteProductoService.getLotesByProductoId(producto.id);
+                            final lotes =
+                                await LoteProductoService.getLotesByProductoId(
+                                  producto.id,
+                                );
                             lotesPorProducto[producto.id] = lotes;
                           }
 
                           final notificaciones = NotificacionService()
-                              .generarNotificacionesInventario(productos, lotesPorProducto);
+                              .generarNotificacionesInventario(
+                                productos,
+                                lotesPorProducto,
+                              );
 
                           Navigator.push(
                             context,
@@ -269,7 +270,11 @@ class _ProvidersPageState extends State<ProvidersPage> {
                           );
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error cargando notificaciones: $e')),
+                            SnackBar(
+                              content: Text(
+                                'Error cargando notificaciones: $e',
+                              ),
+                            ),
                           );
                         }
                       },
@@ -355,7 +360,6 @@ class _ProvidersPageState extends State<ProvidersPage> {
                     ),
                   ),
 
-
                   if (_searchQuery != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -390,13 +394,33 @@ class _ProvidersPageState extends State<ProvidersPage> {
                             child: CircularProgressIndicator(),
                           );
                         } else if (snapshot.hasError) {
-                          return Center(
-                            child: Text("Error: ${snapshot.error}"),
+                          debugPrint(
+                            "❌ Error al obtener proveedores: ${snapshot.error}",
                           );
-                        } else if (!snapshot.hasData ||
-                            snapshot.data!.isEmpty) {
                           return const Center(
-                            child: Text("No hay proveedores"),
+                            child: Text(
+                              "No se pudieron cargar los proveedores",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF9B1D42),
+                              ),
+                            ),
+                          );
+                        }
+
+                        final proveedores = snapshot.data ?? [];
+
+                        if (proveedores.isEmpty) {
+                          return const Center(
+                            child: Text(
+                              "No hay proveedores registrados",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF9B1D42),
+                              ),
+                            ),
                           );
                         } else {
                           List<Proveedor> proveedores = snapshot.data!;
@@ -488,7 +512,6 @@ class _ProvidersPageState extends State<ProvidersPage> {
       ),
     );
   }
-
 
   // Tarjeta del proveedor
   Widget _buildProviderCard(Proveedor proveedor) {
@@ -606,7 +629,11 @@ class _ProvidersPageState extends State<ProvidersPage> {
                 children: [
                   Expanded(
                     child: _buildFlatWhiteButton(
-                      icon: Icon(Icons.edit, size: 32, color: Color(0xFF9B1D42)),
+                      icon: Icon(
+                        Icons.edit,
+                        size: 32,
+                        color: Color(0xFF9B1D42),
+                      ),
                       label: "Editar",
                       onPressed: () => _navigateToEditProvider(proveedor),
                     ),
@@ -614,7 +641,11 @@ class _ProvidersPageState extends State<ProvidersPage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _buildFlatWhiteButton(
-                      icon: Icon(Icons.delete, size: 32, color: Color(0xFF9B1D42)),
+                      icon: Icon(
+                        Icons.delete,
+                        size: 32,
+                        color: Color(0xFF9B1D42),
+                      ),
                       label: "Eliminar",
                       onPressed: () => _deleteProvider(proveedor),
                     ),
@@ -625,16 +656,21 @@ class _ProvidersPageState extends State<ProvidersPage> {
               SizedBox(
                 width: double.infinity,
                 child: _buildFlatWhiteButton(
-                  icon: Icon(Icons.shopping_cart, size: 30, color: Color(0xFF9B1D42)), // puedes ajustar el tamaño
+                  icon: Icon(
+                    Icons.shopping_cart,
+                    size: 30,
+                    color: Color(0xFF9B1D42),
+                  ), // puedes ajustar el tamaño
 
                   label: "Ver Carrito",
                   onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CarritoProveedorPage(proveedor: proveedor),
-                    ),
-                  );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (_) => CarritoProveedorPage(proveedor: proveedor),
+                      ),
+                    );
                   },
                 ),
               ),
@@ -642,13 +678,18 @@ class _ProvidersPageState extends State<ProvidersPage> {
               SizedBox(
                 width: double.infinity,
                 child: _buildFlatWhiteButton(
-                  icon: Icon(Icons.pending_actions, size: 30, color: Color(0xFF9B1D42)),
+                  icon: Icon(
+                    Icons.pending_actions,
+                    size: 30,
+                    color: Color(0xFF9B1D42),
+                  ),
                   label: "Ver pendientes",
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => CarritosPendientesPage(proveedor: proveedor),
+                        builder:
+                            (_) => CarritosPendientesPage(proveedor: proveedor),
                       ),
                     );
                   },
@@ -671,7 +712,11 @@ class _ProvidersPageState extends State<ProvidersPage> {
       icon: icon,
       label: Text(
         label,
-        style: const TextStyle(color: Color(0xFF9B1D42), fontSize: 18, fontFamily: 'TitanOne'),
+        style: const TextStyle(
+          color: Color(0xFF9B1D42),
+          fontSize: 18,
+          fontFamily: 'TitanOne',
+        ),
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,

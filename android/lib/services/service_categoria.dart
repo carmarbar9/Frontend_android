@@ -6,7 +6,9 @@ import 'package:android/models/session_manager.dart';
 class CategoryApiService {
   static const String _baseUrl = 'http://10.0.2.2:8080/api/categorias';
 
-  static Future<List<Categoria>> getCategoriesByNegocioId(String negocioId) async {
+  static Future<List<Categoria>> getCategoriesByNegocioId(
+    String negocioId,
+  ) async {
     final url = Uri.parse('$_baseUrl/negocio/$negocioId');
 
     final response = await http.get(
@@ -19,14 +21,20 @@ class CategoryApiService {
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body);
-      final filteredList = jsonList.where((json) => json['pertenece'] == "INVENTARIO").toList();
+      final filteredList =
+          jsonList.where((json) => json['pertenece'] == "INVENTARIO").toList();
       return filteredList.map((json) => Categoria.fromJson(json)).toList();
+    } else if (response.statusCode == 204) {
+      // No hay categorías aún
+      return [];
     } else {
       throw Exception('Error al obtener las categorías: ${response.body}');
     }
   }
 
-  static Future<List<Categoria>> getCategoriesByNegocioIdVenta(String negocioId) async {
+  static Future<List<Categoria>> getCategoriesByNegocioIdVenta(
+    String negocioId,
+  ) async {
     final url = Uri.parse('$_baseUrl/negocio/$negocioId');
 
     final response = await http.get(
@@ -39,15 +47,19 @@ class CategoryApiService {
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body);
-      final filteredList = jsonList.where((json) => json['pertenece'] == "VENTA").toList();
+      final filteredList =
+          jsonList.where((json) => json['pertenece'] == "VENTA").toList();
       return filteredList.map((json) => Categoria.fromJson(json)).toList();
+    } else if (response.statusCode == 204) {
+      // No hay categorías aún
+      return [];
     } else {
       throw Exception('Error al obtener las categorías: ${response.body}');
     }
   }
 
   static Future<Categoria> createCategory(Map<String, dynamic> data) async {
-    final url = Uri.parse('$_baseUrl');
+    final url = Uri.parse('$_baseUrl/dto');
 
     final response = await http.post(
       url,
@@ -58,9 +70,9 @@ class CategoryApiService {
       body: jsonEncode(data),
     );
 
-    if (response.statusCode == 201) {
+    try {
       return Categoria.fromJson(jsonDecode(response.body));
-    } else {
+    } catch (e) {
       throw Exception('Error al crear la categoría: ${response.body}');
     }
   }
@@ -94,12 +106,15 @@ class CategoryApiService {
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body);
-      final filteredList = jsonList.where((json) => json['pertenece'] == "INVENTARIO").toList();
+      final filteredList =
+          jsonList.where((json) => json['pertenece'] == "INVENTARIO").toList();
       return filteredList.map((json) => Categoria.fromJson(json)).toList();
     } else if (response.statusCode == 404) {
       return [];
     } else {
-      throw Exception('Error al obtener las categorías de inventario por nombre: ${response.body}');
+      throw Exception(
+        'Error al obtener las categorías de inventario por nombre: ${response.body}',
+      );
     }
   }
 
@@ -116,17 +131,23 @@ class CategoryApiService {
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body);
-      final filteredList = jsonList.where((json) => json['pertenece'] == "VENTA").toList();
+      final filteredList =
+          jsonList.where((json) => json['pertenece'] == "VENTA").toList();
       return filteredList.map((json) => Categoria.fromJson(json)).toList();
     } else if (response.statusCode == 404) {
       return [];
     } else {
-      throw Exception('Error al obtener las categorías de carta por nombre: ${response.body}');
+      throw Exception(
+        'Error al obtener las categorías de carta por nombre: ${response.body}',
+      );
     }
   }
 
-  static Future<Categoria> updateCategory(String id, Map<String, dynamic> data) async {
-    final url = Uri.parse('$_baseUrl/$id');
+  static Future<Categoria> updateCategory(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    final url = Uri.parse('$_baseUrl/dto/$id');
 
     final response = await http.put(
       url,

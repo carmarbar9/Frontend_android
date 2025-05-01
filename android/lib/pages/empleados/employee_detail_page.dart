@@ -144,10 +144,7 @@ class _EmployeeDetailPageState extends State<EmployeeDetailPage> {
                   employee.password = employee.password;
                 } else {
                   // Encriptar con BCrypt en Flutter
-                  employee.password = BCrypt.hashpw(
-                    passwordInput,
-                    BCrypt.gensalt(),
-                  );
+                  employee.password = passwordInput;
                 }
 
                 employee.firstName = firstNameController.text;

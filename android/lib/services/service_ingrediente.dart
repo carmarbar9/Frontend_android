@@ -7,7 +7,9 @@ class IngredienteService {
   static const String _baseUrl = 'http://10.0.2.2:8080/api/ingredientes';
 
   /// Obtener ingredientes por productoVenta.id
-  static Future<List<Ingrediente>> getIngredientesByProductoVenta(int productoVentaId) async {
+  static Future<List<Ingrediente>> getIngredientesByProductoVenta(
+    int productoVentaId,
+  ) async {
     final response = await http.get(
       Uri.parse('$_baseUrl/productoVenta/$productoVentaId'),
       headers: {
@@ -20,7 +22,9 @@ class IngredienteService {
       final List<dynamic> jsonList = jsonDecode(response.body);
       return jsonList.map((json) => Ingrediente.fromJson(json)).toList();
     } else {
-      throw Exception('Error al cargar ingredientes del producto de venta: ${response.body}');
+      throw Exception(
+        'Error al cargar ingredientes del producto de venta: ${response.body}',
+      );
     }
   }
 
@@ -29,12 +33,25 @@ class IngredienteService {
     required int cantidad,
     required int productoInventarioId,
     required int productoVentaId,
+    required int categoriaId, // Este es el parámetro que se pasa a la función
+    required int negocioId,
   }) async {
-    final Map<String, dynamic> body = {
+    // Aquí no es necesario redefinir categoriaId, porque ya lo tienes como parámetro
+    final negocioId = int.parse(SessionManager.negocioId!);
+
+    final body = {
       'cantidad': cantidad,
-      'productoInventario': {'id': productoInventarioId},
+      'productoInventario': {
+        'id': productoInventarioId,
+        'categoria': {
+          'id': categoriaId, // Usa el categoriaId pasado como parámetro
+          'negocio': {'id': negocioId},
+        },
+      },
       'productoVenta': {'id': productoVentaId},
     };
+
+    print("📤 Enviando ingrediente: ${jsonEncode(body)}");
 
     final response = await http.post(
       Uri.parse(_baseUrl),
@@ -44,6 +61,9 @@ class IngredienteService {
       },
       body: jsonEncode(body),
     );
+
+    print("📥 Status: ${response.statusCode}");
+    print("📥 Body: ${response.body}");
 
     if (response.statusCode != 201) {
       throw Exception('Error al añadir ingrediente: ${response.body}');
