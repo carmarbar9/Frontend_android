@@ -206,7 +206,6 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-  
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
@@ -318,14 +317,19 @@ class _MesaDetailPageState extends State<MesaDetailPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(height: 10),
-            Text(
-              product,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF9B1D42),
+            Flexible(
+              child: Text(
+                product,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF9B1D42),
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                softWrap: true,
               ),
-              textAlign: TextAlign.center,
             ),
             if (quantity > 0)
               Padding(
