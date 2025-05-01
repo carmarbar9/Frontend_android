@@ -4,9 +4,7 @@ import 'package:android/services/service_inventory.dart';
 import 'package:android/services/service_lote.dart';
 import 'package:android/services/service_notificacion.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:android/models/subscripcion.dart';
-import 'package:android/services/service_subscription.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
 import 'package:android/models/session_manager.dart';
 
@@ -198,11 +196,10 @@ class _PlansPageState extends State<PlansPage> {
                             ),
                             onPressed: () {
                               const url =
-                                  'http://10.0.2.2:8080/masInformacion';
-                              _abrirEnlaceWeb(url);
+                                  'https://ispp-2425-g2.ew.r.appspot.com/masInformacion';
                             },
                             child: const Text(
-                              'Ver más información',
+                              'https://ispp-2425-g2.ew.r.appspot.com/',
                               style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.bold),
                             ),
@@ -312,14 +309,7 @@ class _PlansPageState extends State<PlansPage> {
     );
   }
 
-  Future<void> _abrirEnlaceWeb(String url) async {
-    if (!await launchUrl(Uri.parse(url),
-        mode: LaunchMode.externalApplication)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo abrir el enlace')),
-      );
-    }
-  }
+
 
   String _formatearFecha(DateTime fecha) {
     return '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';

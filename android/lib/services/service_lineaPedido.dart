@@ -4,7 +4,7 @@ import '../models/linea_de_pedido.dart';
 import '../models/session_manager.dart';
 
 class LineaDePedidoService {
-  final String baseUrl = 'http://10.0.2.2:8080/api/lineasDePedido';
+  final String baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/lineasDePedido';
 
   Future<LineaDePedido> createLineaDePedido(LineaDePedido linea) async {
     final response = await http.post(

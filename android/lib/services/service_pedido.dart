@@ -4,7 +4,7 @@ import '../models/pedido.dart';
 import '../models/session_manager.dart';
 
 class PedidoService {
-  final String baseUrl = 'http://10.0.2.2:8080/api/pedidos';
+  final String baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/pedidos';
 
   /// Crear un pedido
   Future<Pedido> createPedido(Pedido pedido) async {

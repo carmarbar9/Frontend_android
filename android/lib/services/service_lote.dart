@@ -4,7 +4,7 @@ import '../models/lote.dart';
 import '../models/session_manager.dart';
 
 class LoteProductoService {
-  static const String baseUrl = 'http://10.0.2.2:8080/api/lotes';
+  static const String baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/lotes';
 
   static Future<List<Lote>> getLotesByProductoId(int productoId) async {
     final url = Uri.parse('$baseUrl/producto/$productoId');

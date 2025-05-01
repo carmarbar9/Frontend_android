@@ -4,7 +4,7 @@ import 'package:android/models/ingrediente.dart';
 import 'package:android/models/session_manager.dart';
 
 class IngredienteService {
-  static const String _baseUrl = 'http://10.0.2.2:8080/api/ingredientes';
+  static const String _baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/ingredientes';
 
   /// Obtener ingredientes por productoVenta.id
   static Future<List<Ingrediente>> getIngredientesByProductoVenta(

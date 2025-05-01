@@ -5,7 +5,7 @@ import '../models/session_manager.dart';
 
 
 class ReabastecimientoService {
-  static const String baseUrl = 'http://10.0.2.2:8080/api/reabastecimientos';
+  static const String baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/reabastecimientos';
 
   static Future<Reabastecimiento> crearReabastecimiento(Reabastecimiento reabastecimiento) async {
     final response = await http.post(

@@ -9,7 +9,7 @@ import 'package:android/models/dueno.dart';
 import 'package:android/models/session_manager.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:8080/api';
+  static const String baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api';
 
   /// LOGIN
   Future<AuthResponse> login(String username, String password) async {

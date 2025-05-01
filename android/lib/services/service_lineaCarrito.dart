@@ -4,7 +4,7 @@ import 'package:android/models/lineaCarrito.dart';
 import 'package:android/models/session_manager.dart';
 
 class ApiLineaCarritoService {
-  static const baseUrl = 'http://10.0.2.2:8080/api/lineasDeCarrito';
+  static const baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/lineasDeCarrito';
 
   static Future<List<LineaDeCarrito>> getLineasByCarrito(int carritoId) async {
   final response = await http.get(
