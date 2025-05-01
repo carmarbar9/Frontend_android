@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'package:http/http.dart' as http;
 import '../models/reabastecimiento.dart';
 import '../models/session_manager.dart';
@@ -24,5 +23,24 @@ class ReabastecimientoService {
       throw Exception("Error al crear reabastecimiento: ${response.body}");
     }
   }
+
+  static Future<List<Reabastecimiento>> getByNegocio(int negocioId) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/negocio/$negocioId'),
+    headers: {
+      'Authorization': 'Bearer ${SessionManager.token}',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final List<dynamic> jsonList = jsonDecode(response.body);
+    return jsonList.map((json) => Reabastecimiento.fromJson(json)).toList();
+  } else {
+    throw Exception("Error al obtener reabastecimientos: ${response.body}");
+  }
+}
+
+
 
 }

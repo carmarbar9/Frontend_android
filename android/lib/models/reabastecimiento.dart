@@ -1,5 +1,3 @@
-import 'package:android/models/session_manager.dart';
-
 class Reabastecimiento {
   final int? id; // <<-- Aquí que sea nullable
   final DateTime fecha;
