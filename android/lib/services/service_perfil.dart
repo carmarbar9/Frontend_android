@@ -5,8 +5,8 @@ import 'package:android/models/perfil.dart';
 import 'package:android/models/session_manager.dart';
 
 class UserProfileService {
-  final String duenoApiUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/duenos/';
-  final String userApiUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/users/username/';
+  final String duenoApiUrl = 'http://10.0.2.2:8080/api/duenos/';
+  final String userApiUrl = 'http://10.0.2.2:8080/api/users/username/';
 
   /// Obtener perfil a partir del username
   Future<UserProfile> fetchUserProfileByUsername(String username) async {
@@ -48,7 +48,7 @@ class UserProfileService {
 
   Future<UserProfile> fetchUserProfileByUserId(int userId) async {
   final response = await http.get(
-    Uri.parse('https://ispp-2425-g2.ew.r.appspot.com/api/duenos/user/$userId'),
+    Uri.parse('http://10.0.2.2:8080/api/duenos/user/$userId'),
     headers: {
       'Authorization': 'Bearer ${SessionManager.token}',
       'Content-Type': 'application/json',
@@ -88,7 +88,7 @@ class UserProfileService {
 
   /// Eliminar perfil
   Future<bool> deleteUserProfile(int duenoId) async {
-    final url = Uri.parse('https://ispp-2425-g2.ew.r.appspot.com/api/users/$duenoId');
+    final url = Uri.parse('http://10.0.2.2:8080/api/users/$duenoId');
 
     final response = await http.delete(
       url,

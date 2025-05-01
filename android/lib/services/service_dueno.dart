@@ -4,7 +4,7 @@ import 'dart:convert';
 import '../models/dueno.dart';
 
 class DuenoService {
-  static const String baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/duenos'; 
+  static const String baseUrl = 'http://10.0.2.2:8080/api/duenos'; 
 
   static Future<Dueno?> fetchDuenoByUserId(int userId, String token) async {
     final url = Uri.parse('$baseUrl/user/$userId');
