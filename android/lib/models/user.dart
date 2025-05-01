@@ -17,16 +17,14 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    print("🧾 JSON recibido en User.fromJson: $json");
     return User(
       id: json['id'],
       username: json['username'],
       password: json['password'],
       authority: Authority.fromJson(json['authority']),
-      subscripcion:
-          json['subscripcion'] != null
-              ? Subscripcion.fromJson(json['subscripcion'])
-              : null,
+      subscripcion: json['subscripcion'] != null
+          ? Subscripcion.fromJson(json['subscripcion'])
+          : null,
     );
   }
 

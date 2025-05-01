@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:android/models/subscripcion.dart';
 import 'package:android/services/service_subscription.dart';
 import 'package:android/pages/notificaciones/notifications_page.dart';
+import 'package:android/models/session_manager.dart';
 
 class PlansPage extends StatefulWidget {
   const PlansPage({super.key});
@@ -13,23 +14,27 @@ class PlansPage extends StatefulWidget {
 
 class _PlansPageState extends State<PlansPage> {
   Subscripcion? subscripcion;
+  bool isLoading = true;
 
-  @override
+ @override
   void initState() {
     super.initState();
-    _cargarSubscripcion();
+    subscripcion = SessionManager.user?.subscripcion;
+    isLoading = false;
   }
 
-  Future<void> _cargarSubscripcion() async {
-    final datos = await SubscripcionService.getDetallesSubscripcion();
-    setState(() {
-      subscripcion = datos;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    final planActual = subscripcion?.planType ?? SubscripcionType.FREE;
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    final planActual = subscripcion?.planType;
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
@@ -163,19 +168,17 @@ class _PlansPageState extends State<PlansPage> {
       padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-      color: isCurrent ? const Color.fromARGB(255, 45, 91, 167) : const Color.fromARGB(255, 167, 45, 77),
-      borderRadius: BorderRadius.circular(20),
-      border: isCurrent
-          ? Border.all(color: Colors.white, width: 2)
-          : null,
-      boxShadow: const [
-        BoxShadow(
-          color: Colors.black26,
-          blurRadius: 8,
-          offset: Offset(0, 4),
-        ),
-      ],
-    ),
+        color: isCurrent ? const Color.fromARGB(255, 45, 91, 167) : const Color.fromARGB(255, 167, 45, 77),
+        borderRadius: BorderRadius.circular(20),
+        border: isCurrent ? Border.all(color: Colors.white, width: 2) : null,
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
