@@ -654,24 +654,6 @@ class _ProvidersPageState extends State<ProvidersPage> {
                   },
                 ),
               ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: _buildFlatWhiteButton(
-                  icon: Icon(Icons.history, size: 30, color: Color(0xFF9B1D42)),
-                  label: "Ver reabastecimientos",
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ReabastecimientosPage(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-
             ],
           ),
         );
