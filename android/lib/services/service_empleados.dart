@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:android/models/session_manager.dart';
 
 class EmpleadoService {
-  static const String _baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/empleados';
+  static const String _baseUrl = 'http://10.0.2.2:8080/api/empleados';
 
   static Future<List<Empleado>> getAllEmpleados() async {
     final url = Uri.parse(_baseUrl);

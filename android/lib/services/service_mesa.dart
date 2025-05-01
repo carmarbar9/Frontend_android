@@ -5,7 +5,7 @@ import 'package:android/models/mesa.dart';
 import 'package:android/models/session_manager.dart';
 
 class MesaService {
-  static const String _baseUrl = 'https://ispp-2425-g2.ew.r.appspot.com/api/mesas';
+  static const String _baseUrl = 'http://10.0.2.2:8080/api/mesas';
 
   static Future<List<Mesa>> getMesas() async {
     final int negocioId = int.parse(SessionManager.negocioId!);

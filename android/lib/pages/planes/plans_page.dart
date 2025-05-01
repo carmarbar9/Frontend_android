@@ -198,7 +198,7 @@ class _PlansPageState extends State<PlansPage> {
                             ),
                             onPressed: () {
                               const url =
-                                  'https://ispp-2425-g2.ew.r.appspot.com/masInformacion';
+                                  'http://10.0.2.2:8080/masInformacion';
                               _abrirEnlaceWeb(url);
                             },
                             child: const Text(

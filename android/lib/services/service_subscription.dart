@@ -8,7 +8,7 @@ import '../models/session_manager.dart';
   static Future<Subscripcion?> getDetallesSubscripcion() async {
     final token = await SessionManager.token;
     final response = await http.get(
-      Uri.parse('https://ispp-2425-g2.ew.r.appspot.com/api/subscriptions/status'),
+      Uri.parse('http://10.0.2.2:8080/api/subscriptions/status'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
